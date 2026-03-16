@@ -1,0 +1,13 @@
+{
+  "name": "kitaru",
+  "description": "Kitaru skills for Claude Code: scoping (flow architecture design) and authoring (writing durable agent workflows)",
+  "version": "0.2.0",
+  "author": {
+    "name": "ZenML",
+    "url": "https://kitaru.ai"
+  },
+  "homepage": "https://kitaru.ai",
+  "repository": "https://github.com/zenml-io/kitaru-skills",
+  "license": "Apache-2.0",
+  "keywords": ["kitaru", "zenml", "durable-execution", "ai-agents", "workflows"]
+}
