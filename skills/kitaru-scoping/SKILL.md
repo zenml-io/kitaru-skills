@@ -44,13 +44,17 @@ Kitaru is a durable execution layer for Python workflows built around four
 user-facing surfaces:
 
 - **SDK primitives**: `@flow`, `@checkpoint`, `wait()`, `log()`, `save()`,
-  `load()`, `llm()`, plus configuration helpers
-- **Programmatic control**: `KitaruClient` for executions, logs, artifacts,
-  retry, resume, replay, cancel, and wait input
-- **CLI control**: `kitaru run`, `kitaru executions ...`, stack/model/secret
-  commands, and runtime inspection commands
-- **MCP control**: execution, artifact, status, run, and replay tools for agent
-  environments
+  `load()`, `llm()`, plus configuration helpers (`configure`, `connect`,
+  `create_stack`, `list_stacks`, `current_stack`, `use_stack`, `delete_stack`)
+- **KitaruClient** (inspection and control of existing executions):
+  `executions.get / list / latest / logs / pending_waits / input / abort_wait /
+  retry / resume / replay / cancel`, plus `artifacts.list / get`
+- **CLI control**: `kitaru login`, `kitaru run`, `kitaru executions ...`,
+  stack/model/secret commands (including remote stack creation for `kubernetes`,
+  `vertex`, `sagemaker`, `azureml`), and runtime inspection commands
+- **MCP control**: execution tools (`kitaru_executions_list/get/latest/run/
+  input/retry/replay/cancel`), artifact tools, status, stack listing, and
+  `manage_stack` (create/delete including remote stacks)
 
 It also ships a **PydanticAI adapter** (`wrap(...)`, `hitl_tool(...)`) for agent
 workloads that want Kitaru tracking without rewriting the whole control flow.
@@ -60,13 +64,38 @@ workloads that want Kitaru tracking without rewriting the whole control flow.
 Kitaru uses durable rerun-from-top execution.
 
 - **Retry** continues the same execution after failure.
-- **Resume** continues the same execution after a `wait()` is resolved.
-- **Replay** starts a new execution derived from an earlier one.
+- **Resume** continues the same execution after a `wait()` is resolved (manual
+  fallback if auto-continuation doesn't trigger).
+- **Replay** starts a new execution derived from an earlier one, using
+  checkpoint selectors (not wait selectors) as replay anchors.
 - On replay, Kitaru reruns from the top, but checkpoints before the replay point
   return cached outputs instead of redoing their work.
 
-That means naming matters. Stable checkpoint names and wait names become the
-handles people use later for replay and operational control.
+### Wait resolution lifecycle
+
+When a flow hits `wait()`, the execution pauses. Resolution is a two-step
+concept:
+
+1. **Input** resolves the wait — via `client.executions.input(...)`, CLI
+   `kitaru executions input`, or MCP `kitaru_executions_input`
+2. **Resume** is a separate manual fallback if the execution doesn't
+   auto-continue after input is provided
+
+Design operator workflows around `input` as the primary action, not `resume`.
+
+That means naming matters. Stable checkpoint names become the handles people use
+later for replay. Stable wait names become the handles for operational input.
+
+### Surface ownership
+
+Not every surface can do every job:
+
+- **Launching executions**: SDK flow objects (`.run()`, `.deploy()`), CLI
+  (`kitaru run`), MCP (`kitaru_executions_run`) — **not** `KitaruClient`
+- **Inspecting/controlling executions**: `KitaruClient`, CLI, MCP
+- **Creating remote stacks**: CLI (`kitaru stack create`) and MCP
+  (`manage_stack`) — the Python SDK `create_stack(...)` is **local stacks only**
+- **Artifact browsing**: `KitaruClient` and MCP — not the CLI
 
 ## Interview process
 
@@ -110,7 +139,7 @@ Determine whether Kitaru is actually the right tool.
 - Expensive steps you do not want to redo during development or production
   recovery
 - Human approval or correction points that must survive process restarts
-- Multi-step workflows that benefit from replay after a checkpoint or wait
+- Multi-step workflows that benefit from replay after a checkpoint
 - Operational debugging needs: logs, artifacts, execution history, audit trail
 - Clear side-effect boundaries where a durable plan-then-commit pattern helps
 
@@ -160,10 +189,13 @@ These are not style preferences. They are actual implementation boundaries.
 - `wait()` can only run in the flow body, never inside a checkpoint.
 - `save()` and `load()` require checkpoint scope.
 - `log()` can run in flow scope or checkpoint scope.
+- `llm()` is valid only inside a `@flow`; outside a checkpoint it gets a
+  synthetic `llm_call` checkpoint automatically.
 - Checkpoint concurrency is exposed through `.submit()`, `.map()`, and
   `.product()` inside a running flow.
-- `llm()` can run directly in flow code; outside an explicit checkpoint it is
-  still tracked via a synthetic `llm_call` checkpoint.
+- Default wait timeout is 600 seconds — this is the runner polling window, not
+  the wait-record expiry. The execution stays waiting even after the runner
+  exits.
 
 ### Where waits belong
 
@@ -175,8 +207,9 @@ Examples:
 - user choice between branches
 - external callback or asynchronous decision
 
-Keep wait schemas simple and keep wait names stable. Those names often become
-replay anchors later.
+Keep wait schemas simple and keep wait names stable. Those names become the
+handles operators use to provide input (via `client.executions.input(...)`,
+`kitaru executions input`, or MCP `kitaru_executions_input`).
 
 ### Side effects
 
@@ -197,27 +230,39 @@ operated.
 
 Ask which surface will be used for each job:
 
-- run or deploy the flow
+- launch or deploy the flow
 - inspect execution status
 - read logs
 - provide wait input
-- replay from a checkpoint or wait
+- abort a wait
+- replay from a checkpoint
 - cancel a stuck run
 - inspect artifacts
+- create/manage stacks
 
 Use these rules:
 
-- **SDK** when authoring code or embedding Kitaru control in Python
-- **KitaruClient** when another Python service needs programmatic control
-- **CLI** for human operators and shell-based workflows
+- **SDK flow objects** for launching new executions from Python code
+- **KitaruClient** for programmatic inspection and control of existing
+  executions (not for launching)
+- **CLI** for human operators and shell-based workflows; also the only way to
+  log in with managed workspace names/IDs
 - **MCP** for agent tools and LLM-assisted operations
 
 Important asymmetries to account for in the design:
 
-- artifact browsing exists in `KitaruClient` and MCP, not the CLI
-- `resume` exists in `KitaruClient` and the CLI, not MCP
-- `latest` exists in `KitaruClient` and MCP, not the CLI
-- stack switching exists in SDK helpers and the CLI, not MCP
+| Capability | SDK | KitaruClient | CLI | MCP |
+|---|---|---|---|---|
+| Launch new execution | Yes (flow object) | No | Yes | Yes |
+| Inspect execution | Limited | Yes | Yes | Yes |
+| Resolve wait input | No | Yes | Yes | Yes |
+| Abort wait | No | Yes | No | No |
+| Resume paused execution | No | Yes | Yes | No |
+| Replay execution | Yes (flow object) | Yes | Yes | Yes |
+| Browse artifacts | No | Yes | No | Yes |
+| List pending waits | No | Yes | No | No |
+| Create local stack | Yes | No | Yes | Yes |
+| Create remote stack | No | No | Yes | Yes |
 
 ## Phase 5: Replay strategy
 
@@ -228,15 +273,17 @@ Then design replay anchors deliberately.
 
 ### Replay anchor rules
 
-- Stable checkpoint names and wait names are valuable design artifacts
-- Replay selectors can target checkpoints or waits
-- Override keys must be namespaced:
-  - `checkpoint.<selector>`
-  - `wait.<selector>`
+- Stable checkpoint names are the primary replay anchors
+- `from_` targets checkpoint selectors (checkpoint name, invocation ID, or call
+  ID) — wait selectors are not valid replay anchors
+- Override keys use the `checkpoint.<selector>` namespace only; `wait.*`
+  overrides are not supported in replay
+- If the replayed execution reaches a wait, resolve it operationally via
+  `input`, not via override keys
 - Duplicate or vague names make replay painful later
 
-When scoping, write down which checkpoint names and wait names are intended to
-be stable public selectors.
+When scoping, write down which checkpoint names are intended to be stable public
+replay selectors.
 
 ## Phase 6: PydanticAI-specific guidance
 
@@ -245,15 +292,18 @@ agent turn, not every internal model call.
 
 Use these rules:
 
-- `wrap(...)` is for agent/model/tool tracking under Kitaru
-- keep explicit outer checkpoints around major agent turns when you want clear
-  replay boundaries
-- `hitl_tool(...)` is the supported path for tool-time human approval that
-  should bridge back to flow-level waiting
-- deferred tool flows are not supported in the current adapter; do not design a
-  workflow around them
-- MCP-backed toolsets are supported, so they can be part of the design if the
-  user already relies on MCP tools
+- `wrap(...)` is for agent/model/tool tracking under Kitaru; wrap the agent once
+  at module scope and reuse the wrapped reference
+- keep explicit outer checkpoints with `type="llm_call"` around major agent
+  turns for clear replay boundaries
+- `hitl_tool(...)` is a tool marker/decorator that bridges tool-time approvals
+  back to flow-level `wait(...)` — it is not the wait primitive itself
+- deferred tool flows (`ApprovalRequired`, `CallDeferred`) are not supported in
+  the current adapter; do not design a workflow around them
+- MCP-backed toolsets are supported (via `KitaruMCPToolset`), so they can be
+  part of the design if the user already relies on MCP tools
+- only `run()` and `run_sync()` are explicitly synthetic-checkpointed at flow
+  scope; do not assume `iter()` behaves identically
 
 ## Phase 7: Check anti-patterns
 
@@ -264,9 +314,13 @@ Review the proposed design for these smells:
 - nested checkpoints or attempts to call flows from flows
 - side effects mixed into planning checkpoints
 - artifact sharing with no naming strategy
-- replay needs discussed abstractly but no concrete replay anchors named
+- replay needs discussed abstractly but no concrete checkpoint names chosen
 - assuming CLI, client, and MCP all expose the same controls
+- using `KitaruClient` to launch executions (it can't — use flow objects)
+- using SDK `create_stack(...)` for remote stacks (it's local-only)
 - PydanticAI designs that depend on deferred tools
+- cross-flow artifact designs with no plan for how downstream flows receive
+  upstream execution IDs
 
 ## Phase 8: Define the MVP flow
 
@@ -278,7 +332,7 @@ The MVP should usually have:
 - 2-4 checkpoints
 - at most one wait unless human review is the core product
 - one clear operator surface for the main operational tasks
-- a small set of stable replay anchors
+- a small set of stable replay anchors (checkpoint names)
 - output that is genuinely useful on its own
 
 If the user asks for a huge autonomous platform, help them carve out the first
@@ -307,11 +361,14 @@ guide.
 - **Not a Kitaru concern**: [pieces that should stay outside the flow]
 
 ## Operator Surface
-- **Run / deploy**: [SDK | KitaruClient | CLI | MCP]
-- **Logs / inspection**: [surface]
-- **Wait input / resume operations**: [surface]
+- **Launch / deploy**: [SDK flow object | CLI | MCP] (not KitaruClient)
+- **Logs / inspection**: [KitaruClient | CLI | MCP]
+- **Wait input**: [KitaruClient | CLI | MCP]
+- **Wait abort**: [KitaruClient] (only surface with abort_wait)
+- **Resume**: [KitaruClient | CLI] (not MCP)
 - **Replay / cancel**: [surface]
-- **Artifact inspection**: [surface]
+- **Artifact inspection**: [KitaruClient | MCP] (not CLI)
+- **Stack management**: [SDK (local only) | CLI (local + remote) | MCP (local + remote)]
 
 ## Flow Design
 
@@ -323,8 +380,8 @@ guide.
   2. [checkpoint_name] — [what it does] -> [output type]
 - **Wait points**:
   - [wait_name] — [what decision/input is needed, schema type]
-- **Replay anchors**:
-  - [checkpoint or wait name] — [why this is a stable restart point]
+- **Replay anchors** (checkpoint selectors only):
+  - [checkpoint_name] — [why this is a stable restart point]
 - **Replay story**: [what can be regenerated without redoing everything]
 - **Side effects**: [what external systems are touched and how they are guarded]
 
@@ -332,11 +389,12 @@ guide.
 [Optional same structure]
 
 ## Cross-Flow Data
-[If multiple flows exist, explain what artifacts are shared and who consumes them]
+[If multiple flows exist, explain what artifacts are shared, who consumes them,
+and **how downstream flows obtain upstream execution IDs** for `load(...)` calls]
 
 ## Naming Strategy
-- **Stable checkpoint names**: [...]
-- **Stable wait names**: [...]
+- **Stable checkpoint names** (replay anchors): [...]
+- **Stable wait names** (operator input handles): [...]
 - **Artifact naming rules**: [...]
 
 ## Deferred / Future Work

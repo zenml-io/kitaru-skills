@@ -73,7 +73,9 @@ Enforce these rules when writing or reviewing Kitaru code:
 6. Checkpoint outputs must be serializable.
 7. `.submit()`, `.map()`, and `.product()` are for work launched from inside a
    running flow.
-8. Use stable, unique names for checkpoints, waits, and artifacts so replay and
+8. `llm()` is valid only inside a `@flow`; outside a checkpoint it gets a
+   synthetic `llm_call` checkpoint automatically.
+9. Use stable, unique names for checkpoints, waits, and artifacts so replay and
    artifact lookup stay unambiguous.
 
 ## Primitive reference
@@ -110,7 +112,9 @@ pauses the flow until input arrives.
 - Valid only in the flow body
 - Invalid inside checkpoints
 - Use simple schemas and stable `name` values
-- Timeout defaults exist even if the caller omits one
+- Default timeout is 600 seconds (runner polling window, not wait-record
+  expiry); the execution stays waiting even after the timeout — the runner just
+  stops polling and exits
 
 ### `log(...)`
 
@@ -125,8 +129,11 @@ pauses the flow until input arrives.
 Use explicit artifacts when a checkpoint should publish named outputs for later
 inspection or reuse.
 
-- `save(name, value, type="...")` requires checkpoint scope
-- `load(exec_id, name)` requires checkpoint scope and an execution UUID string
+- `save(name, value, *, type="output", tags: list[str] | None = None)` requires
+  checkpoint scope
+- `load(exec_id, name)` requires checkpoint scope and an execution UUID string;
+  it can retrieve both explicit `save(...)` artifacts and implicit checkpoint
+  outputs by checkpoint/output name
 - Allowed artifact kinds are: `prompt`, `response`, `context`, `input`,
   `output`, `blob`
 - Keep artifact names unique within an execution to avoid ambiguous loads
@@ -136,10 +143,11 @@ inspection or reuse.
 `llm(prompt, *, model=None, system=None, temperature=None, max_tokens=None,
 name=None) -> str`
 
+- Valid only inside a `@flow`
 - Accepts a plain string or chat-style message list
 - Uses local model alias resolution when `model` names an alias
-- Credentials resolve env-first, then optional ZenML secret fallback from the
-  alias config
+- Only `llm()` currently auto-resolves alias-linked secrets; other primitives do
+  not have this behavior
 - Inside a checkpoint: runs inline
 - Inside a flow body outside a checkpoint: Kitaru wraps the call in a synthetic
   `llm_call` checkpoint so the call is still tracked and replayable
@@ -150,55 +158,126 @@ Replay is one shared concept exposed through several surfaces.
 
 ### Replay entrypoints
 
-- SDK: `flow.replay(...)`
-- Client: `KitaruClient().executions.replay(...)`
-- CLI: `kitaru executions replay ...`
+- SDK: `flow.replay(exec_id, from_=..., overrides=..., **flow_inputs)`
+- Client: `KitaruClient().executions.replay(exec_id, from_=..., overrides=...,
+  **flow_inputs)`
+- CLI: `kitaru executions replay <exec_id> --from <selector> [--override
+  checkpoint.<name>=<value>]`
 - MCP: `kitaru_executions_replay`
 
 ### Replay selector rules
 
-`from_` can point at a checkpoint selector or a wait selector. The exact replay
-plan is built from stable names and IDs, so avoid vague naming.
+`from_` targets a **checkpoint selector** — a checkpoint name, invocation ID, or
+call ID. Wait selectors are not valid replay anchors.
 
-Override keys must stay namespaced:
+Override keys must use the `checkpoint.<selector>` namespace:
 
-- `checkpoint.<selector>`
-- `wait.<selector>`
+- `checkpoint.<name>` — replace the cached output of that checkpoint
+- `wait.*` overrides are **not supported**; if the replayed execution reaches a
+  wait, resolve it via `client.executions.input(...)` or
+  `kitaru executions input`
 
 Do not invent alternate replay APIs or made-up override keys.
+
+## Wait resolution lifecycle
+
+When a flow hits `wait()`, the execution pauses. The resolution flow is:
+
+1. **Provide input** — use `client.executions.input(exec_id, wait=...,
+   value=...)`, CLI `kitaru executions input`, or MCP
+   `kitaru_executions_input`
+2. **Abort a wait** — use `client.executions.abort_wait(exec_id, wait=...)`
+3. **Resume** — if the execution does not continue automatically after input is
+   provided, use `client.executions.resume(exec_id)` or
+   `kitaru executions resume` as a manual fallback
+
+`input` resolves the wait; `resume` is a separate operation for paused
+executions that didn't auto-continue.
 
 ## Operational surfaces: what exists where
 
 Use the surface that matches the job instead of assuming everything is available
 in every interface.
 
-- **SDK**
-  - author flows and checkpoints
-  - use `wait`, `log`, `save`, `load`, `llm`
-  - use `configure`, `connect`, `list_stacks`, `current_stack`, `use_stack`
-  - use `KitaruClient` for programmatic execution and artifact control
-- **KitaruClient**
-  - `executions.get/list/latest/logs/input/retry/resume/replay/cancel`
-  - `artifacts.list/get`
-- **CLI**
-  - `login`, `logout`, `run`, `status`, `info`
-  - `log-store set/show/reset`
-  - `stack list/current/use`
-  - `model register/list`
-  - `secrets set/show/list/delete`
-  - `executions get/list/logs/input/replay/retry/resume/cancel`
-- **MCP**
-  - execution listing, lookup, latest, run, log retrieval, input, retry,
-    replay, cancel
-  - artifact listing/get
-  - status and stack listing
+### SDK (flow objects + helpers)
 
-Important asymmetries to remember:
+- Author flows and checkpoints
+- Use `wait`, `log`, `save`, `load`, `llm`
+- Use `configure(...)`, `connect(server_url, ...)`, `list_stacks()`,
+  `current_stack()`, `use_stack()`, `create_stack(...)` (**local stacks only**),
+  `delete_stack(...)`
+- Launch executions: `flow.run(...)`, `flow.deploy(...)`, `flow.replay(...)`
 
-- Artifact browsing exists in `KitaruClient` and MCP, not the CLI
-- `resume` exists in `KitaruClient` and the CLI, not MCP
-- Stack switching exists in SDK helpers and the CLI, not MCP
-- `latest` exists in `KitaruClient` and MCP, not the CLI
+### KitaruClient (inspection and control of existing executions)
+
+The client is for **managing existing executions**, not launching new ones.
+
+- `executions.get / list / latest / logs / pending_waits / input / abort_wait /
+  retry / resume / replay / cancel`
+- `artifacts.list / get`
+
+### CLI
+
+- `login`, `logout`, `status`, `info`
+- `log-store set / show / reset`
+- `stack list / current / show / use / create / delete`
+  - `stack create` supports `local`, `kubernetes`, `vertex`, `sagemaker`,
+    `azureml` (remote stack creation is CLI/MCP only, not available in the
+    Python SDK `create_stack()`)
+  - Advanced: `--extra` for component overrides, `--async` for async
+    provisioning
+- `model register / list`
+- `secrets set / show / list / delete`
+- `executions get / list / logs / input / replay / retry / resume / cancel`
+- JSON output contract: `--output json` / `-o json` emits
+  `{command, item}` for single-item commands, `{command, items, count}` for
+  lists, and JSONL event objects for `executions logs --follow --output json`
+
+### MCP tools (exact names)
+
+- `kitaru_executions_list`, `kitaru_executions_get`, `kitaru_executions_latest`
+- `kitaru_executions_run` (target format: `<module_or_file>:<flow_name>`)
+- `kitaru_executions_input`, `kitaru_executions_retry`,
+  `kitaru_executions_replay`, `kitaru_executions_cancel`
+- `get_execution_logs`
+- `kitaru_artifacts_list`, `kitaru_artifacts_get`
+- `kitaru_status`, `kitaru_stacks_list`
+- `manage_stack` (create/delete; supports `local`, `kubernetes`, `vertex`,
+  `sagemaker`, `azureml`, plus `extra` and `async_mode`)
+
+### Key asymmetries
+
+| Capability | SDK | KitaruClient | CLI | MCP |
+|---|---|---|---|---|
+| Launch new execution | Yes (flow object) | No | Yes (`kitaru run`) | Yes (`kitaru_executions_run`) |
+| Inspect execution | Limited (FlowHandle) | Yes | Yes | Yes |
+| Resolve wait input | No | Yes | Yes | Yes |
+| Abort wait | No | Yes (`abort_wait`) | No | No |
+| Resume paused execution | No | Yes | Yes | No |
+| Replay execution | Yes (flow object) | Yes | Yes | Yes |
+| Browse artifacts | No | Yes | No | Yes |
+| List pending waits | No | Yes (`pending_waits`) | No | No |
+| Create local stack | Yes | No | Yes | Yes |
+| Create remote stack | No | No | Yes | Yes |
+| Switch active stack | Yes | No | Yes | No |
+
+## Connection and runtime context
+
+Use Kitaru configuration helpers instead of inventing custom runtime wiring.
+
+- `configure(...)` sets local execution defaults
+- `connect(server_url, ...)` connects to a server via URL (Python SDK surface)
+- `kitaru login` connects to a server URL **or** a managed workspace by name/ID
+  (CLI surface — broader than `connect()`)
+- `list_stacks()`, `current_stack()`, `use_stack()` and `kitaru stack ...` help
+  choose the active execution stack
+- `create_stack(...)` in the SDK creates **local stacks only**; use CLI
+  (`kitaru stack create`) or MCP (`manage_stack`) for remote stacks
+  (`kubernetes`, `vertex`, `sagemaker`, `azureml`)
+- `model register / list` manage local model aliases used by `llm(...)`; alias
+  registries are transported into submitted/replayed runs via
+  `KITARU_MODEL_REGISTRY`
+- `secrets set / show / list / delete` manage secret values used by aliases
 
 ## PydanticAI adapter
 
@@ -218,40 +297,37 @@ What the adapter really does:
   trace
 - At flow scope outside a checkpoint, `run()` and `run_sync()` use a synthetic
   `llm_call` checkpoint
-- HITL tools bridge tool-time approvals back to flow-level `wait(...)`
+- `hitl_tool(...)` is a tool marker/decorator that bridges tool-time approvals
+  back to flow-level `wait(...)` — it is not the wait primitive itself
 - Tool capture modes are `full`, `metadata_only`, and `off`
 - Per-tool capture overrides are supported
-- MCP toolsets are supported and wrapped
-- Deferred tool flows are not supported; prefer `hitl_tool(...)` or an explicit
-  flow-level `wait(...)` instead
+- MCP toolsets are supported and wrapped (via `KitaruMCPToolset`)
+- Deferred tool flows (`ApprovalRequired`, `CallDeferred`) are not supported;
+  prefer `hitl_tool(...)` or an explicit flow-level `wait(...)` instead
+- Only `run()` and `run_sync()` are explicitly synthetic-checkpointed at flow
+  scope; do not assume `iter()` behaves identically
 
-Safe default pattern: keep wrapped agent calls inside an explicit outer
-checkpoint unless you have a reason not to. That gives you the clearest replay
-boundary, especially when distributed execution is involved.
+Safe default pattern: wrap the agent once at module scope, then call it inside
+an explicit outer checkpoint with `type="llm_call"`. This gives you the clearest
+replay boundary.
 
 ```python
-from kitaru import checkpoint
-import kitaru.adapters.pydantic_ai as kp
+from kitaru import checkpoint, flow
+from kitaru.adapters import pydantic_ai as kp
 
-@checkpoint(type="agent_turn")
-def ask_agent(agent, prompt: str) -> str:
-    wrapped = kp.wrap(
-        agent,
-        tool_capture_config={"mode": "metadata_only", "enabled": True},
-    )
-    return wrapped.run_sync(prompt).output
+agent = kp.wrap(
+    Agent(model, tools=[...]),
+    tool_capture_config={"mode": "full"},
+)
+
+@checkpoint(type="llm_call")
+def run_agent(prompt: str) -> str:
+    return agent.run_sync(prompt).output
+
+@flow
+def my_flow(topic: str) -> str:
+    return run_agent(f"Research {topic}")
 ```
-
-## Connection and runtime context
-
-Use Kitaru configuration helpers instead of inventing custom runtime wiring.
-
-- `configure(...)` sets local execution defaults
-- `connect(...)` / `kitaru login ...` connect to a server or managed workspace
-- `list_stacks()`, `current_stack()`, `use_stack()` and `kitaru stack ...` help
-  choose the active execution stack
-- `model register/list` manage local model aliases used by `llm(...)`
-- `secrets ...` manages secret values used by aliases and connected operations
 
 ## Common mistakes checklist
 
@@ -259,10 +335,22 @@ Use Kitaru configuration helpers instead of inventing custom runtime wiring.
 - Putting `wait()` inside a checkpoint
 - Nesting checkpoint calls
 - Returning non-serializable values from checkpoints
+- Calling `llm()` outside a `@flow`
 - Using vague or duplicate checkpoint / wait names that make replay selectors
   hard to target
 - Reusing artifact names so `load()` becomes ambiguous
+- Using `wait.*` override keys in replay (they are not supported)
 - Assuming CLI, client, and MCP expose the same operation set
+- Using `KitaruClient` to launch new executions (it's for
+  inspection/control only)
+- Using `connect(...)` and expecting managed workspace support (use
+  `kitaru login` for that)
+- Using SDK `create_stack(...)` for remote stacks (it's local-only; use
+  CLI/MCP)
 - Reaching for deferred PydanticAI tools even though they are unsupported here
 - Wrapping every tiny helper in a checkpoint instead of using meaningful replay
   boundaries
+- Wrapping the PydanticAI agent inside the checkpoint function instead of at
+  module scope
+- Using `type="agent_turn"` on a PydanticAI checkpoint instead of
+  `type="llm_call"` (the shipped example pattern)
