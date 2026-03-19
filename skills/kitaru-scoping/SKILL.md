@@ -90,7 +90,7 @@ later for replay. Stable wait names become the handles for operational input.
 
 Not every surface can do every job:
 
-- **Launching executions**: SDK flow objects (`.run()`, `.deploy()`), CLI
+- **Launching executions**: SDK flow objects (`.run()`), CLI
   (`kitaru run`), MCP (`kitaru_executions_run`) — **not** `KitaruClient`
 - **Inspecting/controlling executions**: `KitaruClient`, CLI, MCP
 - **Creating remote stacks**: CLI (`kitaru stack create`) and MCP

@@ -31,8 +31,8 @@ Think of a Kitaru flow like a long trip with named save points.
 - `wait()` pauses at the flow level and resumes later with input.
 - Replay reruns from the top, but checkpoints before the selected replay point
   return cached outputs instead of doing the work again.
-- Flows are executed with `.run(...)` or `.deploy(...)`, not by calling the
-  decorated function directly.
+- Flows are executed with `.run(...)`, not by calling the decorated function
+  directly.
 
 ```python
 from kitaru import checkpoint, flow, wait
@@ -86,11 +86,8 @@ Use `@flow` for the durable orchestration boundary.
 
 - Supported decorator overrides: `stack`, `image`, `cache`, `retries`
 - Main entrypoints:
-  - `.run(...)`
-  - `.deploy(...)`
+  - `.run(...)` — pass `stack="..."` to target a remote stack
   - `.replay(exec_id, from_=..., overrides=..., **flow_inputs)`
-- `.deploy(...)` is still execution through the same flow model; it is not a
-  separate deployment DSL.
 
 ### `@checkpoint`
 
@@ -206,7 +203,7 @@ in every interface.
 - Use `configure(...)`, `connect(server_url, ...)`, `list_stacks()`,
   `current_stack()`, `use_stack()`, `create_stack(...)` (**local stacks only**),
   `delete_stack(...)`
-- Launch executions: `flow.run(...)`, `flow.deploy(...)`, `flow.replay(...)`
+- Launch executions: `flow.run(...)`, `flow.replay(...)`
 
 ### KitaruClient (inspection and control of existing executions)
 
