@@ -8,8 +8,8 @@ designing and building durable AI agent workflows with
 
 | Skill | Slash command | Purpose |
 |---|---|---|
-| **kitaru-scoping** | `/kitaru-scoping` | Structured interview to validate whether your workflow benefits from durable execution, then designs the flow architecture (checkpoint boundaries, wait points, replay anchors, artifact strategy, MVP scope) |
-| **kitaru-authoring** | `/kitaru-authoring` | Guide for writing Kitaru flows, checkpoints, waits, logging, artifacts, tracked LLM calls, replay/resume/retry, KitaruClient usage, CLI commands, MCP operations, and PydanticAI adapter integrations |
+| **kitaru-scoping** | `/kitaru-scoping` | Structured interview to validate whether your workflow benefits from durable execution, then designs the flow architecture (checkpoint boundaries, wait points, replay anchors, memory-vs-artifact strategy, memory scope design, operator surface, MVP scope) |
+| **kitaru-authoring** | `/kitaru-authoring` | Guide for writing Kitaru flows, checkpoints, waits, logging, artifacts, `kitaru.memory`, `KitaruClient.memories`, replay/resume/retry, CLI memory commands, MCP memory tools, and PydanticAI adapter integrations |
 
 ### Recommended workflow
 
@@ -63,11 +63,14 @@ curl -fsSL https://raw.githubusercontent.com/zenml-io/kitaru-skills/main/skills/
 **Scoping:**
 - "I want to build a research agent — is Kitaru right for this?"
 - "Help me figure out where to put checkpoints in my coding agent workflow."
+- "Should repo conventions live in memory or artifacts?"
 - "I have a complex agent with 10 steps — help me scope it down."
 
 **Authoring:**
 - "Refactor this script into one `@flow` with explicit checkpoints."
 - "Add a flow-level `kitaru.wait()` approval gate before publish."
+- "Add `kitaru.memory` durable shared state to this flow."
+- "How do I seed memory from a script and inspect it from the CLI or MCP?"
 - "Wrap this PydanticAI call in a `@checkpoint` and preserve replay safety."
 
 ## Links
