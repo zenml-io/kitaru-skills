@@ -15,14 +15,17 @@ The plugin is distributed via the Claude Code marketplace as `zenml-io/kitaru-sk
   plugin.json         # Plugin identity, version, keywords
   marketplace.json    # Marketplace listing metadata
 skills/
-  kitaru-scoping/SKILL.md    # Structured interview → flow_architecture.md
-  kitaru-authoring/SKILL.md  # Authoring guide for flows, checkpoints, waits, memory, etc.
+  kitaru-quickstart/SKILL.md       # Interactive onboarding → demo flow
+  kitaru-quickstart/references/    # Track templates, host guides, MCP config
+  kitaru-scoping/SKILL.md          # Structured interview → flow_architecture.md
+  kitaru-authoring/SKILL.md        # Authoring guide for flows, checkpoints, waits, memory, etc.
 ```
 
+- **kitaru-quickstart** (`/kitaru-quickstart`) — interactive onboarding that scaffolds a personalized demo flow, demonstrates crash recovery with replay, human-in-the-loop with `wait()`, durable memory, and optional MCP integration.
 - **kitaru-scoping** (`/kitaru-scoping`) — validates whether a workflow benefits from durable execution, then designs the flow architecture (checkpoint boundaries, wait points, replay anchors, memory strategy, operator surface, MVP scope). Outputs a `flow_architecture.md`.
 - **kitaru-authoring** (`/kitaru-authoring`) — reference guide for writing Kitaru flows, checkpoints, waits, logging, artifacts, `kitaru.memory`, `KitaruClient`, CLI, MCP, and PydanticAI adapter integrations.
 
-The intended user workflow is: scope first → author second.
+The intended user workflow is: quickstart → scope → author.
 
 ## How to work on this repo
 
@@ -35,8 +38,9 @@ There is no build step, no linter, no test suite. The deliverables are the two `
 ## Key constraints when editing skills
 
 - The SKILL.md frontmatter (`name`, `description`) is what Claude Code uses for skill matching and trigger detection. Keep trigger keywords accurate.
-- Both skills share the same Kitaru domain model (surfaces, asymmetries, guardrails). Changes to one skill's representation of a constraint (e.g., "waits cannot go inside checkpoints") should be mirrored in the other.
+- All three skills share the same Kitaru domain model (surfaces, asymmetries, guardrails). Changes to one skill's representation of a constraint (e.g., "waits cannot go inside checkpoints") should be mirrored in the others.
 - The authoring skill's "common mistakes checklist" and the scoping skill's "anti-patterns" section overlap intentionally — they serve different audiences (implementer vs architect).
+- The quickstart skill's track templates in `references/tracks/` must use only real, documented Kitaru APIs. Template decorator placement is fixed; only internal business logic is customizable.
 - Plugin version is in `.claude-plugin/plugin.json` — bump it when publishing updates.
 
 ## Installation methods (for testing)
@@ -47,7 +51,8 @@ There is no build step, no linter, no test suite. The deliverables are the two `
 /plugin install kitaru@kitaru
 
 # Manual (for local development)
-mkdir -p .claude/skills/kitaru-scoping .claude/skills/kitaru-authoring
+mkdir -p .claude/skills/kitaru-quickstart .claude/skills/kitaru-scoping .claude/skills/kitaru-authoring
+cp -r skills/kitaru-quickstart/ .claude/skills/kitaru-quickstart/
 cp skills/kitaru-scoping/SKILL.md .claude/skills/kitaru-scoping/SKILL.md
 cp skills/kitaru-authoring/SKILL.md .claude/skills/kitaru-authoring/SKILL.md
 ```

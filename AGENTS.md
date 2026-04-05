@@ -3,6 +3,7 @@
 ## Project Structure & Module Organization
 This repository is a Claude Code plugin, not a Python package. Keep contributor work focused on the plugin metadata and skill documents:
 
+- `skills/kitaru-quickstart/SKILL.md` defines the interactive onboarding skill.
 - `skills/kitaru-scoping/SKILL.md` defines the workflow-scoping skill.
 - `skills/kitaru-authoring/SKILL.md` defines the implementation-authoring skill.
 - `.claude-plugin/plugin.json` contains plugin metadata such as name, version, and repository URL.
