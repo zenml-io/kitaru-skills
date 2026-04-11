@@ -284,19 +284,23 @@ this out to the user.
 
 ### Step 4: Inspect memory from the CLI
 
+The templates use module-level `kitaru.memory` inside the flow body, so the
+values live in the default flow typed scope. CLI inspection needs both the
+scope value and the scope type:
+
 ```bash
-kitaru memory list --scope <FLOW_NAME>
-kitaru memory get last_topic --scope <FLOW_NAME>
+kitaru memory list --scope <FLOW_NAME> --scope-type flow
+kitaru memory get <MEMORY_KEY> --scope <FLOW_NAME> --scope-type flow
 ```
 
-Memory key names by track:
+Memory scope and key names by track:
 
-| Track           | Flow name       | Memory key     |
-|-----------------|-----------------|----------------|
-| Research/content| `research_flow` | `last_topic`   |
-| Coding agent    | `coding_flow`   | `last_issue`   |
-| Data pipeline   | `data_flow`     | `last_source`  |
-| Support/triage  | `support_flow`  | `last_ticket`  |
+| Track            | Scope type | Scope value     | Memory key    |
+|------------------|------------|-----------------|---------------|
+| Research/content | `flow`     | `research_flow` | `last_topic`  |
+| Coding agent     | `flow`     | `coding_flow`   | `last_issue`  |
+| Data pipeline    | `flow`     | `data_flow`     | `last_source` |
+| Support/triage   | `flow`     | `support_flow`  | `last_ticket` |
 
 ### Step 5: Explain
 

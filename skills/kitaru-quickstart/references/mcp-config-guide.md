@@ -74,16 +74,25 @@ Once configured, the Kitaru MCP server exposes these tools:
 - `kitaru_executions_replay` — replay from a checkpoint
 - `kitaru_executions_cancel` — cancel a running execution
 - `get_execution_logs` — read execution logs
-- `kitaru_memory_list` — list memory entries in a scope
-- `kitaru_memory_get` — read a memory value
+- `kitaru_memory_list` — list memory entries in a known typed scope
+- `kitaru_memory_get` — read a memory value from a known typed scope
 - `kitaru_memory_set` — write a memory value
-- `kitaru_memory_delete` — delete a memory key
+- `kitaru_memory_delete` — soft-delete a memory key
 - `kitaru_memory_history` — view version history for a key
+- `kitaru_memory_compact` — summarize memory values with an LLM
+- `kitaru_memory_purge` — physically delete old versions of one key
+- `kitaru_memory_purge_scope` — physically delete old versions across a scope
+- `kitaru_memory_compaction_log` — inspect compact/purge audit records
 - `kitaru_artifacts_list` — list artifacts for an execution
 - `kitaru_artifacts_get` — read an artifact
 - `kitaru_status` — check Kitaru connection status
 - `kitaru_stacks_list` — list available stacks
 - `manage_stack` — create or delete stacks
+
+Memory tools operate on explicit typed scopes: provide both `scope` and
+`scope_type` for scoped memory calls. `kitaru_memory_get` supports `version`,
+and `kitaru_memory_list` supports `prefix`. MCP can work with a known memory
+scope, but it does not currently expose memory scope listing or memory reindexing.
 
 ## Authentication
 
