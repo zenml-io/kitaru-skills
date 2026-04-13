@@ -3,17 +3,19 @@ name: kitaru-scoping
 description: >-
   Scope and validate whether an agent workflow is well-suited for Kitaru's
   durable execution model, then design the flow architecture — checkpoint
-  boundaries, wait points, replay anchors, artifact strategy, operator surface,
-  and MVP scope. Runs a structured interview to help users identify what
-  benefits from durability, what doesn't, and where replay/resume boundaries
-  should go. Produces a flow_architecture.md specification document. Use this
-  skill whenever a user describes an agent workflow they want to make durable,
-  asks whether Kitaru is right for their use case, seems unsure about where to
-  place checkpoints or waits, needs to choose between SDK / KitaruClient / CLI
-  / MCP control surfaces, or arrives with a workflow that might be too simple
-  or too complex for Kitaru. Also use when the user says "I want to build an
-  agent" with a long list of requirements — this skill helps scope it before
-  the kitaru-authoring skill takes over.
+  boundaries, wait points, replay anchors, memory-vs-artifact strategy,
+  memory scope design, operator surface, and MVP scope. Runs a structured
+  interview to help users identify what benefits from durability, what doesn't,
+  what should live in memory versus artifacts, and where replay/resume
+  boundaries should go. Produces a flow_architecture.md specification document.
+  Use this skill whenever a user describes an agent workflow they want to make
+  durable, asks whether Kitaru is right for their use case, seems unsure about
+  where to place checkpoints or waits, needs to choose between SDK /
+  KitaruClient / CLI / MCP control surfaces, asks how to handle cross-execution
+  shared state, or arrives with a workflow that might be too simple or too
+  complex for Kitaru. Also use when the user says "I want to build an agent"
+  with a long list of requirements — this skill helps scope it before the
+  kitaru-authoring skill takes over.
 ---
 
 # Scope Kitaru Flow Architectures
@@ -27,14 +29,15 @@ flow architecture that the authoring skill can implement cleanly.
 Users often arrive in one of these states:
 
 - **The everything-flow**: one giant workflow that tries to mix planning,
-  execution, approvals, retries, side effects, and reporting into a single
-  tangled structure.
+  execution, approvals, retries, side effects, durable state, and reporting
+  into a single tangled structure.
 - **The over-checkpointed design**: every tiny helper is a checkpoint, which
   adds serialization cost without adding replay value.
 - **The wrong tool problem**: the user needs streaming chat, sub-100ms serving,
   or a plain script rather than durable orchestration.
 - **The fuzzy durability problem**: the workflow might be a good Kitaru fit, but
-  nobody has decided where waits, replay anchors, or side effects should live.
+  nobody has decided where waits, replay anchors, memory boundaries, or side
+  effects should live.
 
 Your value is to turn that fog into a practical architecture.
 
@@ -44,17 +47,26 @@ Kitaru is a durable execution layer for Python workflows built around four
 user-facing surfaces:
 
 - **SDK primitives**: `@flow`, `@checkpoint`, `wait()`, `log()`, `save()`,
-  `load()`, `llm()`, plus configuration helpers (`configure`, `connect`,
-  `create_stack`, `list_stacks`, `current_stack`, `use_stack`, `delete_stack`)
-- **KitaruClient** (inspection and control of existing executions):
-  `executions.get / list / latest / logs / pending_waits / input / abort_wait /
-  retry / resume / replay / cancel`, plus `artifacts.list / get`
+  `load()`, `llm()`, `memory.configure()`, `memory.set()`, `memory.get()`,
+  `memory.list()`, `memory.history()`, `memory.delete()`, plus configuration
+  helpers (`configure`, `connect`, `create_stack`, `list_stacks`,
+  `current_stack`, `use_stack`, `delete_stack`)
+- **KitaruClient** (inspection/control plus explicit typed-scope
+  memory/artifact administration): `executions.get / list / latest / logs /
+  pending_waits / input / abort_wait / retry / resume / replay / cancel`,
+  `artifacts.list / get`, and `memories.get / list / history / set / delete /
+  scopes / compact / purge / purge_scope / compaction_log / reindex`
 - **CLI control**: `kitaru login`, `kitaru run`, `kitaru executions ...`,
-  stack/model/secret commands (including remote stack creation for `kubernetes`,
-  `vertex`, `sagemaker`, `azureml`), and runtime inspection commands
+  `kitaru memory scopes/list/get/set/delete/history/compact/purge/purge-scope/
+  compaction-log/reindex`, stack/model/secret commands (including remote stack
+  creation for `kubernetes`, `vertex`, `sagemaker`, `azureml`), and runtime
+  inspection commands
 - **MCP control**: execution tools (`kitaru_executions_list/get/latest/run/
-  input/retry/replay/cancel`), artifact tools, status, stack listing, and
-  `manage_stack` (create/delete including remote stacks)
+  input/retry/replay/cancel`), memory tools (`kitaru_memory_list/get/set/
+  delete/history/compact/purge/purge_scope/compaction_log`), artifact tools,
+  status, stack listing, and `manage_stack` (create/delete including remote
+  stacks). MCP memory can operate on a known typed scope, but cannot list memory
+  scopes or reindex historical memory tags.
 
 It also ships a **PydanticAI adapter** (`wrap(...)`, `hitl_tool(...)`) for agent
 workloads that want Kitaru tracking without rewriting the whole control flow.
@@ -85,6 +97,8 @@ Design operator workflows around `input` as the primary action, not `resume`.
 
 That means naming matters. Stable checkpoint names become the handles people use
 later for replay. Stable wait names become the handles for operational input.
+Stable memory typed scopes (`scope_type` + `scope`) and important keys become
+the handles people use to inspect or patch durable state later.
 
 ### Surface ownership
 
@@ -93,6 +107,8 @@ Not every surface can do every job:
 - **Launching executions**: SDK flow objects (`.run()`), CLI
   (`kitaru run`), MCP (`kitaru_executions_run`) — **not** `KitaruClient`
 - **Inspecting/controlling executions**: `KitaruClient`, CLI, MCP
+- **Using module-level memory inside flow code**: SDK `kitaru.memory`
+- **Explicit typed-scope memory administration**: `KitaruClient`, CLI, MCP
 - **Creating remote stacks**: CLI (`kitaru stack create`) and MCP
   (`manage_stack`) — the Python SDK `create_stack(...)` is **local stacks only**
 - **Artifact browsing**: `KitaruClient` and MCP — not the CLI
@@ -124,11 +140,34 @@ Listen for:
 - External systems: GitHub, email, databases, deployment targets, APIs
 - Data flow: what needs to persist between steps or executions
 - Failure points: where things break or must be resumed safely
-- Operator needs: who will inspect logs, replay work, submit wait input, or
-  cancel runs later
+- Operator needs: who will inspect logs, replay work, submit wait input, seed
+  or edit durable state, or cancel runs later
 
 If the answer is thin, ask targeted follow-ups about side effects, human
-intervention, and failure recovery.
+intervention, durable shared state, and failure recovery.
+
+### Memory-oriented discovery questions
+
+Ask these when the workflow appears to need state beyond one execution:
+
+- What information must survive across executions?
+- Should that information be fetched by stable key, or is it really tied to one
+  execution output?
+- Who will seed or edit that state: flow code, admin scripts, a human operator,
+  or an MCP assistant?
+- Which typed scope owns each key: **namespace**, **flow**, or **execution**?
+- What exact `scope` value will operators use with that `scope_type`?
+- Does the workflow need replay-frozen values, or is "latest durable state"
+  acceptable?
+- Will the state need maintenance later: compaction, purge, purge-scope,
+  compaction-log inspection, or project-level reindexing?
+- If purge/purge-scope is needed, what retention rule applies: keep all history,
+  keep newest N, or include tombstoned keys?
+- If compact is needed, will the target environment have a default LLM model or
+  an explicit model configured?
+
+These questions help you decide whether the design wants **memory** or
+**artifacts**.
 
 ## Phase 2: Assess fit
 
@@ -141,7 +180,7 @@ Determine whether Kitaru is actually the right tool.
 - Human approval or correction points that must survive process restarts
 - Multi-step workflows that benefit from replay after a checkpoint
 - Operational debugging needs: logs, artifacts, execution history, audit trail
-- Clear side-effect boundaries where a durable plan-then-commit pattern helps
+- Durable shared state that should survive across executions under stable keys
 
 ### Signals that Kitaru may be unnecessary
 
@@ -179,6 +218,7 @@ steps.
 - nested checkpoint calls
 - tiny internal model/tool calls inside a PydanticAI run that are already traced
   as child events
+- memory operations that belong in the flow body
 
 ### Real runtime constraints to respect
 
@@ -188,6 +228,12 @@ These are not style preferences. They are actual implementation boundaries.
 - Checkpoints do not nest.
 - `wait()` can only run in the flow body, never inside a checkpoint.
 - `save()` and `load()` require checkpoint scope.
+- `kitaru.memory.*` is allowed in flow scope, but forbidden inside a
+  checkpoint.
+- Outside a flow, module-level memory use requires configuring an active scope
+  first; `memory.configure(scope=...)` defaults to `scope_type="namespace"`.
+- Module-level memory uses the active configured typed scope; explicit `scope=`
+  and `scope_type=` live on client/CLI/MCP surfaces instead.
 - `log()` can run in flow scope or checkpoint scope.
 - `llm()` is valid only inside a `@flow`; outside a checkpoint it gets a
   synthetic `llm_call` checkpoint automatically.
@@ -210,6 +256,53 @@ Examples:
 Keep wait schemas simple and keep wait names stable. Those names become the
 handles operators use to provide input (via `client.executions.input(...)`,
 `kitaru executions input`, or MCP `kitaru_executions_input`).
+
+### Memory vs artifacts
+
+This is one of the most important design choices.
+
+Use **memory** when the workflow needs durable shared state addressed by stable
+`scope_type + scope + key` names.
+
+Use **artifacts** when the value is an execution output or replay/debug boundary
+that should stay tied to a specific run or checkpoint.
+
+A simple test:
+
+- If the workflow needs "the current repo style guide" or "the latest customer
+  preference", that smells like **memory**.
+- If the workflow needs "the exact draft produced in execution X" or "the exact
+  retrieval output from checkpoint Y", that smells like an **artifact**.
+
+Do not silently substitute memory for explicit checkpoint outputs. Memory is not
+a drop-in replacement for replay-stable artifacts.
+
+### Memory scope design
+
+When memory is the right fit, choose the scope deliberately:
+
+- **namespace**: shared durable state across many executions, users, or agents
+- **flow**: state that naturally belongs to one flow name
+- **execution**: state isolated to one run but still key-addressable
+
+Important asymmetry to remember:
+
+- Module-level `kitaru.memory` uses an **active typed scope** set by
+  `memory.configure(...)` or inferred from the active flow
+- `KitaruClient.memories`, CLI memory commands, and MCP memory tools use
+  **explicit typed scope** (`scope_type` + `scope`) on each scoped operation
+- CLI scoped memory commands require both `--scope` and `--scope-type`
+- MCP can read/write/compact/purge a known typed scope, but cannot list memory
+  scopes or run reindex; do not choose MCP as the only operator surface if the
+  operator must discover scopes
+
+For execution-scoped memory, distinguish membership from producer provenance: a
+detached admin write can target `scope_type="execution"` plus
+`scope=<execution_id>` after a run finishes, so it belongs to that execution
+bucket even if that memory version was not produced during the live flow.
+
+Stable typed scope names become operator handles just like checkpoint and wait
+names become operator handles.
 
 ### Side effects
 
@@ -238,13 +331,20 @@ Ask which surface will be used for each job:
 - replay from a checkpoint
 - cancel a stuck run
 - inspect artifacts
+- seed memory
+- inspect or edit memory
+- list memory scopes
+- read memory versions or prefix-filter memory lists
+- compact, purge, inspect compaction logs, or reindex memory
 - create/manage stacks
 
 Use these rules:
 
 - **SDK flow objects** for launching new executions from Python code
+- **SDK `kitaru.memory`** for in-flow memory usage and outside-flow scripts that
+  can work with one active configured typed scope
 - **KitaruClient** for programmatic inspection and control of existing
-  executions (not for launching)
+  executions, plus explicit typed-scope memory administration
 - **CLI** for human operators and shell-based workflows; also the only way to
   log in with managed workspace names/IDs
 - **MCP** for agent tools and LLM-assisted operations
@@ -264,6 +364,30 @@ Important asymmetries to account for in the design:
 | Create local stack | Yes | No | Yes | Yes |
 | Create remote stack | No | No | Yes | Yes |
 
+### Memory-specific asymmetries
+
+| Memory capability | SDK `kitaru.memory` | KitaruClient | CLI | MCP |
+|---|---|---|---|---|
+| In-flow memory reads/writes | Yes | No | No | No |
+| Outside-flow seed/update | Yes, after `configure(...)` | Yes | Yes | Yes |
+| Active-scope Python API | Yes | No | No | No |
+| Explicit typed-scope operations | No | Yes | Yes | Yes |
+| List memory scopes | No | Yes | Yes | No |
+| Versioned reads | Yes | Yes | No | Yes |
+| Prefix listing | No | Yes | No | Yes |
+| Compact / purge / compaction log | No | Yes | Yes | Yes |
+| Reindex historical tags | No | Yes | Yes | No |
+
+Memory maintenance has different jobs:
+
+- `compact` sends selected memory values to an LLM and writes a summary as a new
+  memory version. It does not delete source entries.
+- `purge` / `purge_scope` physically delete old versions. `keep=1` keeps the
+  newest selected version; omitting `keep` deletes all selected versions.
+- `compaction_log` reads the audit trail for compact and purge operations.
+- `reindex` is project-scoped, dry-run by default, additive tag backfill for
+  historical memory discovery. It is not cleanup and does not rewrite values.
+
 ## Phase 5: Replay strategy
 
 Ask explicitly: "If this workflow fails or the requirements change, where would
@@ -281,6 +405,18 @@ Then design replay anchors deliberately.
 - If the replayed execution reaches a wait, resolve it operationally via
   `input`, not via override keys
 - Duplicate or vague names make replay painful later
+
+### Memory replay caveat
+
+Memory is durable, but it is not fully replay-frozen in the current release.
+
+That means:
+
+- replayed reads may observe newer memory values than the source execution saw
+- replayed writes create new memory versions
+
+If the user needs frozen replay semantics for a critical input, keep that input
+as an explicit checkpoint output/artifact instead of shared memory.
 
 When scoping, write down which checkpoint names are intended to be stable public
 replay selectors.
@@ -312,9 +448,26 @@ Review the proposed design for these smells:
 - too many tiny checkpoints
 - waits buried inside logic that belongs in the flow body
 - nested checkpoints or attempts to call flows from flows
+- memory operations planned inside checkpoints
+- memory used where replay-frozen artifacts are required
+- module-level memory designs that assume per-call `scope=`
+- CLI or MCP operator plans that assume default memory scope inference
+- memory scopes named without a `scope_type`
+- choosing CLI as the only memory inspection surface when versioned reads or
+  prefix filtering are required
+- choosing MCP as the memory operator surface without providing exact
+  `scope_type` + `scope` values
+- assuming MCP can list memory scopes or run reindex
+- designing memory maintenance but assigning it to module-level `kitaru.memory`
+- treating `compact` as cleanup instead of summary-writing; purge is the
+  separate hard-delete step
+- treating `delete` and `purge` as interchangeable cleanup operations
+- forgetting that `memory reindex` is project-scoped, additive tag backfill, not
+  a value rewrite or cleanup operation
 - side effects mixed into planning checkpoints
 - artifact sharing with no naming strategy
 - replay needs discussed abstractly but no concrete checkpoint names chosen
+- memory scopes or keys left vague even though operators must inspect them later
 - assuming CLI, client, and MCP all expose the same controls
 - using `KitaruClient` to launch executions (it can't — use flow objects)
 - using SDK `create_stack(...)` for remote stacks (it's local-only)
@@ -332,6 +485,7 @@ The MVP should usually have:
 - 2-4 checkpoints
 - at most one wait unless human review is the core product
 - one clear operator surface for the main operational tasks
+- a deliberate memory decision (yes/no, and why)
 - a small set of stable replay anchors (checkpoint names)
 - output that is genuinely useful on its own
 
@@ -368,7 +522,28 @@ guide.
 - **Resume**: [KitaruClient | CLI] (not MCP)
 - **Replay / cancel**: [surface]
 - **Artifact inspection**: [KitaruClient | MCP] (not CLI)
+- **Memory seed/update**: [SDK module API | KitaruClient | CLI | MCP]
+- **Memory inspection**: [KitaruClient | CLI | MCP]
+- **Memory scope listing**: [KitaruClient | CLI] (not MCP)
+- **Memory maintenance**: [KitaruClient | CLI | MCP for compact/purge/log;
+  KitaruClient | CLI for reindex]
 - **Stack management**: [SDK (local only) | CLI (local + remote) | MCP (local + remote)]
+
+## Memory Strategy
+- **Use memory?**: [yes/no]
+- **Why memory vs artifacts?**: [brief reasoning]
+- **Typed scopes**: [`scope_type` + `scope` -> owner/operator surface]
+- **Keys**: [stable keys and what they store]
+- **Seed/update surfaces**: [module API | KitaruClient | CLI | MCP]
+- **Maintenance**: [none | compact | purge | purge-scope | compaction-log |
+  reindex; who runs it]
+- **Retention policy**: [keep all history | keep newest N | purge tombstoned
+  keys | other]
+- **Inspection constraints**: [scope listing? versioned read? prefix list?
+  chosen surface]
+- **MCP scope handoff**: [if MCP is used, where exact `scope_type` + `scope`
+  values come from]
+- **Replay caveat**: [if relevant]
 
 ## Flow Design
 
@@ -390,11 +565,13 @@ guide.
 
 ## Cross-Flow Data
 [If multiple flows exist, explain what artifacts are shared, who consumes them,
-and **how downstream flows obtain upstream execution IDs** for `load(...)` calls]
+and how downstream flows obtain upstream execution IDs for `load(...)` calls. If
+memory is shared across flows, name the scopes and key owners explicitly.]
 
 ## Naming Strategy
 - **Stable checkpoint names** (replay anchors): [...]
 - **Stable wait names** (operator input handles): [...]
+- **Stable memory scopes / keys**: [...]
 - **Artifact naming rules**: [...]
 
 ## Deferred / Future Work
@@ -410,8 +587,8 @@ Once the document is ready:
 
 1. Show it to the user and ask what should change
 2. Offer the next step: implement the MVP flow with `kitaru-authoring`
-3. Carry forward the chosen checkpoint names, wait names, replay anchors, and
-   operator surfaces into implementation
+3. Carry forward the chosen checkpoint names, wait names, replay anchors,
+   memory decisions, memory scopes, and operator surfaces into implementation
 
 ## Readiness check
 

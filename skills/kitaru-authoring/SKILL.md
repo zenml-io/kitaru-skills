@@ -1,36 +1,44 @@
 ---
 name: kitaru-authoring
 description: >
-  Guide for writing Kitaru durable workflows and operational control paths. Use
-  when creating or refactoring Kitaru flows, checkpoints, waits, logging,
-  artifacts, tracked LLM calls, replay/resume/retry flows, KitaruClient usage,
-  CLI commands, MCP operations, or PydanticAI adapter integrations. Triggers on
-  mentions of kitaru, @flow, @checkpoint, kitaru.wait, kitaru.log,
-  kitaru.save, kitaru.load, kitaru.llm, KitaruClient, replay, resume, retry,
-  `kitaru run`, `kitaru executions ...`, MCP tools, `wrap(...)`, or
-  `hitl_tool(...)`.
+  Guide for writing Kitaru durable workflows, durable shared memory, and
+  operational control paths. Use when creating or refactoring Kitaru flows,
+  checkpoints, waits, logging, artifacts, `kitaru.memory`,
+  `KitaruClient.memories`, tracked LLM calls, replay/resume/retry flows,
+  KitaruClient usage, CLI commands, MCP operations, or PydanticAI adapter
+  integrations. Triggers on mentions of kitaru, @flow, @checkpoint,
+  kitaru.wait, kitaru.log, kitaru.save, kitaru.load, kitaru.memory,
+  memory.configure, memory.get, memory.set, memory.list, memory.history,
+  memory.delete, KitaruClient, KitaruClient.memories, replay, resume, retry,
+  `kitaru run`, `kitaru executions ...`, `kitaru memory ...`, MCP tools,
+  `kitaru_memory_*`, `wrap(...)`, or `hitl_tool(...)`.
 ---
 
 # Kitaru Authoring Skill
 
 Use this guide when writing or refactoring Kitaru workflows and when choosing
-which Kitaru surface to use for running, observing, replaying, or controlling
-those workflows.
+which Kitaru surface to use for running, observing, replaying, controlling, or
+persisting durable state for those workflows.
 
 > **Before building**: If the workflow shape is still fuzzy, suggest the
 > `kitaru-scoping` skill first. It helps the user decide whether Kitaru is a
-> fit, where checkpoints and waits belong, and which replay anchors should be
-> stable before code gets written.
+> fit, where checkpoints and waits belong, whether memory or artifacts should
+> hold shared state, and which replay anchors should be stable before code gets
+> written.
 
 ## Mental model
 
-Think of a Kitaru flow like a long trip with named save points.
+Think of a Kitaru flow like a long trip with named save points and a shared
+cabinet of durable facts.
 
 - `@flow` is the durable outer boundary.
 - `@checkpoint` is a replay boundary inside that flow.
 - `wait()` pauses at the flow level and resumes later with input.
 - Replay reruns from the top, but checkpoints before the selected replay point
   return cached outputs instead of doing the work again.
+- Artifacts are boxes tied to a specific execution or checkpoint.
+- Memory is the shared cabinet: durable values stored under stable
+  `scope_type + scope + key` names.
 - Flows are executed with `.run(...)`, not by calling the decorated function
   directly.
 
@@ -68,15 +76,22 @@ Enforce these rules when writing or reviewing Kitaru code:
 2. Do not call one checkpoint from inside another checkpoint.
 3. Do not call `wait()` inside a checkpoint.
 4. `save()` and `load()` require checkpoint scope.
-5. `log()` works in flow scope and checkpoint scope, but it attaches metadata to
+5. `kitaru.memory.*` is allowed in the flow body but forbidden inside a
+   checkpoint.
+6. Outside a flow, configure an active scope before using `memory.get()`,
+   `memory.set()`, `memory.list()`, `memory.history()`, or `memory.delete()`;
+   `memory.configure(scope=...)` defaults to `scope_type="namespace"`.
+7. The module-level `kitaru.memory` API uses the active configured typed scope;
+   it does not take per-call `scope=` or `scope_type=` arguments.
+8. `log()` works in flow scope and checkpoint scope, but it attaches metadata to
    different targets depending on where it runs.
-6. Checkpoint outputs must be serializable.
-7. `.submit()`, `.map()`, and `.product()` are for work launched from inside a
-   running flow.
-8. `llm()` is valid only inside a `@flow`; outside a checkpoint it gets a
-   synthetic `llm_call` checkpoint automatically.
-9. Use stable, unique names for checkpoints, waits, and artifacts so replay and
-   artifact lookup stay unambiguous.
+9. Checkpoint outputs must be serializable.
+10. `.submit()`, `.map()`, and `.product()` are for work launched from inside a
+    running flow.
+11. `llm()` is valid only inside a `@flow`; outside a checkpoint it gets a
+    synthetic `llm_call` checkpoint automatically.
+12. Use stable, unique names for checkpoints, waits, artifacts, memory scopes,
+    and important memory keys so replay and operations stay unambiguous.
 
 ## Primitive reference
 
@@ -134,6 +149,88 @@ inspection or reuse.
 - Allowed artifact kinds are: `prompt`, `response`, `context`, `input`,
   `output`, `blob`
 - Keep artifact names unique within an execution to avoid ambiguous loads
+
+### `memory`
+
+Use `kitaru.memory` for durable shared state addressed by stable keys within one
+active configured typed scope (`scope_type` + `scope`).
+
+Public module-level API:
+
+- `memory.configure(scope: str | None = None, *, scope_type: "namespace" | "flow" | "execution" | None = None)`
+- `memory.set(key, value)`
+- `memory.get(key, *, version=None)`
+- `memory.list()`
+- `memory.history(key)`
+- `memory.delete(key)`
+
+Key behavior to teach correctly:
+
+- Valid in the flow body
+- Invalid inside checkpoints
+- Inside a flow, the default scope is the flow name unless you configured a
+  different active scope
+- Outside a flow, configure an active scope first; `memory.configure(scope=...)`
+  defaults to `scope_type="namespace"`
+- `memory.configure(scope_type="namespace")` still requires an explicit
+  `scope=...`, while `scope_type="flow"` and `scope_type="execution"` can only
+  be inferred inside a `@flow`
+- The module API uses the active typed scope; do not invent per-call `scope=` or
+  `scope_type=` support
+- In flow code, reads like `memory.get()` behave like runtime step outputs, so
+  keep memory calls in the flow body and pass their results into checkpoints
+  when you need normal Python logic
+- Deletes are soft deletes, so `history(...)` includes tombstones
+- Maintenance operations are **not** module-level APIs: do not invent
+  `memory.compact()`, `memory.purge()`, `memory.purge_scope()`,
+  `memory.compaction_log()`, or `memory.reindex()`
+- Replay is not fully memory-frozen: replays may observe newer values, and
+  replayed writes create new versions
+
+A good pattern is to keep the memory calls in the flow body, then pass the
+result into a checkpoint when you want normal Python logic:
+
+```python
+from kitaru import checkpoint, flow, memory
+
+@checkpoint
+def increment_runs(previous_runs: int | None) -> int:
+    return (previous_runs or 0) + 1
+
+@flow
+def research_agent(topic: str) -> None:
+    previous_runs = memory.get("stats/run_count")
+    updated_runs = increment_runs(previous_runs)
+    memory.set("stats/run_count", updated_runs)
+    memory.set("last_topic", topic)
+```
+
+Outside a flow, configure first:
+
+```python
+from kitaru import memory
+
+memory.configure(scope="repo_docs", scope_type="namespace")
+memory.set("style/release_notes", {"tone": "concise"})
+```
+
+Switch to `KitaruClient.memories` when you need explicit typed-scope
+administration, prefix filtering, scope listing, maintenance operations, or
+memory inspection outside the active-scope module model.
+
+Maintenance lives on `KitaruClient`, CLI, and MCP surfaces:
+
+- `compact` sends selected memory values to an LLM and writes the summary as a
+  new memory version; it does not delete source entries. Single-key compaction
+  defaults to `source_mode="current"`, can use `source_mode="history"`, and
+  multi-key compaction summarizes current values into a required target key.
+- `purge` / `purge_scope` physically delete old versions; delete is only a
+  tombstone.
+- `compaction_log` reads compact/purge audit records.
+- `reindex` is project-scoped, dry-run by default, additive tag backfill for
+  historical memory discovery; it does not rewrite memory values.
+- `compact` uses an LLM, so make sure a default model or explicit `model=` /
+  `--model` is available.
 
 ### `llm(...)`
 
@@ -199,19 +296,33 @@ in every interface.
 ### SDK (flow objects + helpers)
 
 - Author flows and checkpoints
-- Use `wait`, `log`, `save`, `load`, `llm`
+- Use `wait`, `log`, `save`, `load`, `llm`, `memory.configure`, `memory.set`,
+  `memory.get`, `memory.list`, `memory.history`, `memory.delete`
 - Use `configure(...)`, `connect(server_url, ...)`, `list_stacks()`,
   `current_stack()`, `use_stack()`, `create_stack(...)` (**local stacks only**),
   `delete_stack(...)`
 - Launch executions: `flow.run(...)`, `flow.replay(...)`
 
-### KitaruClient (inspection and control of existing executions)
+### KitaruClient (execution control + explicit memory/artifact inspection)
 
-The client is for **managing existing executions**, not launching new ones.
+The client is for **managing existing executions** and for **explicit typed-scope
+memory/artifact administration**, not for launching new executions.
 
 - `executions.get / list / latest / logs / pending_waits / input / abort_wait /
   retry / resume / replay / cancel`
 - `artifacts.list / get`
+- `memories.get / list(prefix=...) / history / set / delete / scopes / purge /
+  purge_scope / compact / compaction_log / reindex`
+  - Scoped memory calls require explicit `scope=` and `scope_type=`.
+  - `get(..., version=...)` supports versioned reads.
+  - `compact`, `purge`, `purge_scope`, and `compaction_log` are typed-scope
+    maintenance operations.
+  - `reindex(apply=False)` is project-scoped, dry-run by default, and backfills
+    missing memory discovery tags for historical data.
+  - `memories.get(...)`, `list(...)`, and `history(...)` return memory-entry
+    metadata; load values with
+    `client.artifacts.get(entry.artifact_id).load()`. Module-level
+    `memory.get(...)` returns the stored value directly.
 
 ### CLI
 
@@ -226,6 +337,21 @@ The client is for **managing existing executions**, not launching new ones.
 - `model register / list`
 - `secrets set / show / list / delete`
 - `executions get / list / logs / input / replay / retry / resume / cancel`
+- `memory scopes`; `memory list/get/set/delete/history`; `memory compact`;
+  `memory purge`; `memory purge-scope`; `memory compaction-log`;
+  `memory reindex`
+  - All scoped memory commands require both `--scope` and `--scope-type`.
+  - `memory scopes` and `memory reindex` are unscoped/project-scoped commands.
+  - `memory set` parses JSON when possible; otherwise it stores the raw string.
+  - CLI memory does not expose versioned `get` or prefix-filtered `list`.
+  - `memory compact` summarizes selected memory values with an LLM and writes a
+    new memory version; it may need a configured default model or `--model`.
+  - `memory purge` physically deletes old versions of one key.
+  - `memory purge-scope` physically deletes old versions across a scope;
+    `--include-deleted` also removes tombstoned keys.
+  - `memory compaction-log` reads compact/purge audit records.
+  - `memory reindex` is dry-run by default; use `--apply` to persist missing
+    discovery tags.
 - JSON output contract: `--output json` / `-o json` emits
   `{command, item}` for single-item commands, `{command, items, count}` for
   lists, and JSONL event objects for `executions logs --follow --output json`
@@ -238,6 +364,15 @@ The client is for **managing existing executions**, not launching new ones.
   `kitaru_executions_replay`, `kitaru_executions_cancel`
 - `get_execution_logs`
 - `kitaru_artifacts_list`, `kitaru_artifacts_get`
+- `kitaru_memory_list`, `kitaru_memory_get`, `kitaru_memory_set`,
+  `kitaru_memory_delete`, `kitaru_memory_history`
+- `kitaru_memory_compact`, `kitaru_memory_purge`,
+  `kitaru_memory_purge_scope`, `kitaru_memory_compaction_log`
+  - MCP memory tools use explicit typed scopes: every scoped memory tool takes
+    `scope` and `scope_type`.
+  - `kitaru_memory_get` supports `version`; `kitaru_memory_list` supports
+    `prefix`.
+  - MCP does not expose memory scope listing or memory reindexing.
 - `kitaru_status`, `kitaru_stacks_list`
 - `manage_stack` (create/delete; supports `local`, `kubernetes`, `vertex`,
   `sagemaker`, `azureml`, plus `extra` and `async_mode`)
@@ -257,6 +392,23 @@ The client is for **managing existing executions**, not launching new ones.
 | Create local stack | Yes | No | Yes | Yes |
 | Create remote stack | No | No | Yes | Yes |
 | Switch active stack | Yes | No | Yes | No |
+
+### Memory-specific asymmetries
+
+| Memory capability | SDK `kitaru.memory` | KitaruClient | CLI | MCP |
+|---|---|---|---|---|
+| In-flow memory reads/writes | Yes | No | No | No |
+| Outside-flow seed/update | Yes, after `memory.configure(...)` | Yes | Yes | Yes |
+| Active-scope Python API | Yes | No | No | No |
+| Explicit typed-scope admin (`scope` + `scope_type`) | No | Yes | Yes | Yes |
+| List memory scopes | No | Yes (`memories.scopes()`) | Yes (`kitaru memory scopes`) | No |
+| Read a specific version | Yes (`memory.get(version=...)`) | Yes | No | Yes |
+| Prefix-filter a list | No | Yes (`memories.list(..., prefix=...)`) | No | Yes |
+| Compact memory | No | Yes | Yes | Yes |
+| Purge one key | No | Yes | Yes | Yes |
+| Purge a whole scope | No | Yes | Yes | Yes |
+| Read compaction/purge audit log | No | Yes | Yes | Yes |
+| Reindex historical memory tags | No | Yes (`reindex(apply=False)`) | Yes (`kitaru memory reindex`) | No |
 
 ## Connection and runtime context
 
@@ -330,16 +482,39 @@ def my_flow(topic: str) -> str:
 
 - Calling `my_flow(...)` directly instead of `my_flow.run(...)`
 - Putting `wait()` inside a checkpoint
+- Calling `memory.*` inside a checkpoint
+- Passing `scope=` or `scope_type=` to module-level `kitaru.memory` calls even
+  though the module API uses the active configured typed scope
+- Forgetting to configure an active scope before module-level memory use outside
+  flows; `memory.configure(scope=...)` defaults to `scope_type="namespace"`
+- Describing memory identity as only a `scope` when the operation requires
+  `scope_type + scope + key`
+- Forgetting `--scope-type` on CLI memory commands
+- Assuming CLI or MCP memory commands infer a default scope
+- Assuming MCP can list memory scopes or run memory reindexing
+- Trying to call maintenance operations on module-level `kitaru.memory`
+- Assuming `compact` deletes source entries; it writes a summary, then `purge`
+  is a separate hard-delete step
+- Treating `delete` and `purge` as interchangeable: delete writes a tombstone;
+  purge physically removes versions
+- Treating `KitaruClient.memories.get(...)` as the raw stored value rather than
+  entry metadata
+- Using invalid memory keys/scopes; use letters, numbers, `.`, `_`, `-`, and
+  `/`, and avoid `:`
+- Using memory for execution-linked outputs that should be explicit artifacts
+- Assuming memory is replay-deterministic across replays
 - Nesting checkpoint calls
 - Returning non-serializable values from checkpoints
 - Calling `llm()` outside a `@flow`
 - Using vague or duplicate checkpoint / wait names that make replay selectors
   hard to target
 - Reusing artifact names so `load()` becomes ambiguous
+- Reusing unstable memory scope or key names so operators cannot inspect state
+  later
 - Using `wait.*` override keys in replay (they are not supported)
 - Assuming CLI, client, and MCP expose the same operation set
 - Using `KitaruClient` to launch new executions (it's for
-  inspection/control only)
+  inspection/control/memory admin only)
 - Using `connect(...)` and expecting managed workspace support (use
   `kitaru login` for that)
 - Using SDK `create_stack(...)` for remote stacks (it's local-only; use
