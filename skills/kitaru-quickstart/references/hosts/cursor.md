@@ -8,13 +8,15 @@
 
 ## Configuration
 
-Create or merge into `.cursor/mcp.json`:
+Create or merge into `.cursor/mcp.json`. Use the demo project's uv
+environment instead of a bare `kitaru-mcp` executable:
 
 ```json
 {
   "mcpServers": {
     "kitaru": {
-      "command": "kitaru-mcp",
+      "command": "uv",
+      "args": ["run", "--directory", "<ABSOLUTE_DEMO_DIR>", "kitaru-mcp"],
       "transport": "stdio"
     }
   }

@@ -6,15 +6,16 @@
 
 ## Configuration
 
-Codex CLI MCP configuration is not yet authoritatively documented in the
-Kitaru repository. The Kitaru MCP server executable is:
+Codex CLI MCP configuration may vary by installation. The Kitaru MCP server
+should still be launched through the demo project's uv environment:
 
-```
-kitaru-mcp
+```bash
+uv run --directory <ABSOLUTE_DEMO_DIR> kitaru-mcp
 ```
 
 Suggest the user consult the Codex CLI documentation for the correct MCP
-configuration path and format, then use `kitaru-mcp` as the server command.
+configuration path and format, then use the command/args form below rather
+than a bare `kitaru-mcp` executable.
 
 If the user knows their Codex MCP config location, the general pattern is:
 
@@ -22,7 +23,8 @@ If the user knows their Codex MCP config location, the general pattern is:
 {
   "mcpServers": {
     "kitaru": {
-      "command": "kitaru-mcp"
+      "command": "uv",
+      "args": ["run", "--directory", "<ABSOLUTE_DEMO_DIR>", "kitaru-mcp"]
     }
   }
 }

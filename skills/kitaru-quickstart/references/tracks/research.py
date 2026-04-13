@@ -66,11 +66,27 @@ def research_flow(topic: str) -> str:
     return result
 
 
+REPLAY_FROM = "draft_content"
+DEFAULT_TOPIC = "durable AI agents"
+
+
+def _usage() -> None:
+    print("Usage: uv run python demo_flow.py [topic]")
+    print("       uv run python demo_flow.py --replay <EXEC_ID>")
+
+
 if __name__ == "__main__":
     import sys
 
-    topic = sys.argv[1] if len(sys.argv) > 1 else "durable AI agents"
-    handle = research_flow.run(topic)
+    if len(sys.argv) > 1 and sys.argv[1] == "--replay":
+        if len(sys.argv) < 3:
+            _usage()
+            raise SystemExit(2)
+        handle = research_flow.replay(sys.argv[2], from_=REPLAY_FROM)
+    else:
+        topic = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else DEFAULT_TOPIC
+        handle = research_flow.run(topic)
+
     print(f"Execution ID: {handle.exec_id}")
     print(f"Status: {handle.status}")
     result = handle.wait()

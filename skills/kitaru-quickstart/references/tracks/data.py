@@ -91,11 +91,27 @@ def data_flow(source: str) -> str:
     return result
 
 
+REPLAY_FROM = "transform"
+DEFAULT_SOURCE = "sales_data_2026_q1.csv"
+
+
+def _usage() -> None:
+    print("Usage: uv run python demo_flow.py [source]")
+    print("       uv run python demo_flow.py --replay <EXEC_ID>")
+
+
 if __name__ == "__main__":
     import sys
 
-    source = sys.argv[1] if len(sys.argv) > 1 else "sales_data_2026_q1.csv"
-    handle = data_flow.run(source)
+    if len(sys.argv) > 1 and sys.argv[1] == "--replay":
+        if len(sys.argv) < 3:
+            _usage()
+            raise SystemExit(2)
+        handle = data_flow.replay(sys.argv[2], from_=REPLAY_FROM)
+    else:
+        source = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else DEFAULT_SOURCE
+        handle = data_flow.run(source)
+
     print(f"Execution ID: {handle.exec_id}")
     print(f"Status: {handle.status}")
     result = handle.wait()

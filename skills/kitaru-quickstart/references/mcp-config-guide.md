@@ -5,31 +5,37 @@ is not directly supported.
 
 ## Install the MCP extra
 
+With uv:
+
 ```bash
-uv add kitaru --extra mcp
+uv add 'kitaru[mcp]>=0.4.0'
 ```
 
 Or with pip:
 
 ```bash
-pip install "kitaru[mcp]"
+pip install 'kitaru[mcp]>=0.4.0'
 ```
 
-## Verify installation
+## Verify installation from the project environment
+
+Prefer the uv directory form so the MCP host uses the same virtual
+environment where Kitaru was installed:
 
 ```bash
-kitaru-mcp --help
+uv run --directory <ABSOLUTE_PROJECT_PATH> kitaru-mcp --help
 ```
 
-If `kitaru-mcp` is not found, ensure the Python environment where Kitaru is
-installed is activated.
+If you are not using uv, configure the MCP host with the absolute path to the
+`kitaru-mcp` executable inside the Python environment. Do not rely on shell
+activation; many MCP hosts do not inherit the active terminal environment.
 
 ## Server executable
 
-The MCP server command is:
+The environment-safe server invocation is:
 
-```
-kitaru-mcp
+```bash
+uv run --directory <ABSOLUTE_PROJECT_PATH> kitaru-mcp
 ```
 
 It uses stdio transport by default.
@@ -42,7 +48,13 @@ Most hosts use a JSON configuration file with this schema:
 {
   "mcpServers": {
     "kitaru": {
-      "command": "kitaru-mcp"
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "<ABSOLUTE_PROJECT_PATH>",
+        "kitaru-mcp"
+      ]
     }
   }
 }
@@ -54,12 +66,21 @@ Some hosts require an explicit transport field:
 {
   "mcpServers": {
     "kitaru": {
-      "command": "kitaru-mcp",
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "<ABSOLUTE_PROJECT_PATH>",
+        "kitaru-mcp"
+      ],
       "transport": "stdio"
     }
   }
 }
 ```
+
+Replace `<ABSOLUTE_PROJECT_PATH>` with the full path to the project that has
+Kitaru installed, for example `/Users/alex/kitaru-quickstart-demo`.
 
 ## Available MCP tools
 
@@ -73,7 +94,7 @@ Once configured, the Kitaru MCP server exposes these tools:
 - `kitaru_executions_retry` — retry a failed execution
 - `kitaru_executions_replay` — replay from a checkpoint
 - `kitaru_executions_cancel` — cancel a running execution
-- `get_execution_logs` — read execution logs
+- `get_execution_logs` — read execution logs when the active log backend has entries
 - `kitaru_memory_list` — list memory entries in a known typed scope
 - `kitaru_memory_get` — read a memory value from a known typed scope
 - `kitaru_memory_set` — write a memory value
@@ -92,7 +113,12 @@ Once configured, the Kitaru MCP server exposes these tools:
 Memory tools operate on explicit typed scopes: provide both `scope` and
 `scope_type` for scoped memory calls. `kitaru_memory_get` supports `version`,
 and `kitaru_memory_list` supports `prefix`. MCP can work with a known memory
-scope, but it does not currently expose memory scope listing or memory reindexing.
+scope, but it does not currently expose memory scope listing or memory
+reindexing.
+
+For the quickstart's flow memory, use `scope_type="flow"` and the `flow_id`
+from `kitaru executions get <EXEC_ID> --output json`; do not assume the
+Python function name is the external memory scope.
 
 ## Authentication
 
@@ -100,4 +126,6 @@ The MCP server uses the same authentication context as the Kitaru CLI. If
 you are logged in via `kitaru login`, the MCP server will use those
 credentials.
 
-For local-only usage (no remote server), no login is needed.
+For local-only usage, run `kitaru login` only if you want the local server and
+dashboard. The MCP server can still inspect local project state through the
+same Kitaru environment.
