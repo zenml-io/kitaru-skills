@@ -56,7 +56,7 @@ user-facing surfaces:
   pending_waits / input / abort_wait / retry / resume / replay / cancel`,
   `artifacts.list / get`, and `memories.get / list / history / set / delete /
   scopes / compact / purge / purge_scope / compaction_log / reindex`
-- **CLI control**: `kitaru login`, `kitaru run`, `kitaru executions ...`,
+- **CLI control**: `kitaru login`, `kitaru executions ...`,
   `kitaru memory scopes/list/get/set/delete/history/compact/purge/purge-scope/
   compaction-log/reindex`, stack/model/secret commands (including remote stack
   creation for `kubernetes`, `vertex`, `sagemaker`, `azureml`), and runtime
@@ -104,8 +104,9 @@ the handles people use to inspect or patch durable state later.
 
 Not every surface can do every job:
 
-- **Launching executions**: SDK flow objects (`.run()`), CLI
-  (`kitaru run`), MCP (`kitaru_executions_run`) — **not** `KitaruClient`
+- **Launching executions**: SDK flow objects (`.run()`) or a Python entrypoint,
+  MCP (`kitaru_executions_run`) — **not** `KitaruClient`, and not a top-level
+  CLI `kitaru run` command
 - **Inspecting/controlling executions**: `KitaruClient`, CLI, MCP
 - **Using module-level memory inside flow code**: SDK `kitaru.memory`
 - **Explicit typed-scope memory administration**: `KitaruClient`, CLI, MCP
@@ -282,7 +283,9 @@ a drop-in replacement for replay-stable artifacts.
 When memory is the right fit, choose the scope deliberately:
 
 - **namespace**: shared durable state across many executions, users, or agents
-- **flow**: state that naturally belongs to one flow name
+- **flow**: state that naturally belongs to one flow identity. Operator
+  surfaces may expose this as a flow ID, so capture the exact scope value from
+  execution details or memory-scope discovery.
 - **execution**: state isolated to one run but still key-addressable
 
 Important asymmetry to remember:
@@ -353,7 +356,7 @@ Important asymmetries to account for in the design:
 
 | Capability | SDK | KitaruClient | CLI | MCP |
 |---|---|---|---|---|
-| Launch new execution | Yes (flow object) | No | Yes | Yes |
+| Launch new execution | Yes (flow object / Python entrypoint) | No | No top-level run command | Yes |
 | Inspect execution | Limited | Yes | Yes | Yes |
 | Resolve wait input | No | Yes | Yes | Yes |
 | Abort wait | No | Yes | No | No |
@@ -515,7 +518,7 @@ guide.
 - **Not a Kitaru concern**: [pieces that should stay outside the flow]
 
 ## Operator Surface
-- **Launch / deploy**: [SDK flow object | CLI | MCP] (not KitaruClient)
+- **Launch / deploy**: [SDK flow object / Python entrypoint | MCP] (not KitaruClient; not CLI)
 - **Logs / inspection**: [KitaruClient | CLI | MCP]
 - **Wait input**: [KitaruClient | CLI | MCP]
 - **Wait abort**: [KitaruClient] (only surface with abort_wait)

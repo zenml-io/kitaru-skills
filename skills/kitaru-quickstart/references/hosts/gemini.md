@@ -7,15 +7,27 @@ their host if Gemini is suspected.
 
 ## Configuration
 
-Gemini CLI MCP configuration is not yet authoritatively documented in the
-Kitaru repository. The Kitaru MCP server executable is:
+Gemini CLI MCP configuration may vary by installation. The Kitaru MCP server
+should still be launched through the demo project's uv environment:
 
-```
-kitaru-mcp
+```bash
+uv run --directory <ABSOLUTE_DEMO_DIR> kitaru-mcp
 ```
 
 Suggest the user consult Gemini CLI documentation for MCP server
-registration, then use `kitaru-mcp` as the server command.
+registration, then use this command/args shape rather than a bare
+`kitaru-mcp` executable:
+
+```json
+{
+  "mcpServers": {
+    "kitaru": {
+      "command": "uv",
+      "args": ["run", "--directory", "<ABSOLUTE_DEMO_DIR>", "kitaru-mcp"]
+    }
+  }
+}
+```
 
 ## Fallback
 

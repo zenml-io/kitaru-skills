@@ -10,7 +10,7 @@ description: >
   kitaru.wait, kitaru.log, kitaru.save, kitaru.load, kitaru.memory,
   memory.configure, memory.get, memory.set, memory.list, memory.history,
   memory.delete, KitaruClient, KitaruClient.memories, replay, resume, retry,
-  `kitaru run`, `kitaru executions ...`, `kitaru memory ...`, MCP tools,
+  `kitaru executions ...`, `kitaru memory ...`, MCP tools,
   `kitaru_memory_*`, `wrap(...)`, or `hitl_tool(...)`.
 ---
 
@@ -168,8 +168,10 @@ Key behavior to teach correctly:
 
 - Valid in the flow body
 - Invalid inside checkpoints
-- Inside a flow, the default scope is the flow name unless you configured a
-  different active scope
+- Inside a flow, the default scope is the active flow identity unless you
+  configured a different active scope. Operator surfaces may expose that flow
+  identity as a flow ID, so use execution details or `memory scopes` to find
+  the exact external scope value.
 - Outside a flow, configure an active scope first; `memory.configure(scope=...)`
   defaults to `scope_type="namespace"`
 - `memory.configure(scope_type="namespace")` still requires an explicit
@@ -381,7 +383,7 @@ memory/artifact administration**, not for launching new executions.
 
 | Capability | SDK | KitaruClient | CLI | MCP |
 |---|---|---|---|---|
-| Launch new execution | Yes (flow object) | No | Yes (`kitaru run`) | Yes (`kitaru_executions_run`) |
+| Launch new execution | Yes (flow object / Python entrypoint) | No | No top-level run command | Yes (`kitaru_executions_run`) |
 | Inspect execution | Limited (FlowHandle) | Yes | Yes | Yes |
 | Resolve wait input | No | Yes | Yes | Yes |
 | Abort wait | No | Yes (`abort_wait`) | No | No |

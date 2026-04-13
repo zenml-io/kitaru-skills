@@ -7,15 +7,27 @@ host if Copilot is suspected.
 
 ## Configuration
 
-GitHub Copilot MCP configuration is not yet authoritatively documented in
-the Kitaru repository. The Kitaru MCP server executable is:
+GitHub Copilot MCP configuration may vary by editor/version. The Kitaru MCP
+server should still be launched through the demo project's uv environment:
 
-```
-kitaru-mcp
+```bash
+uv run --directory <ABSOLUTE_DEMO_DIR> kitaru-mcp
 ```
 
 Suggest the user consult GitHub Copilot documentation for MCP server
-registration, then use `kitaru-mcp` as the server command.
+registration, then use this command/args shape rather than a bare
+`kitaru-mcp` executable:
+
+```json
+{
+  "mcpServers": {
+    "kitaru": {
+      "command": "uv",
+      "args": ["run", "--directory", "<ABSOLUTE_DEMO_DIR>", "kitaru-mcp"]
+    }
+  }
+}
+```
 
 ## Fallback
 
