@@ -39,6 +39,6 @@ There is currently no dedicated automated test suite. Treat testing as documenta
 - Re-read edited Markdown in rendered form when possible to catch broken lists, code fences, or tables.
 
 ## Commit & Pull Request Guidelines
-Recent history uses short, imperative commit messages such as `Update skills for Kitaru memory support` and `Align skills with current Kitaru SDK surface`. Follow that pattern.
+Recent history uses short, imperative commit messages such as `Update quickstart flow templates` and `Align skills with current Kitaru SDK surface`. Follow that pattern.
 
 Pull requests should explain what changed, why it changed, and which files were updated. If you alter behavior or installation steps, update `README.md` in the same PR.

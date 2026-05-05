@@ -3,7 +3,7 @@ name: kitaru-quickstart
 description: >
   Interactive onboarding for new Kitaru users. Scaffolds a personalized demo
   flow, demonstrates crash recovery with replay, human-in-the-loop with
-  wait(), durable memory across executions, and optional MCP integration.
+  wait(), artifact capture, and optional MCP integration.
   Use when a user mentions kitaru quickstart, getting started with kitaru,
   kitaru demo, kitaru onboarding, try kitaru, learn kitaru, what is kitaru,
   show me kitaru, kitaru tutorial, or wants to see what Kitaru does.
@@ -13,7 +13,7 @@ description: >
 
 Build and run a working Kitaru demo tailored to the user's domain. Take
 someone from "I've heard of Kitaru" to "I understand crash recovery, replay,
-wait, memory, and the dashboard" in a single teaching session.
+waits, artifacts, and the dashboard" in a single teaching session.
 
 > **Relationship to other skills**:
 > - `/kitaru-quickstart` → activation and intuition (this skill)
@@ -69,8 +69,8 @@ then offer `/kitaru-authoring` for PydanticAI conversion.
 | Depth              | Phases              |
 |--------------------|---------------------|
 | Five-minute tour   | 0 → 1 → 5          |
-| Guided build       | 0 → 1 → 2 → 2.5 → 3 → 5 |
-| Guided build + MCP | 0 → 1 → 2 → 2.5 → 3 → 4 → 5 |
+| Guided build       | 0 → 1 → 2 → 3 → 5 |
+| Guided build + MCP | 0 → 1 → 2 → 3 → 4 → 5 |
 
 ## Tutorial pacing rules
 
@@ -140,8 +140,8 @@ This is a tutorial, not a firehose. Throughout the session:
    If `uv add` says only an older Kitaru version is available, explain that
    an ancestor `exclude-newer` setting may be filtering PyPI. Move the demo
    to a neutral path and retry. If it still fails, stop with the clear
-   message that this quickstart needs Kitaru `>=0.4.0` because it uses
-   module-level `kitaru.memory`.
+   message that this quickstart needs Kitaru `>=0.4.0` because it expects the
+   current local server, replay, wait, artifact, and MCP surfaces.
 
 4. **Initialize and verify Kitaru**:
    ```bash
@@ -160,8 +160,8 @@ This is a tutorial, not a firehose. Throughout the session:
    > "Kitaru's local server should now be running. Open
    > http://127.0.0.1:8383 in your browser. Take a minute to look around —
    > the dashboard is where you'll be able to see executions, checkpoints,
-   > waits, and replay behavior visually. Tell me when you've had a look and
-   > we'll continue."
+   > waits, artifacts, and replay behavior visually. Tell me when you've had a
+   > look and we'll continue."
 
    Pause here and wait for acknowledgement. If local server startup fails
    because local dependencies are missing, rerun
@@ -192,7 +192,7 @@ domain choice:
 Adapt variable names, mock data, and print statements to the user's domain.
 
 **CRITICAL**: Do NOT alter the placement, arguments, or syntax of `@flow`,
-`@checkpoint`, `wait()`, `log()`, `memory.*`, or the `--replay` helper. Only
+`@checkpoint`, `wait()`, `log()`, `save()`, or the `--replay` helper. Only
 customize the internal business logic of checkpoint functions: string
 content, mock data values, and explanatory print text.
 
@@ -218,8 +218,8 @@ for these items:
 
 - the `@flow` function: this is the durable orchestration boundary;
 - the `@checkpoint` functions: these are replay save points;
-- `memory.get(...)` and `memory.set(...)`: these deliberately live in the
-  flow body, not inside checkpoints;
+- `log(...)` and `save(...)`: these leave inspectable breadcrumbs and
+  artifacts for later debugging;
 - the simulated crash in the second meaningful checkpoint;
 - the `wait(...)` gate that will pause for human input later;
 - the `--replay <EXEC_ID>` helper at the bottom of the file.
@@ -386,89 +386,7 @@ Then summarize:
 > long-running agent workflows can include human approval without babysitting
 > a live process."
 
-Ask whether the user wants to continue to memory or discuss waits first.
-
----
-
-## Phase 2.5: Durable memory demo
-
-### Step 1: Explain memory
-
-> "Kitaru memory lets a flow remember small pieces of state across
-> executions. In this demo, the flow records the last topic/issue/source/ticket
-> after approval, then reads it at the start of the next run."
-
-### Step 2: Run the flow again with different input
-
-Choose a different argument that makes sense for the track:
-
-| Track            | Example second input              |
-|------------------|-----------------------------------|
-| Research/content | `"quantum computing"`             |
-| Coding agent     | `"optimize database query speed"` |
-| Data pipeline    | `"inventory_data_2026_q2.csv"`    |
-| Support/triage   | `"login page returns 500 error"`  |
-
-```bash
-uv run python demo_flow.py "<new input>"
-```
-
-If the dashboard or log backend shows the early
-`log(returning_user=True, ...)` metadata, point it out. If logs are sparse,
-do not treat that as a failure — the durable proof comes from the CLI memory
-inspection in the next steps. If the run pauses at `wait()`, resolve it with
-the Phase 2 command so the final `memory.set(...)` call can write the new
-value.
-
-### Step 3: Find the flow UUID for CLI memory inspection
-
-Inside the flow body, module-level `kitaru.memory` resolves the active flow
-scope automatically. Outside the flow, CLI/MCP/Client calls need an explicit
-typed scope. For this quickstart, use the **flow UUID**, not the Python
-function name.
-
-Get the execution details:
-
-```bash
-uv run kitaru executions get <EXEC_ID> --output json
-```
-
-Extract `item.flow_id` from the JSON. If that is not obvious, run:
-
-```bash
-uv run kitaru memory scopes --output json
-```
-
-and choose the row where `scope_type` is `flow` and the scope corresponds to
-the demo flow. Do not use `research_flow`, `coding_flow`, `data_flow`, or
-`support_flow` as the CLI scope unless the current CLI explicitly reports
-that exact value as the scope.
-
-### Step 4: Inspect memory from the CLI
-
-```bash
-uv run kitaru memory list --scope <FLOW_ID> --scope-type flow
-uv run kitaru memory get <MEMORY_KEY> --scope <FLOW_ID> --scope-type flow
-```
-
-Memory scope and key names by track:
-
-| Track            | Flow function in code | Scope type | CLI scope value                  | Memory key    |
-|------------------|-----------------------|------------|----------------------------------|---------------|
-| Research/content | `research_flow`       | `flow`     | `flow_id` from execution details | `last_topic`  |
-| Coding agent     | `coding_flow`         | `flow`     | `flow_id` from execution details | `last_issue`  |
-| Data pipeline    | `data_flow`           | `flow`     | `flow_id` from execution details | `last_source` |
-| Support/triage   | `support_flow`        | `flow`     | `flow_id` from execution details | `last_ticket` |
-
-### Step 5: Explain
-
-> "The code had the easy experience: inside the flow, memory knew which flow
-> it belonged to. Operator tools need the explicit typed scope, so we used the
-> flow UUID. This is like the difference between saying 'my house' while
-> you're standing in it and giving someone the exact street address from
-> outside."
-
-Ask whether the user wants to continue to the CLI inspection tour.
+Ask whether the user wants to continue to the CLI inspection tour or discuss waits first.
 
 ---
 
@@ -503,12 +421,21 @@ local stack, log output may be sparse or say "No log entries found" depending
 on the active log store and runtime setup. That is not a quickstart failure;
 fall back to `executions get` and the dashboard.
 
-### Step 4: Explain
+### Step 4: Inspect saved artifacts in the dashboard
+
+The templates call `save(...)` inside the final checkpoint after approval. Ask
+the user to open the completed execution in the dashboard and look for the saved
+artifact from the final checkpoint.
+
+Explain that the CLI is focused on execution control and logs; for scriptable
+artifact inspection, use KitaruClient or MCP artifact tools.
+
+### Step 5: Explain
 
 > "The dashboard is the visual way to understand what happened. The CLI is
-> the scriptable way to inspect the same executions, waits, checkpoints, and
-> failures. Logs are useful when the active log backend captures them, but
-> execution details are the dependable baseline."
+> the scriptable way to inspect executions, waits, checkpoints, and failures.
+> Logs are useful when the active log backend captures them, while saved
+> artifacts are the durable boxes you can inspect later."
 
 End with a short recap and ask before continuing.
 
@@ -605,9 +532,7 @@ If a wait is currently pending, also demonstrate:
 If applicable:
 5. **Replay** — trigger a replay via MCP
 
-For MCP memory tools, remind the user that scoped memory calls require both
-`scope_type` and `scope`. For this quickstart, use `scope_type="flow"` and the
-flow UUID discovered in Phase 2.5.
+Keep the MCP demo focused on executions, wait input, replay, logs, and artifact inspection.
 
 ### Step 8: Handle failure
 
@@ -634,7 +559,7 @@ the session:
 - **Flow**: [flow name] with [N] checkpoints
 - **Demo directory**: [absolute path]
 - **Dashboard**: http://127.0.0.1:8383
-- **Demonstrated**: crash recovery, replay[, wait(), memory, MCP]
+- **Demonstrated**: crash recovery, replay[, wait(), MCP]
 
 ## Commands worth remembering
 
@@ -644,7 +569,6 @@ uv run kitaru executions list
 uv run kitaru executions get <EXEC_ID>
 uv run python demo_flow.py --replay <FAILED_EXEC_ID>
 uv run kitaru executions input <EXEC_ID> --value true
-uv run kitaru memory list --scope <FLOW_ID> --scope-type flow
 ```
 
 ## Kitaru primitives used
@@ -655,7 +579,7 @@ uv run kitaru memory list --scope <FLOW_ID> --scope-type flow
 | `@checkpoint` | Replay-safe unit of work | `demo_flow.py` |
 | `wait()` | Human-in-the-loop gate | `demo_flow.py` |
 | `log()` | Structured metadata when supported by the log backend | `demo_flow.py` |
-| `memory.set/get` | Cross-execution durable state | `demo_flow.py` |
+| `save()` | Explicit artifact capture inside checkpoints | `demo_flow.py` |
 | `replay` | Re-execute from a checkpoint boundary | `demo_flow.py --replay` |
 
 ## Cleanup options
@@ -716,8 +640,8 @@ Never silently delete the demo directory or modify global MCP configuration.
 Enforce these rules throughout the entire session:
 
 1. **Template integrity**: Never alter the placement, arguments, or syntax
-   of `@flow`, `@checkpoint`, `wait()`, `log()`, `memory.*`, `save()`, or
-   `load()` decorators or calls. Only customize internal business logic and
+   of `@flow`, `@checkpoint`, `wait()`, `log()`, `save()`, or `load()`
+   decorators or calls. Only customize internal business logic and
    explanatory text. Preserve the template's `--replay` helper.
 
 2. **Scope limit**: Keep generated code under 150 lines. Use mock functions
@@ -740,12 +664,7 @@ Enforce these rules throughout the entire session:
 7. **No blanket shell approval**: Do not request broad shell preapproval from
    the user.
 
-8. **Memory placement**: `memory.*` calls belong in the flow body only,
-   never inside checkpoints. CLI/MCP memory inspection needs explicit typed
-   scopes; for this quickstart's flow memory, use `scope_type=flow` and the
-   `flow_id`, not the Python function name.
-
-9. **Real commands only**: Use only documented Kitaru CLI commands and this
+8. **Real commands only**: Use only documented Kitaru CLI commands and this
    quickstart's validated forms:
    - Install: `uv add 'kitaru[local,mcp]>=0.4.0'`
    - Local server/dashboard: `uv run kitaru login`, then open
@@ -756,17 +675,17 @@ Enforce these rules throughout the entire session:
    - There is no `kitaru ui`, `kitaru dashboard`, or top-level `kitaru run`
      command in this quickstart.
 
-10. **Logs expectations**: Do not promise that `kitaru executions logs` always
+9. **Logs expectations**: Do not promise that `kitaru executions logs` always
     returns rich structured logs. Empty or sparse logs on the default local
     setup are acceptable; use `executions get` and the dashboard as the
     reliable baseline.
 
-11. **MCP command shape**: Do not configure MCP with a bare `kitaru-mcp` in
+10. **MCP command shape**: Do not configure MCP with a bare `kitaru-mcp` in
     this quickstart. Use `command: "uv"` with
     `args: ["run", "--directory", "<ABSOLUTE_DEMO_DIR>", "kitaru-mcp"]`.
 
-12. **No API key requirements**: The quickstart must run without API keys,
+11. **No API key requirements**: The quickstart must run without API keys,
     cloud credentials, or external service accounts.
 
-13. **Checkpoint outputs must be serializable**: All mock return values from
+12. **Checkpoint outputs must be serializable**: All mock return values from
     checkpoints must be JSON-serializable: strings, numbers, lists, and dicts.

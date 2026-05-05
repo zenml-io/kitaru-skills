@@ -18,12 +18,12 @@ skills/
   kitaru-quickstart/SKILL.md       # Interactive onboarding → demo flow
   kitaru-quickstart/references/    # Track templates, host guides, MCP config
   kitaru-scoping/SKILL.md          # Structured interview → flow_architecture.md
-  kitaru-authoring/SKILL.md        # Authoring guide for flows, checkpoints, waits, memory, etc.
+  kitaru-authoring/SKILL.md        # Authoring guide for flows, checkpoints, waits, artifacts, etc.
 ```
 
-- **kitaru-quickstart** (`/kitaru-quickstart`) — interactive onboarding that scaffolds a personalized demo flow, demonstrates crash recovery with replay, human-in-the-loop with `wait()`, durable memory, and optional MCP integration.
-- **kitaru-scoping** (`/kitaru-scoping`) — validates whether a workflow benefits from durable execution, then designs the flow architecture (checkpoint boundaries, wait points, replay anchors, memory strategy, operator surface, MVP scope). Outputs a `flow_architecture.md`.
-- **kitaru-authoring** (`/kitaru-authoring`) — reference guide for writing Kitaru flows, checkpoints, waits, logging, artifacts, `kitaru.memory`, `KitaruClient`, CLI, MCP, and PydanticAI adapter integrations.
+- **kitaru-quickstart** (`/kitaru-quickstart`) — interactive onboarding that scaffolds a personalized demo flow, demonstrates crash recovery with replay, human-in-the-loop with `wait()`, artifact capture, and optional MCP integration.
+- **kitaru-scoping** (`/kitaru-scoping`) — validates whether a workflow benefits from durable execution, then designs the flow architecture (checkpoint boundaries, wait points, replay anchors, artifact strategy, operator surface, MVP scope). Outputs a `flow_architecture.md`.
+- **kitaru-authoring** (`/kitaru-authoring`) — reference guide for writing Kitaru flows, checkpoints, waits, logging, artifacts, `KitaruClient`, CLI, MCP, and PydanticAI adapter integrations.
 
 The intended user workflow is: quickstart → scope → author.
 
@@ -33,7 +33,7 @@ There is no build step, no linter, no test suite. The deliverables are the two `
 
 1. **Accuracy against the Kitaru SDK** — every primitive, API surface, and constraint described in the skills must match the current Kitaru release. Cross-reference with the [Kitaru SDK repo](https://github.com/zenml-io/kitaru) and [docs](https://kitaru.ai/docs).
 2. **Completeness of asymmetry tables** — the skills document capability differences across four surfaces (SDK, KitaruClient, CLI, MCP). These tables must stay synchronized between the two skill files.
-3. **Stable naming** — checkpoint names, wait names, memory scopes, and operator handles are first-class concepts. Changes to naming conventions in the skills ripple into generated architecture documents.
+3. **Stable naming** — checkpoint names, wait names, artifact names, and operator handles are first-class concepts. Changes to naming conventions in the skills ripple into generated architecture documents.
 
 ## Key constraints when editing skills
 

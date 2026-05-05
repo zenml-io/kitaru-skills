@@ -1,12 +1,12 @@
 """Data pipeline flow — Kitaru quickstart demo.
 
-Demonstrates: @flow, @checkpoint, wait(), log(), memory
+Demonstrates: @flow, @checkpoint, wait(), log(), save()
 Flow shape: ingest → validate → transform → approve → load
 """
 
 import time
 
-from kitaru import checkpoint, flow, log, memory, wait
+from kitaru import checkpoint, flow, log, save, wait
 
 
 @checkpoint
@@ -59,16 +59,14 @@ def load_data(records: list[dict]) -> str:
     """Simulate loading transformed data into a destination."""
     log(step="load", record_count=len(records))
     time.sleep(1)
-    return f"Loaded {len(records)} records into warehouse"
+    result = f"Loaded {len(records)} records into warehouse"
+    save("load_result", result, type="output")
+    return result
 
 
 @flow
 def data_flow(source: str) -> str:
     """Ingest, validate, transform, approve, and load data."""
-    previous_source = memory.get("last_source")
-    if previous_source:
-        log(returning_user=True, previous_source=previous_source)
-
     raw = ingest(source)
     validation = validate(raw)
 
@@ -86,9 +84,7 @@ def data_flow(source: str) -> str:
     if not approved:
         return "Data load was rejected"
 
-    result = load_data(transformed)
-    memory.set("last_source", source)
-    return result
+    return load_data(transformed)
 
 
 REPLAY_FROM = "transform"
