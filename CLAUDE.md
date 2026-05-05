@@ -29,7 +29,7 @@ The intended user workflow is: quickstart → scope → author.
 
 ## How to work on this repo
 
-There is no build step, no linter, no test suite. The deliverables are the two `SKILL.md` files. Quality comes from:
+There is no build step, no linter, no test suite. The deliverables are the three `SKILL.md` files plus the quickstart reference templates and setup guides. Quality comes from:
 
 1. **Accuracy against the Kitaru SDK** — every primitive, API surface, and constraint described in the skills must match the current Kitaru release. Cross-reference with the [Kitaru SDK repo](https://github.com/zenml-io/kitaru) and [docs](https://kitaru.ai/docs).
 2. **Completeness of asymmetry tables** — the skills document capability differences across four surfaces (SDK, KitaruClient, CLI, MCP). These tables must stay synchronized between the two skill files.

@@ -559,7 +559,7 @@ the session:
 - **Flow**: [flow name] with [N] checkpoints
 - **Demo directory**: [absolute path]
 - **Dashboard**: http://127.0.0.1:8383
-- **Demonstrated**: crash recovery, replay[, wait(), MCP]
+- **Demonstrated**: crash recovery, replay[, wait(), artifact capture, MCP]
 
 ## Commands worth remembering
 

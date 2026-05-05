@@ -52,13 +52,13 @@ Add to your project's `.claude/settings.json`:
 ### Manual installation
 
 ```bash
-mkdir -p .claude/skills/kitaru-scoping .claude/skills/kitaru-authoring
-
-curl -fsSL https://raw.githubusercontent.com/zenml-io/kitaru-skills/main/skills/kitaru-scoping/SKILL.md \
-  -o .claude/skills/kitaru-scoping/SKILL.md
-
-curl -fsSL https://raw.githubusercontent.com/zenml-io/kitaru-skills/main/skills/kitaru-authoring/SKILL.md \
-  -o .claude/skills/kitaru-authoring/SKILL.md
+tmpdir=$(mktemp -d)
+git clone --depth 1 https://github.com/zenml-io/kitaru-skills.git "$tmpdir/kitaru-skills"
+mkdir -p .claude/skills
+cp -R "$tmpdir/kitaru-skills/skills/kitaru-quickstart" .claude/skills/
+cp -R "$tmpdir/kitaru-skills/skills/kitaru-scoping" .claude/skills/
+cp -R "$tmpdir/kitaru-skills/skills/kitaru-authoring" .claude/skills/
+rm -rf "$tmpdir"
 ```
 
 ## Example prompts
