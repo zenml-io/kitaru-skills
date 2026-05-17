@@ -20,7 +20,7 @@ There is no build step in this repo. Most contributor work is editing Markdown a
 - `git diff --stat` gives a compact review of changed files.
 - `jq . .claude-plugin/plugin.json` validates plugin JSON formatting if `jq` is installed.
 
-For manual smoke testing, follow the install commands in [`README.md`](README.md) and verify the plugin exposes `/kitaru-scoping` and `/kitaru-authoring`.
+For manual smoke testing, follow the install commands in [`README.md`](README.md) and verify the plugin exposes `/kitaru-quickstart`, `/kitaru-scoping`, and `/kitaru-authoring`.
 
 ## Coding Style & Naming Conventions
 Use Markdown for prose and JSON for plugin metadata. Match the existing style:
@@ -37,6 +37,26 @@ There is currently no dedicated automated test suite. Treat testing as documenta
 - Check that examples match the current Kitaru API surface.
 - Confirm new trigger phrases and command names are consistent across `SKILL.md`, `README.md`, and plugin metadata.
 - Re-read edited Markdown in rendered form when possible to catch broken lists, code fences, or tables.
+- Validate `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` with `jq .` or equivalent.
+- Run a memory-regression search for removed native memory terms before finishing.
+
+## Release Sync Checklist
+
+When updating the plugin for a new Kitaru release, verify current source of truth
+before editing skill prose:
+
+- Adapter exports under `kitaru/src/kitaru/adapters/*/__init__.py`
+- Current adapter guides for PydanticAI, OpenAI Agents, LangGraph, and Claude Agent SDK
+- MCP server docs for current tool names and categories
+- `CHANGELOG.md` and `pyproject.toml` for release facts and removed APIs
+- Skill inventory and slash command names across README, AGENTS, CLAUDE, metadata, and frontmatter
+- All three plugin metadata version fields: `.claude-plugin/plugin.json` `version`, `.claude-plugin/marketplace.json` `metadata.version`, and `.claude-plugin/marketplace.json` `plugins[0].version`
+- Markdown validity: headings, tables, code fences, and beginner quickstart pacing
+
+Native durable memory APIs were removed in Kitaru 0.11.0. Do not reintroduce
+old native-memory wording or recommend a Kitaru-owned durable key-value state
+API. Cross-execution application state belongs in an external/application-owned
+store, with explicit values or stable references passed into flows.
 
 ## Commit & Pull Request Guidelines
 Recent history uses short, imperative commit messages such as `Update quickstart flow templates` and `Align skills with current Kitaru SDK surface`. Follow that pattern.

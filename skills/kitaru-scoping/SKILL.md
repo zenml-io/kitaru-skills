@@ -12,9 +12,11 @@ description: >-
   right for their use case, seems unsure about where to place checkpoints or
   waits, needs to choose between SDK / KitaruClient / CLI / MCP control
   surfaces, asks how to handle state across executions, or arrives with a
-  workflow that might be too simple or too complex for Kitaru. Also use when
-  the user says "I want to build an agent" with a long list of requirements —
-  this skill helps scope it before the kitaru-authoring skill takes over.
+  workflow that might be too simple or too complex for Kitaru, or needs to
+  choose among PydanticAI, OpenAI Agents, LangGraph, and Claude Agent SDK
+  adapter boundaries. Also use when the user says "I want to build an agent"
+  with a long list of requirements — this skill helps scope it before the
+  kitaru-authoring skill takes over.
 ---
 
 # Scope Kitaru Flow Architectures
@@ -46,20 +48,30 @@ Kitaru is a durable execution layer for Python workflows built around four
 user-facing surfaces:
 
 - **SDK primitives**: `@flow`, `@checkpoint`, `wait()`, `log()`, `save()`,
-  `load()`, `llm()`, plus configuration helpers (`configure`, `connect`,
-  `create_stack`, `list_stacks`, `current_stack`, `use_stack`, `delete_stack`)
-- **KitaruClient** (inspection/control plus artifact inspection):
+  `load()`, `llm()`, `current_execution_id()`, plus configuration helpers,
+  local-stack helpers, and secret helpers (`create_secret`, `delete_secret`,
+  `get_secret`)
+- **KitaruClient** (inspection/control plus artifact and deployment operations):
   `executions.get / list / latest / logs / pending_waits / input / abort_wait /
-  retry / resume / replay / cancel` and `artifacts.list / get`
-- **CLI control**: `kitaru login`, `kitaru executions ...`, stack/model/secret
-  commands (including remote stack creation for `kubernetes`, `vertex`,
-  `sagemaker`, `azureml`), and runtime inspection commands
-- **MCP control**: execution tools (`kitaru_executions_list/get/latest/run/
-  input/retry/replay/cancel`), artifact tools, status, stack listing, and
-  `manage_stack` (create/delete including remote stacks).
+  retry / resume / replay / cancel`, `artifacts.list / get`, deployment
+  inspection/invocation, and auth-management namespaces
+- **CLI control**: `kitaru login`, `kitaru auth token`, `kitaru executions ...`,
+  `kitaru build/deploy/invoke`, `kitaru flow deployments ...`, stack/model/secret
+  commands, `clean`, `info`, and `analytics`
+- **MCP control**: execution tools, deployment tools, artifact tools,
+  metadata-only secret creation, local-server/status/stack tools, and
+  `manage_stack`.
 
-It also ships a **PydanticAI adapter** (`wrap(...)`, `hitl_tool(...)`) for agent
-workloads that want Kitaru tracking without rewriting the whole control flow.
+It also ships four adapter families. Scope them as design choices, not as one
+universal answer:
+
+- **PydanticAI** — `KitaruAgent` for durable PydanticAI runs and tool/MCP calls
+- **OpenAI Agents** — `KitaruRunner` for OpenAI Agents SDK runs
+- **LangGraph** — `KitaruGraphRunner` for graph calls or middleware-observed sync calls
+- **Claude Agent SDK** — `KitaruClaudeRunner` for whole Claude SDK invocations
+
+`wrap(...)` still exists as a deprecated PydanticAI migration shim, but new
+designs should use `KitaruAgent(...)` directly.
 
 ### Execution model
 
@@ -208,6 +220,9 @@ These are not style preferences. They are actual implementation boundaries.
 - Flows do not nest.
 - Checkpoints do not nest.
 - `wait()` can only run in the flow body, never inside a checkpoint.
+- Adapter wait helpers follow the same rule. If a PydanticAI/OpenAI/LangGraph
+  tool body needs to pause, keep the bridge at flow scope or opt that tool out
+  of granular adapter checkpoints where the adapter supports that opt-out.
 - `save()` and `load()` require checkpoint scope.
 - `log()` can run in flow scope or checkpoint scope.
 - `llm()` is valid only inside a `@flow`; outside a checkpoint it gets a
@@ -243,6 +258,12 @@ Use an **external system** when the value is mutable application state shared
 across many executions, users, or services. Good homes include a database, an
 object store, a repository file, or an existing service API.
 
+Do not design around native durable key-value state in Kitaru. Cross-execution
+mutable state belongs in external/application-owned storage, while
+replay-critical values should be explicit checkpoint outputs or saved artifacts.
+If source docs mention LangGraph `InMemorySaver`, treat that only as
+LangGraph-owned checkpointer terminology, not as a Kitaru state API.
+
 A simple test:
 
 - If the workflow needs "the exact draft produced in execution X" or "the exact
@@ -275,7 +296,7 @@ operated.
 
 Ask which surface will be used for each job:
 
-- launch or deploy the flow
+- launch, deploy, or invoke the flow
 - inspect execution status
 - read logs
 - provide wait input
@@ -284,6 +305,12 @@ Ask which surface will be used for each job:
 - cancel a stuck run
 - inspect artifacts
 - create/manage stacks
+- create/read/delete secrets
+- obtain short-lived auth tokens for raw HTTP calls
+- generate deployment curl commands for operators or CI
+- reset local/project state with `clean`
+- gather diagnostics with `info`
+- manage anonymous analytics preference
 
 Use these rules:
 
@@ -291,8 +318,10 @@ Use these rules:
 - **KitaruClient** for programmatic inspection and control of existing
   executions and artifacts
 - **CLI** for human operators and shell-based workflows; also the only way to
-  log in with managed workspace names/IDs
-- **MCP** for agent tools and LLM-assisted operations
+  log in with managed workspace names/IDs, print short-lived auth tokens, run
+  `flow deployments curl`, and use `clean` / `info` / `analytics`
+- **MCP** for agent tools and LLM-assisted operations, including deployments
+  and metadata-only secret creation
 
 Important asymmetries to account for in the design:
 
@@ -308,6 +337,17 @@ Important asymmetries to account for in the design:
 | List pending waits | No | Yes | No | No |
 | Create local stack | Yes | No | Yes | Yes |
 | Create remote stack | No | No | Yes | Yes |
+| Deploy flow version | No (use CLI or server APIs) | Limited deployment namespace | Yes | Yes |
+| Invoke deployment | No (use deployment endpoint/client) | Yes | Yes | Yes |
+| Create secret | Yes | No | Yes | Yes (metadata only) |
+| Delete secret | Yes | No | Yes | No |
+| Print auth token / curl command | No | No | Yes | No |
+| Clean/reset local state | No | No | Yes | No |
+| Diagnostics (`info`) | Limited helpers | No | Yes | Status only |
+| Analytics preference | No | No | Yes | No |
+
+List-style CLI commands use paginated windows by default (`--page`, `--size`),
+with `--limit` kept as a first-page shortcut where documented.
 
 ## Phase 5: Replay strategy
 
@@ -337,25 +377,49 @@ checkpoint output or saved artifact first.
 When scoping, write down which checkpoint names are intended to be stable public
 replay selectors.
 
-## Phase 6: PydanticAI-specific guidance
+## Phase 6: Adapter strategy
 
-When the user is building with PydanticAI, scope the workflow around the outer
-agent turn, not every internal model call.
+If the workflow uses an agent framework, choose the adapter boundary before
+writing code. The decision is concrete: where does Kitaru get to put a replay
+save point?
 
-Use these rules:
+### PydanticAI / `KitaruAgent`
 
-- `wrap(...)` is for agent/model/tool tracking under Kitaru; wrap the agent once
-  at module scope and reuse the wrapped reference
-- keep explicit outer checkpoints with `type="llm_call"` around major agent
-  turns for clear replay boundaries
-- `hitl_tool(...)` is a tool marker/decorator that bridges tool-time approvals
-  back to flow-level `wait(...)` — it is not the wait primitive itself
-- deferred tool flows (`ApprovalRequired`, `CallDeferred`) are not supported in
-  the current adapter; do not design a workflow around them
-- MCP-backed toolsets are supported (via `KitaruMCPToolset`), so they can be
-  part of the design if the user already relies on MCP tools
-- only `run()` and `run_sync()` are explicitly synthetic-checkpointed at flow
-  scope; do not assume `iter()` behaves identically
+Use `KitaruAgent(...)` when the user already has a PydanticAI `Agent` and wants
+Kitaru to record model, tool, and MCP calls. Default granular mode gives model,
+tool, and MCP calls their own checkpoints; `granular_checkpoints=False` keeps a
+coarser one-checkpoint-per-turn shape. Use `CapturePolicy` to decide what is
+saved. `hitl_tool(...)` and `wait_for_input(...)` bridge tool-time human input
+back to flow-scope waits. Do not recommend `wrap(...)` for new code; mention it
+only as a deprecated migration shim.
+
+### OpenAI Agents / `KitaruRunner`
+
+Use `KitaruRunner(...)` when the agent is built on the OpenAI Agents SDK. Choose
+`checkpoint_strategy="runner_call"` when the flow needs one clean returned result
+from `.wait()`. Choose `checkpoint_strategy="calls"` when finer model/tool
+replay boundaries matter; explain that this can produce multiple terminal
+checkpoints, so the final flow result may be ambiguous and should be inspected
+through artifacts/client/UI instead.
+
+### LangGraph / `KitaruGraphRunner`
+
+Use `KitaruGraphRunner(...)` when the runtime seam is a LangGraph graph or a
+LangChain/Deep Agents object that behaves like one. `graph_call` is the default
+coarse outer checkpoint. `calls` requires Kitaru LangGraph middleware and creates
+true sync model/tool checkpoints only at middleware-owned call sites. LangGraph
+checkpointers and stores remain LangGraph-owned; Kitaru does not replace them.
+If `InMemorySaver` appears in examples, treat it as a local LangGraph
+checkpointer that is not restart-durable.
+
+### Claude Agent SDK / `KitaruClaudeRunner`
+
+Use `KitaruClaudeRunner(...)` when a Claude SDK invocation should become one
+Kitaru checkpoint. This is deliberately coarse: Claude-internal Bash, MCP,
+custom tool, hook, permission, and workspace side effects are not granular
+Kitaru replay boundaries. If a file write or API call must be durable, put that
+side effect in its own Kitaru checkpoint after Claude returns. Claude session
+resume and Claude file checkpointing are Claude SDK features, not Kitaru replay.
 
 ## Phase 7: Check anti-patterns
 
@@ -370,7 +434,15 @@ Review the proposed design for these smells:
 - assuming CLI, client, and MCP all expose the same controls
 - using `KitaruClient` to launch executions (it can't — use flow objects)
 - using SDK `create_stack(...)` for remote stacks (it's local-only)
-- PydanticAI designs that depend on deferred tools
+- PydanticAI designs that recommend deprecated `wrap(...)` for new code
+- PydanticAI tool-body waits that are not kept at flow scope or opted out of
+  granular tool checkpoints
+- OpenAI Agents `calls` designs that still expect a single clean `.wait()` value
+- LangGraph designs that treat callbacks/event streams as replay boundaries
+- LangGraph designs that assume Kitaru replaces the graph checkpointer/store
+- Claude Agent SDK designs that expect granular replay of Claude-internal Bash,
+  MCP, custom tool, hook, permission, or workspace side effects
+- designs that expect Kitaru to provide native durable key-value state
 - cross-flow artifact designs with no plan for how downstream flows receive
   upstream execution IDs
 
@@ -415,7 +487,7 @@ guide.
 - **Not a Kitaru concern**: [pieces that should stay outside the flow]
 
 ## Operator Surface
-- **Launch / deploy**: [SDK flow object / Python entrypoint | MCP] (not KitaruClient; not CLI)
+- **Launch / deploy**: [SDK flow object / Python entrypoint | CLI deploy/invoke | deployment endpoint | MCP] (not KitaruClient for raw new flow launches)
 - **Logs / inspection**: [KitaruClient | CLI | MCP]
 - **Wait input**: [KitaruClient | CLI | MCP]
 - **Wait abort**: [KitaruClient] (only surface with abort_wait)
@@ -423,6 +495,7 @@ guide.
 - **Replay / cancel**: [surface]
 - **Artifact inspection**: [KitaruClient | MCP] (not CLI)
 - **Stack management**: [SDK (local only) | CLI (local + remote) | MCP (local + remote)]
+- **Secrets/auth/diagnostics**: [SDK secret helpers | CLI secrets/auth token/info/clean/analytics | MCP metadata-only secret creation/status]
 
 ## State and Artifact Strategy
 - **Execution-linked values**: [what should be saved as artifacts]

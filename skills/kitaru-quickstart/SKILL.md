@@ -49,12 +49,13 @@ properly. Then default to the research/content track for the demo.
 
 - **Raw Python** (default) — no dependencies beyond Kitaru, uses mock
   functions with `time.sleep()`
-- **PydanticAI** — uses `TestModel`, no API keys needed
+- **PydanticAI** — discussed as a follow-up, no API keys in the quickstart
 - **Simplest working path** — you choose
 
 For v1, use the raw Python track template regardless of choice. If the user
 specifically requests PydanticAI, complete the quickstart in raw Python and
-then offer `/kitaru-authoring` for PydanticAI conversion.
+then offer `/kitaru-authoring` for adapter conversion. Keep adapters,
+deployments, and production architecture out of this beginner tour.
 
 ### Question 3: Depth
 
@@ -109,7 +110,7 @@ This is a tutorial, not a firehose. Throughout the session:
    python3 --version
    uv --version
    ```
-   Require Python 3.10+. If `uv` is missing, suggest:
+   Require Python 3.11+. If `uv` is missing, suggest:
    `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
 3. **Choose the demo project directory before creating anything**:
@@ -132,7 +133,7 @@ This is a tutorial, not a firehose. Throughout the session:
    cd "$DEMO_DIR"
    pwd
    uv init --no-workspace
-   uv add 'kitaru[local,mcp]>=0.4.0'
+   uv add 'kitaru[local,mcp]>=0.12.0'
    ```
 
    Store the printed `pwd` value as `<ABSOLUTE_DEMO_DIR>`.
@@ -140,7 +141,7 @@ This is a tutorial, not a firehose. Throughout the session:
    If `uv add` says only an older Kitaru version is available, explain that
    an ancestor `exclude-newer` setting may be filtering PyPI. Move the demo
    to a neutral path and retry. If it still fails, stop with the clear
-   message that this quickstart needs Kitaru `>=0.4.0` because it expects the
+   message that this quickstart needs Kitaru `>=0.12.0` because it expects the
    current local server, replay, wait, artifact, and MCP surfaces.
 
 4. **Initialize and verify Kitaru**:
@@ -165,7 +166,7 @@ This is a tutorial, not a firehose. Throughout the session:
 
    Pause here and wait for acknowledgement. If local server startup fails
    because local dependencies are missing, rerun
-   `uv add 'kitaru[local,mcp]>=0.4.0'` and retry once. If the dashboard is
+   `uv add 'kitaru[local,mcp]>=0.12.0'` and retry once. If the dashboard is
    unavailable but `uv run kitaru status` works, ask whether to continue with
    CLI-only inspection.
 
@@ -448,9 +449,12 @@ Only run this phase if the user chose **guided build + MCP**.
 ### Step 1: Explain the value
 
 > "I can configure your agent host so it can query Kitaru's execution state,
-> provide input to waiting flows, and trigger replays through MCP. Because MCP
-> hosts often launch outside your activated shell, we will point the host at
-> the demo project's uv environment explicitly."
+> provide input to waiting flows, and trigger replays through MCP. The current
+> MCP server also exposes deployment tools, artifact tools, metadata-only secret
+> creation, status, stack, and local-server tools, but this quickstart will only
+> demo the beginner-safe execution/artifact path. Because MCP hosts often launch
+> outside your activated shell, we will point the host at the demo project's uv
+> environment explicitly."
 
 ### Step 2: Detect the host
 
@@ -467,7 +471,7 @@ If no markers are found or multiple match, ask which host the user is using.
 Phase 0 installs the MCP extra. If that was skipped or changed, run:
 
 ```bash
-uv add 'kitaru[local,mcp]>=0.4.0'
+uv add 'kitaru[local,mcp]>=0.12.0'
 ```
 
 Then verify through the project environment:
@@ -531,8 +535,12 @@ If a wait is currently pending, also demonstrate:
 
 If applicable:
 5. **Replay** — trigger a replay via MCP
+6. **Artifacts** — list or inspect the saved final artifact
 
-Keep the MCP demo focused on executions, wait input, replay, logs, and artifact inspection.
+Name, but do not exercise, the broader tool categories: deployments,
+metadata-only secret creation, status/stacks, and local-server start/stop.
+Keep the MCP demo focused on executions, wait input, replay, logs, and artifact
+inspection.
 
 ### Step 8: Handle failure
 
@@ -594,7 +602,7 @@ uv run kitaru executions input <EXEC_ID> --value true
 
 ## Next steps
 - **`/kitaru-scoping`** — Design durability for a real workflow
-- **`/kitaru-authoring`** — Refactor existing code with Kitaru primitives
+- **`/kitaru-authoring`** — Refactor existing code with Kitaru primitives, current adapters (PydanticAI, OpenAI Agents, LangGraph, Claude Agent SDK), deployments, secrets, and operational surfaces
 
 ## Resources
 - [Kitaru documentation](https://kitaru.ai/docs)
@@ -616,7 +624,8 @@ summary matches what they learned.
 > - **`/kitaru-scoping`** if you want to design durability for a real
 >   workflow
 > - **`/kitaru-authoring`** if you have existing code you'd like to
->   refactor with Kitaru primitives
+>   refactor with Kitaru primitives, adapters, deployments, secrets, or
+>   operational controls
 
 ### Step 3: Offer cleanup, defaulting to keep
 
@@ -666,7 +675,7 @@ Enforce these rules throughout the entire session:
 
 8. **Real commands only**: Use only documented Kitaru CLI commands and this
    quickstart's validated forms:
-   - Install: `uv add 'kitaru[local,mcp]>=0.4.0'`
+   - Install: `uv add 'kitaru[local,mcp]>=0.12.0'`
    - Local server/dashboard: `uv run kitaru login`, then open
      `http://127.0.0.1:8383`
    - Guided replay: `uv run python demo_flow.py --replay <id>`
@@ -689,3 +698,8 @@ Enforce these rules throughout the entire session:
 
 12. **Checkpoint outputs must be serializable**: All mock return values from
     checkpoints must be JSON-serializable: strings, numbers, lists, and dicts.
+
+13. **Use application-owned state stores**: Durable cross-execution application
+    state belongs in the user's own database/object store/repository/service,
+    with explicit values or stable references passed into flows. Replay-critical
+    values should be explicit checkpoint outputs or saved artifacts.
