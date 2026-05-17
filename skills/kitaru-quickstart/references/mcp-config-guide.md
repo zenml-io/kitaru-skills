@@ -8,13 +8,13 @@ is not directly supported.
 With uv:
 
 ```bash
-uv add 'kitaru[mcp]>=0.4.0'
+uv add 'kitaru[mcp]>=0.12.0'
 ```
 
 Or with pip:
 
 ```bash
-pip install 'kitaru[mcp]>=0.4.0'
+pip install 'kitaru[mcp]>=0.12.0'
 ```
 
 ## Verify installation from the project environment
@@ -95,8 +95,18 @@ Once configured, the Kitaru MCP server exposes these tools:
 - `kitaru_executions_replay` — replay from a checkpoint
 - `kitaru_executions_cancel` — cancel a running execution
 - `get_execution_logs` — read execution logs when the active log backend has entries
+- `kitaru_deployments_deploy` — create a deployment version from a flow target
+- `kitaru_deployments_invoke` — start an execution from a deployment
+- `kitaru_deployments_list` — list deployment versions
+- `kitaru_deployments_get` — inspect a deployment version or tag
+- `kitaru_deployments_delete` — delete a deployment version
+- `kitaru_deployments_tag` — attach or move a public deployment tag
+- `kitaru_deployments_untag` — remove a public deployment tag
 - `kitaru_artifacts_list` — list artifacts for an execution
 - `kitaru_artifacts_get` — read an artifact
+- `kitaru_secrets_create` — create a secret and return metadata only
+- `kitaru_start_local_server` — start a local Kitaru server
+- `kitaru_stop_local_server` — stop the local Kitaru server
 - `kitaru_status` — check Kitaru connection status
 - `kitaru_stacks_list` — list available stacks
 - `manage_stack` — create or delete stacks
