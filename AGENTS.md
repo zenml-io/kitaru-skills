@@ -53,10 +53,9 @@ before editing skill prose:
 - All three plugin metadata version fields: `.claude-plugin/plugin.json` `version`, `.claude-plugin/marketplace.json` `metadata.version`, and `.claude-plugin/marketplace.json` `plugins[0].version`
 - Markdown validity: headings, tables, code fences, and beginner quickstart pacing
 
-Native Kitaru memory was removed in Kitaru 0.11.0. Do not reintroduce
-`kitaru.memory`, `KitaruClient.memories`, `kitaru memory`, MCP
-`kitaru_memory_*`, or old wording that recommends a native durable memory API.
-Cross-execution application state belongs in an external/application-owned
+Native durable memory APIs were removed in Kitaru 0.11.0. Do not reintroduce
+old native-memory wording or recommend a Kitaru-owned durable key-value state
+API. Cross-execution application state belongs in an external/application-owned
 store, with explicit values or stable references passed into flows.
 
 ## Commit & Pull Request Guidelines

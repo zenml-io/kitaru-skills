@@ -82,9 +82,8 @@ Enforce these rules when writing or reviewing Kitaru code:
    synthetic `llm_call` checkpoint automatically.
 9. Use stable, unique names for checkpoints, waits, and artifacts so replay and
    operations stay unambiguous.
-10. Do not reintroduce removed native-memory APIs. Use artifacts for
-    execution-linked values and external/application-owned stores for mutable
-    cross-execution state.
+10. Use artifacts for execution-linked values and external/application-owned
+    stores for mutable cross-execution state.
 
 ## Primitive reference
 
@@ -162,12 +161,10 @@ one of these explicit patterns instead:
 - Use Kitaru secrets for sensitive configuration and `llm(...)` aliases, not for
   arbitrary workflow state.
 
-Do not invent SDK helpers, CLI commands, or MCP tools for removed native
-key-value state. Specifically, do not recommend `kitaru.memory`,
-`KitaruClient.memories`, `kitaru memory`, or MCP `kitaru_memory_*` tools. When
-replay correctness matters, make the critical value an explicit checkpoint
-output or saved artifact so the exact value from the source execution remains
-inspectable.
+Do not invent SDK helpers, CLI commands, or MCP tools for native durable
+key-value state. When replay correctness matters, make the critical value an
+explicit checkpoint output or saved artifact so the exact value from the source
+execution remains inspectable.
 
 ### `llm(...)`
 
@@ -468,8 +465,8 @@ Use `KitaruClaudeRunner` when one Claude SDK invocation should be durable.
 - Using vague or duplicate checkpoint / wait names that make replay selectors
   hard to target
 - Reusing artifact names so `load()` becomes ambiguous
-- Inventing removed native-memory/key-value state APIs instead of using
-  artifacts or an external store
+- Treating Kitaru as a durable key-value store instead of using artifacts or an
+  external store
 - Using `wait.*` override keys in replay (they are not supported)
 - Assuming CLI, client, and MCP expose the same operation set
 - Using `KitaruClient` to launch new executions (it's for

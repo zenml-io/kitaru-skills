@@ -258,11 +258,11 @@ Use an **external system** when the value is mutable application state shared
 across many executions, users, or services. Good homes include a database, an
 object store, a repository file, or an existing service API.
 
-Native Kitaru memory was removed in Kitaru 0.11.0. Do not design around
-`kitaru.memory`, `KitaruClient.memories`, `kitaru memory`, or MCP
-`kitaru_memory_*` tools. If source docs mention LangGraph `InMemorySaver`, treat
-that only as LangGraph-owned checkpointer terminology, not as a Kitaru memory
-API.
+Do not design around native durable key-value state in Kitaru. Cross-execution
+mutable state belongs in external/application-owned storage, while
+replay-critical values should be explicit checkpoint outputs or saved artifacts.
+If source docs mention LangGraph `InMemorySaver`, treat that only as
+LangGraph-owned checkpointer terminology, not as a Kitaru state API.
 
 A simple test:
 
@@ -442,8 +442,7 @@ Review the proposed design for these smells:
 - LangGraph designs that assume Kitaru replaces the graph checkpointer/store
 - Claude Agent SDK designs that expect granular replay of Claude-internal Bash,
   MCP, custom tool, hook, permission, or workspace side effects
-- Native-memory designs using removed `kitaru.memory`, `KitaruClient.memories`,
-  `kitaru memory`, or `kitaru_memory_*` APIs
+- designs that expect Kitaru to provide native durable key-value state
 - cross-flow artifact designs with no plan for how downstream flows receive
   upstream execution IDs
 

@@ -699,8 +699,7 @@ Enforce these rules throughout the entire session:
 12. **Checkpoint outputs must be serializable**: All mock return values from
     checkpoints must be JSON-serializable: strings, numbers, lists, and dicts.
 
-13. **No native memory APIs**: Do not introduce `kitaru.memory`,
-    `KitaruClient.memories`, `kitaru memory`, or `kitaru_memory_*` in this
-    quickstart. Durable cross-execution application state belongs in the user's
-    own database/object store/repository/service, with explicit values or stable
-    references passed into flows.
+13. **Use application-owned state stores**: Durable cross-execution application
+    state belongs in the user's own database/object store/repository/service,
+    with explicit values or stable references passed into flows. Replay-critical
+    values should be explicit checkpoint outputs or saved artifacts.
