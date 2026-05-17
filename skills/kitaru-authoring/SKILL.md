@@ -266,7 +266,7 @@ inspection**, not for launching new executions.
     provisioning
 - `model register / list`
 - `secrets set / show / list / delete`
-- `build`, `deploy`, `invoke`, and `flow deployments list/get/delete/tag/untag/logs/curl`
+- `build`, `deploy`, `invoke`, `flow deployments list/show/delete/logs/curl`, and `flow tag` / `flow untag`
 - `executions get / list / logs / input / replay / retry / resume / cancel`
 - List commands use `--page` / `--size` pagination where documented; `--limit`
   is a first-page shortcut for compatible lists
