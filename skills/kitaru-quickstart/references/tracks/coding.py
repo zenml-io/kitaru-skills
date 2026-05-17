@@ -1,12 +1,12 @@
 """Coding agent flow — Kitaru quickstart demo.
 
-Demonstrates: @flow, @checkpoint, wait(), log(), memory
+Demonstrates: @flow, @checkpoint, wait(), log(), save()
 Flow shape: analyze issue → generate patch → approve → apply patch
 """
 
 import time
 
-from kitaru import checkpoint, flow, log, memory, wait
+from kitaru import checkpoint, flow, log, save, wait
 
 
 @checkpoint
@@ -47,16 +47,14 @@ def apply_patch(patch: str) -> str:
     """Simulate applying the approved patch."""
     log(step="apply", patch_length=len(patch))
     time.sleep(1)
-    return f"Patch applied successfully ({len(patch)} chars)"
+    result = f"Patch applied successfully ({len(patch)} chars)"
+    save("patch_result", result, type="output")
+    return result
 
 
 @flow
 def coding_flow(issue: str) -> str:
     """Analyze an issue, generate a patch, review, and apply it."""
-    previous_issue = memory.get("last_issue")
-    if previous_issue:
-        log(returning_user=True, previous_issue=previous_issue)
-
     analysis = analyze_issue(issue)
     patch = generate_patch(analysis)
 
@@ -69,9 +67,7 @@ def coding_flow(issue: str) -> str:
     if not approved:
         return f"Patch for '{issue}' was rejected"
 
-    result = apply_patch(patch)
-    memory.set("last_issue", issue)
-    return result
+    return apply_patch(patch)
 
 
 REPLAY_FROM = "generate_patch"

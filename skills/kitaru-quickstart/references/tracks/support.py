@@ -1,12 +1,12 @@
 """Support/triage flow — Kitaru quickstart demo.
 
-Demonstrates: @flow, @checkpoint, wait(), log(), memory
+Demonstrates: @flow, @checkpoint, wait(), log(), save()
 Flow shape: classify ticket → draft response → approve → escalate
 """
 
 import time
 
-from kitaru import checkpoint, flow, log, memory, wait
+from kitaru import checkpoint, flow, log, save, wait
 
 
 @checkpoint
@@ -44,16 +44,14 @@ def escalate(ticket: str, response: str) -> str:
     """Simulate escalating the ticket with the approved response."""
     log(step="escalate", ticket=ticket, response_length=len(response))
     time.sleep(1)
-    return f"Ticket escalated to senior support. Response sent ({len(response)} chars)"
+    result = f"Ticket escalated to senior support. Response sent ({len(response)} chars)"
+    save("escalation_result", result, type="output")
+    return result
 
 
 @flow
 def support_flow(ticket: str) -> str:
     """Classify a ticket, draft a response, approve, and escalate."""
-    previous_ticket = memory.get("last_ticket")
-    if previous_ticket:
-        log(returning_user=True, previous_ticket=previous_ticket)
-
     classification = classify_ticket(ticket)
     response = draft_response(classification)
 
@@ -66,9 +64,7 @@ def support_flow(ticket: str) -> str:
     if not approved:
         return f"Escalation for '{ticket}' was rejected"
 
-    result = escalate(ticket, response)
-    memory.set("last_ticket", ticket)
-    return result
+    return escalate(ticket, response)
 
 
 REPLAY_FROM = "draft_response"

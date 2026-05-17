@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Skills for designing and building durable AI agent workflows with Kitaru",
-    "version": "0.4.1",
+    "version": "0.4.2",
     "homepage": "https://kitaru.ai",
     "repository": "https://github.com/zenml-io/kitaru-skills"
   },
@@ -15,8 +15,8 @@
     {
       "name": "kitaru",
       "source": "./",
-      "description": "Bundles three Kitaru skills: kitaru-quickstart (interactive onboarding with crash-recovery, wait(), and durable memory demos), kitaru-scoping (validates Kitaru fit and outputs a flow_architecture.md), and kitaru-authoring (reference for flows, checkpoints, waits, KitaruClient, CLI, MCP, and PydanticAI integration).",
-      "version": "0.4.1",
+      "description": "Bundles three Kitaru skills: kitaru-quickstart (interactive onboarding with crash-recovery, wait(), and artifact/log inspection demos), kitaru-scoping (validates Kitaru fit and outputs a flow_architecture.md), and kitaru-authoring (reference for flows, checkpoints, waits, KitaruClient, CLI, MCP, and PydanticAI integration).",
+      "version": "0.4.2",
       "author": {
         "name": "ZenML",
         "url": "https://kitaru.ai"
