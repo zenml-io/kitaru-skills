@@ -6,6 +6,8 @@ This repository contains **Kitaru Agent Skills** plus Claude Code plugin metadat
 - `skills/kitaru-quickstart/SKILL.md` defines the interactive onboarding skill.
 - `skills/kitaru-scoping/SKILL.md` defines the workflow-scoping skill.
 - `skills/kitaru-authoring/SKILL.md` defines the implementation-authoring skill.
+- `skills/kitaru-pydantic-ai-migration/SKILL.md` defines the PydanticAI migration skill.
+- `skills/kitaru-openai-agents-migration/SKILL.md` defines the OpenAI Agents SDK migration skill.
 - `.claude-plugin/plugin.json` contains Claude Code plugin metadata such as name, version, and repository URL.
 - `.claude-plugin/marketplace.json` defines the Claude Code marketplace entry used for local/plugin testing.
 - `README.md` is the public-facing usage, installation, and host guidance.
@@ -21,7 +23,7 @@ There is no build step in this repo. Most contributor work is editing Markdown a
 - `git diff --stat` gives a compact review of changed files.
 - `jq . .claude-plugin/plugin.json` validates plugin JSON formatting if `jq` is installed.
 
-For manual Claude Code smoke testing, follow the install commands in [`README.md`](README.md) and verify the Claude Code distribution route exposes `/kitaru-quickstart`, `/kitaru-scoping`, and `/kitaru-authoring`.
+For manual Claude Code smoke testing, follow the install commands in [`README.md`](README.md) and verify the Claude Code distribution route exposes `/kitaru-quickstart`, `/kitaru-scoping`, `/kitaru-authoring`, `/kitaru-pydantic-ai-migration`, and `/kitaru-openai-agents-migration`.
 
 ## Coding Style & Naming Conventions
 Use Markdown for prose and JSON for Claude Code plugin metadata. Match the existing style:
