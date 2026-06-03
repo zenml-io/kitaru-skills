@@ -107,6 +107,19 @@ report.
   `runner_call` if the outer result is enough, or redesign if granular replay is
   required.
 
+### Capture policy saves sensitive OpenAI run data by default
+
+- **Severity:** `MEDIUM`, or `HIGH` for regulated data, approval payloads,
+  customer support transcripts, or internal incident workflows.
+- **Pattern:** migration accepts default `OpenAICapturePolicy` without checking
+  whether prompts, final outputs, run state, interruption payloads, response
+  items, or usage should be durably stored.
+- **Why it matters:** the old app may have treated a prompt or approval payload
+  as transient. After migration, Kitaru may preserve it so replay and inspection
+  work. That is useful, but it changes the data-retention story.
+- **Action:** choose an explicit `OpenAICapturePolicy(...)` and record the
+  decision in the migration report.
+
 ### API keys passed as flow parameters or logged
 
 - **Severity:** `BLOCKER`.

@@ -318,14 +318,17 @@ durable_agent = KitaruAgent(agent, checkpoint_strategy="turn")
 mode may use a turn-level checkpoint for streamed turns.
 
 ```python
+from typing import Any
+
 from pydantic_ai import Agent
 from kitaru.adapters.pydantic_ai import KitaruAgent
 
 agent = Agent("openai:gpt-5-nano", name="streaming_agent")
 durable_agent = KitaruAgent(agent, checkpoint_strategy="calls")
 
-def on_event(event: object) -> None:
-    print(event)
+async def on_event(ctx: Any, stream: Any) -> None:
+    async for event in stream:
+        print(event)
 
 result = durable_agent.run_sync(
     "Stream progress while answering.",
@@ -346,10 +349,10 @@ agent = Agent("openai:gpt-5-nano", name="stream_context_agent")
 durable_agent = KitaruAgent(agent)
 
 @kitaru.checkpoint
-def collect_stream(prompt: str) -> str:
+async def collect_stream(prompt: str) -> str:
     chunks: list[str] = []
-    with durable_agent.run_stream(prompt) as stream:
-        for chunk in stream.stream_text():
+    async with durable_agent.run_stream(prompt) as stream:
+        async for chunk in stream.stream_text():
             chunks.append(chunk)
     return "".join(chunks)
 ```

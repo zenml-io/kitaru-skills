@@ -133,6 +133,9 @@ Look for:
   tickets, upload files, or call external APIs.
 - `context=...`, `RunContextWrapper`, context objects, serializers, and cache
   identity needs.
+- Existing privacy, logging, tracing, retention, or capture expectations; decide
+  whether `OpenAICapturePolicy` should save inputs, outputs, run state,
+  interruption payloads, response items, and usage.
 - Approval interruptions, `result.status`, `interrupted`, resume state, and
   manual approval decisions.
 - `final_output` use without checking status.
@@ -159,20 +162,28 @@ Look for:
 
 ## OpenAI Agents migration quick guide
 
-Minimal sync replacement:
+Minimal durable sync replacement:
 
 ```python
 from agents import Agent
+from kitaru import flow
 from kitaru.adapters.openai_agents import KitaruRunner, OpenAIRunRequest
 
 agent = Agent(name="support_agent", model="gpt-5-nano")
 runner = KitaruRunner(agent, checkpoint_strategy="runner_call")
 
-result = runner.run_sync(OpenAIRunRequest.start("Where is order ORD-1007?"))
-if result.status != "completed":
-    raise RuntimeError(f"Expected completed run, got {result.status!r}")
-print(result.final_output)
+@flow
+def support_flow(message: str) -> str:
+    result = runner.run_sync(OpenAIRunRequest.start(message))
+    if result.status != "completed":
+        raise RuntimeError(f"Expected completed run, got {result.status!r}")
+    return str(result.final_output)
+
+print(support_flow.run("Where is order ORD-1007?").wait())
 ```
+
+Outside an explicit Kitaru flow, this is only adapter API wiring; it does not
+establish a durable Kitaru checkpoint.
 
 For full examples, load `references/code-patterns.md`.
 
@@ -203,7 +214,8 @@ Every non-trivial migration must include or draft `MIGRATION_REPORT.md` with:
 - Approximate translations and caveats.
 - Flagged items with severity and required action.
 - OpenAI-specific notes for result status, approval/resume, context,
-  side-effectful tools, SDK version compatibility, and API-key handling.
+  capture/privacy policy, side-effectful tools, SDK version compatibility, and
+  API-key handling.
 - Verification plan and whether execution was actually run.
 
 Use `references/report-template.md` when a full report is needed.

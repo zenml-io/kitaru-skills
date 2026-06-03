@@ -21,7 +21,7 @@ Kitaru cannot safely see or replay.
 | `await Runner.run(agent, input)` | `await runner.run(OpenAIRunRequest.start(input))` | `direct` | Use async runner in async code. |
 | `Runner.run_sync(...)` inside async code or active event loop | `await KitaruRunner.run(...)` | `absent` for sync call | Do not migrate by keeping sync execution. Convert caller to async or restructure. |
 | `max_turns=` on raw runner call | `OpenAIRunRequest.start(input, max_turns=...)` | `direct` | Keep turn limit with the serializable request. |
-| `metadata=` intended for run/checkpoint metadata | `OpenAIRunRequest.start(input, metadata=...)` | `direct` | Do not confuse this with SDK runtime `context=`. |
+| `metadata=` on a runner request | `OpenAIRunRequest.start(input, metadata=...)` | `direct` | Treat this as serializable request metadata, not SDK runtime `context=` and not a place for secrets. |
 | `final_output` use | `OpenAIRunResult.final_output` after status check | `direct` | Check `result.status == "completed"` first if interruptions are possible. |
 | `RunConfig(...)` passed to raw runner | `run_config_factory=lambda: RunConfig(...)` | `approximate` | Factory recreates config for Kitaru-managed runs. Avoid capturing volatile values. |
 | `checkpoint_strategy="runner_call"` | One Kitaru checkpoint around outer runner call | `approximate` | Best when `.wait()` should return one clean result. Less inner observability. |

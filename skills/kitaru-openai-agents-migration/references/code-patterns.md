@@ -6,6 +6,10 @@ with `KitaruRunner` and `OpenAIRunRequest`.
 
 ## 1. Minimal `Runner.run_sync` replacement
 
+This snippet shows the API-shape replacement only. It does not establish a
+Kitaru durable checkpoint by itself. For durability, call the runner from inside
+an explicit `@flow`, as shown in section 3.
+
 ### Before
 
 ```python
@@ -32,6 +36,10 @@ print(result.final_output)
 ```
 
 ## 2. Async `Runner.run` replacement
+
+This preserves the async runner shape. If the user expects Kitaru replay or
+checkpoint artifacts, make sure this call happens from a Kitaru flow boundary;
+outside a flow it is just adapter API wiring.
 
 ### Before
 
@@ -91,7 +99,8 @@ terminal flow result. Do not wrap this runner call in another `@checkpoint`.
 
 ```python
 from agents import Agent, function_tool
-from kitaru import KitaruAmbiguousFlowResultError, flow
+from kitaru import flow
+from kitaru.errors import KitaruAmbiguousFlowResultError
 from kitaru.adapters.openai_agents import KitaruRunner, OpenAIRunRequest
 
 @function_tool
@@ -358,7 +367,47 @@ def research_report(topic: str) -> str:
     return str(draft.final_output)
 ```
 
-## 12. Remote API key and secret handling
+## 12. Capture policy privacy review
+
+The OpenAI adapter can persist inputs, final outputs, interrupted run state,
+interruption payloads, usage, and optionally response items. Review this before
+migrating customer-data, approval, regulated, or internal-support workflows.
+
+```python
+from agents import Agent
+from kitaru import flow
+from kitaru.adapters.openai_agents import (
+    KitaruRunner,
+    OpenAICapturePolicy,
+    OpenAIRunRequest,
+)
+
+agent = Agent(name="support_agent", model="gpt-5-nano")
+runner = KitaruRunner(
+    agent,
+    checkpoint_strategy="runner_call",
+    capture=OpenAICapturePolicy(
+        save_input=False,
+        save_final_output=False,
+        save_run_state=True,
+        save_interruption_payloads=False,
+        save_response_items=False,
+        save_usage=True,
+    ),
+)
+
+@flow
+def support_flow(message: str) -> str:
+    result = runner.run_sync(OpenAIRunRequest.start(message))
+    if result.status != "completed":
+        raise RuntimeError(f"Expected completed run, got {result.status!r}")
+    return str(result.final_output)
+```
+
+If the source app did not previously store prompts, approval payloads, or final
+answers durably, mark the capture-policy choice in the migration report.
+
+## 13. Remote API key and secret handling
 
 Prefer environment variables or Kitaru secret configuration. Do not pass API keys
 as visible flow parameters, request metadata, or log messages.
@@ -376,7 +425,7 @@ agent = Agent(name="secure_agent", model="gpt-5-nano")
 runner = KitaruRunner(agent, checkpoint_strategy="runner_call")
 ```
 
-## 13. `KitaruAmbiguousFlowResultError` handling
+## 14. `KitaruAmbiguousFlowResultError` handling
 
 If the migration keeps `calls`, prepare callers for ambiguous terminal flow
 results.
@@ -384,7 +433,7 @@ results.
 ```python
 from typing import Protocol
 
-from kitaru import KitaruAmbiguousFlowResultError
+from kitaru.errors import KitaruAmbiguousFlowResultError
 
 class RunnableFlow(Protocol):
     def run(self, value: str) -> object: ...

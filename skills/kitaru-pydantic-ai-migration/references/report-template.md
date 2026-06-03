@@ -15,6 +15,7 @@ answer when the user does not want a file written.
 - Classification totals:
   - Direct: `[n]`
   - Approximate: `[n]`
+  - Absent: `[n]`
   - Flagged: `[n]`
   - Blocked: `[n]`
 
@@ -44,7 +45,7 @@ List mappings that should preserve behavior.
 
 | Source | Target | Why direct |
 |---|---|---|
-| `agent.run_sync(prompt)` | `durable_agent.run_sync(prompt)` | Same PydanticAI run path; Kitaru adds durability around it. |
+| `agent.run_sync(prompt)` inside an explicit Kitaru flow/checkpoint | `durable_agent.run_sync(prompt)` | Same PydanticAI run path; Kitaru adds a durable boundary when called from a Kitaru-managed scope. |
 | `[source]` | `[target]` | `[reason]` |
 
 ## Approximate Translations

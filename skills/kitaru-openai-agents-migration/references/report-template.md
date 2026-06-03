@@ -16,6 +16,7 @@ that now depends on Kitaru replay semantics.
 - Classification totals:
   - Direct: `[count]`
   - Approximate: `[count]`
+  - Absent: `[count]`
   - Flagged: `[count]`
   - Blocked: `[count]`
 
@@ -106,6 +107,19 @@ Use severity labels from `references/gaps-and-flags.md`.
 - `context_serializer` configured for resumed state: `[yes/no/not needed]`
 - `context_deserializer` configured for resumed state: `[yes/no/not needed]`
 - Tenant/user/thread cache separation reviewed: `[yes/no]`
+
+### Capture and privacy policy
+
+- Explicit `OpenAICapturePolicy` reviewed: `[yes/no]`
+- Saves input: `[yes/no]`
+- Saves final output: `[yes/no]`
+- Saves run state: `[yes/no]`
+- Saves interruption payloads: `[yes/no]`
+- Saves response items: `[yes/no]`
+- Saves usage: `[yes/no]`
+- Sensitive prompts, approval payloads, or customer data retained durably:
+  `[none/list]`
+- Required cleanup or retention decision: `[none/list]`
 
 ### Tool side effects
 
