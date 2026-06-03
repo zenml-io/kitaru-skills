@@ -6,7 +6,7 @@
     "url": "https://zenml.io"
   },
   "metadata": {
-    "description": "Three Kitaru skills for quickstart onboarding, durable flow scoping, and authoring with current adapter families",
+    "description": "Three Kitaru Agent Skills for quickstart onboarding, durable flow scoping, and authoring with current adapter families",
     "version": "0.5.0",
     "homepage": "https://kitaru.ai",
     "repository": "https://github.com/zenml-io/kitaru-skills"
@@ -15,7 +15,7 @@
     {
       "name": "kitaru",
       "source": "./",
-      "description": "Bundles three Kitaru skills: kitaru-quickstart (beginner onboarding with crash recovery, wait(), artifacts, dashboard, and optional MCP), kitaru-scoping (durable flow architecture and adapter boundary choices), and kitaru-authoring (flows, checkpoints, waits, KitaruClient, deployments, secrets, CLI/MCP, PydanticAI, OpenAI Agents, LangGraph, and Claude Agent SDK).",
+      "description": "Claude Code package bundling three Kitaru Agent Skills: kitaru-quickstart (beginner onboarding with crash recovery, wait(), artifacts, dashboard, and optional MCP), kitaru-scoping (durable flow architecture and adapter boundary choices), and kitaru-authoring (flows, checkpoints, waits, KitaruClient, deployments, secrets, CLI/MCP, PydanticAI, OpenAI Agents, LangGraph, and Claude Agent SDK).",
       "version": "0.5.0",
       "author": {
         "name": "ZenML",
