@@ -1,29 +1,40 @@
-# Kitaru Skills for Claude Code
+# Kitaru Agent Skills
 
-[Claude Code](https://docs.anthropic.com/en/docs/claude-code) skills for
-discovering, designing, and building durable AI agent workflows with
-[Kitaru](https://kitaru.ai).
+Reusable Markdown agent skills for discovering, designing, and building durable
+AI agent workflows with [Kitaru](https://kitaru.ai).
+
+This repository contains the shared skill content plus Claude Code plugin
+packaging. Claude Code can install the skills through its plugin flow. Codex,
+Cursor, and other agent hosts can use the Markdown skill files and the
+host-specific MCP setup guides where their local skill, rule, or context-loading
+workflow supports that pattern.
 
 ## Skills
 
-| Skill | Slash command | Purpose |
+| Skill | Skill / invocation | Purpose |
 |---|---|---|
-| **kitaru-quickstart** | `/kitaru-quickstart` | Interactive onboarding: scaffolds a personalized demo flow, demonstrates crash recovery with replay, human-in-the-loop with `wait()`, artifact capture, and optional MCP integration |
-| **kitaru-scoping** | `/kitaru-scoping` | Structured interview to validate whether your workflow benefits from durable execution, then designs the flow architecture (checkpoint boundaries, wait points, replay anchors, artifact strategy, operator surface, MVP scope) |
-| **kitaru-authoring** | `/kitaru-authoring` | Guide for writing Kitaru flows, checkpoints, waits, logging, artifacts, `KitaruClient`, replay/resume/retry, deployments, secrets, CLI/MCP tools, and adapters for PydanticAI, OpenAI Agents, LangGraph, and Claude Agent SDK |
+| **kitaru-quickstart** | `kitaru-quickstart` (`/kitaru-quickstart` in Claude Code) | Interactive onboarding: scaffolds a personalized demo flow, demonstrates crash recovery with replay, human-in-the-loop with `wait()`, artifact capture, and optional MCP integration |
+| **kitaru-scoping** | `kitaru-scoping` (`/kitaru-scoping` in Claude Code) | Structured interview to validate whether your workflow benefits from durable execution, then designs the flow architecture (checkpoint boundaries, wait points, replay anchors, artifact strategy, operator surface, MVP scope) |
+| **kitaru-authoring** | `kitaru-authoring` (`/kitaru-authoring` in Claude Code) | Guide for writing Kitaru flows, checkpoints, waits, logging, artifacts, `KitaruClient`, replay/resume/retry, deployments, secrets, CLI/MCP tools, and adapters for PydanticAI, OpenAI Agents, LangGraph, and Claude Agent SDK |
 
 ### Recommended workflow
 
-1. **Quickstart** — use `/kitaru-quickstart` to see what Kitaru does and
-   build intuition for crash recovery, replay, waits, and artifacts
-2. **Scope** — use `/kitaru-scoping` to validate fit and define your flow
+1. **Quickstart** — use `kitaru-quickstart` to see what Kitaru does and build
+   intuition for crash recovery, replay, waits, and artifacts
+2. **Scope** — use `kitaru-scoping` to validate fit and define your flow
    architecture before writing code
-3. **Author** — use `/kitaru-authoring` to build the flows defined in
-   your `flow_architecture.md`
+3. **Author** — use `kitaru-authoring` to build the flows defined in your
+   `flow_architecture.md`
 
-## Installation
+In Claude Code, those skills are exposed as slash commands:
+`/kitaru-quickstart`, `/kitaru-scoping`, and `/kitaru-authoring`.
 
-### Marketplace (recommended)
+## Installation and usage
+
+### Claude Code plugin distribution
+
+Claude Code users can install the packaged skills from the Claude Code plugin
+marketplace:
 
 ```bash
 /plugin marketplace add zenml-io/kitaru-skills
@@ -34,9 +45,8 @@ Once installed, Claude Code will automatically use the skills based on context.
 You can also invoke them explicitly with `/kitaru-quickstart`,
 `/kitaru-scoping`, or `/kitaru-authoring`.
 
-### Team installation
-
-Add to your project's `.claude/settings.json`:
+For project/team installation, add this to your project's
+`.claude/settings.json`:
 
 ```json
 {
@@ -49,7 +59,7 @@ Add to your project's `.claude/settings.json`:
 }
 ```
 
-### Manual installation
+For manual Claude Code installation during local development:
 
 ```bash
 tmpdir=$(mktemp -d)
@@ -60,6 +70,37 @@ cp -R "$tmpdir/kitaru-skills/skills/kitaru-scoping" .claude/skills/
 cp -R "$tmpdir/kitaru-skills/skills/kitaru-authoring" .claude/skills/
 rm -rf "$tmpdir"
 ```
+
+See the [Claude Code host guide](skills/kitaru-quickstart/references/hosts/claude-code.md)
+for MCP setup details.
+
+### Codex usage
+
+Codex setup depends on the Codex version and local configuration style you use.
+If your Codex environment supports local skills, copy the three
+`skills/kitaru-*` directories into the supported Codex skills location or load
+the relevant `SKILL.md` files as explicit project context.
+
+For Kitaru MCP setup, follow the cautious host notes in the
+[Codex host guide](skills/kitaru-quickstart/references/hosts/codex.md). Codex
+MCP configuration can vary by installation, so use that guide as a starting
+point and confirm against your current Codex documentation.
+
+### Cursor usage
+
+Cursor does not install this Claude Code plugin automatically. Use the Markdown
+skill files as project rules or agent context according to the Cursor workflow
+you already use.
+
+For Kitaru MCP setup, see the
+[Cursor host guide](skills/kitaru-quickstart/references/hosts/cursor.md), which
+shows the `.cursor/mcp.json` stdio configuration pattern.
+
+### Manual Markdown use
+
+For any other capable agent host, open the relevant `skills/*/SKILL.md` file and
+ask the agent to follow it. This is the portable fallback path when the host does
+not have a formal skill or plugin system.
 
 ## Example prompts
 
@@ -88,8 +129,11 @@ rm -rf "$tmpdir"
 ## Links
 
 - [Kitaru documentation](https://kitaru.ai/docs)
-- [Claude Code Skills docs](https://kitaru.ai/docs/agent-native/claude-code-skill)
+- [Claude Code skill distribution guide](https://kitaru.ai/docs/agent-native/claude-code-skill)
 - [Kitaru SDK repository](https://github.com/zenml-io/kitaru)
+- [Claude Code MCP host guide](skills/kitaru-quickstart/references/hosts/claude-code.md)
+- [Codex MCP host guide](skills/kitaru-quickstart/references/hosts/codex.md)
+- [Cursor MCP host guide](skills/kitaru-quickstart/references/hosts/cursor.md)
 
 ## License
 

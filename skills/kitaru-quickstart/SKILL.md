@@ -16,9 +16,9 @@ someone from "I've heard of Kitaru" to "I understand crash recovery, replay,
 waits, artifacts, and the dashboard" in a single teaching session.
 
 > **Relationship to other skills**:
-> - `/kitaru-quickstart` → activation and intuition (this skill)
-> - `/kitaru-scoping` → design durability for a real workflow
-> - `/kitaru-authoring` → refactor production code with Kitaru primitives
+> - `kitaru-quickstart` (`/kitaru-quickstart` in Claude Code) → activation and intuition (this skill)
+> - `kitaru-scoping` (`/kitaru-scoping` in Claude Code) → design durability for a real workflow
+> - `kitaru-authoring` (`/kitaru-authoring` in Claude Code) → refactor production code with Kitaru primitives
 
 ## Before you start
 
@@ -54,7 +54,7 @@ properly. Then default to the research/content track for the demo.
 
 For v1, use the raw Python track template regardless of choice. If the user
 specifically requests PydanticAI, complete the quickstart in raw Python and
-then offer `/kitaru-authoring` for adapter conversion. Keep adapters,
+then offer `kitaru-authoring` (`/kitaru-authoring` in Claude Code) for adapter conversion. Keep adapters,
 deployments, and production architecture out of this beginner tour.
 
 ### Question 3: Depth
@@ -601,8 +601,8 @@ uv run kitaru executions input <EXEC_ID> --value true
   `rm -rf [absolute path]`
 
 ## Next steps
-- **`/kitaru-scoping`** — Design durability for a real workflow
-- **`/kitaru-authoring`** — Refactor existing code with Kitaru primitives, current adapters (PydanticAI, OpenAI Agents, LangGraph, Claude Agent SDK), deployments, secrets, and operational surfaces
+- **`kitaru-scoping`** (`/kitaru-scoping` in Claude Code) — Design durability for a real workflow
+- **`kitaru-authoring`** (`/kitaru-authoring` in Claude Code) — Refactor existing code with Kitaru primitives, current adapters (PydanticAI, OpenAI Agents, LangGraph, Claude Agent SDK), deployments, secrets, and operational surfaces
 
 ## Resources
 - [Kitaru documentation](https://kitaru.ai/docs)
@@ -621,11 +621,11 @@ summary matches what they learned.
 
 > "Your quickstart is complete! Here's what you can do next:"
 >
-> - **`/kitaru-scoping`** if you want to design durability for a real
->   workflow
-> - **`/kitaru-authoring`** if you have existing code you'd like to
->   refactor with Kitaru primitives, adapters, deployments, secrets, or
->   operational controls
+> - **`kitaru-scoping`** (`/kitaru-scoping` in Claude Code) if you want to
+>   design durability for a real workflow
+> - **`kitaru-authoring`** (`/kitaru-authoring` in Claude Code) if you have
+>   existing code you'd like to refactor with Kitaru primitives, adapters,
+>   deployments, secrets, or operational controls
 
 ### Step 3: Offer cleanup, defaulting to keep
 
