@@ -3,7 +3,7 @@
 Reusable Markdown agent skills for discovering, designing, migrating, and
 building durable AI agent workflows with [Kitaru](https://kitaru.ai).
 
-This repository contains the shared skill content plus Claude Code plugin
+This repository contains eight shared skill directories plus Claude Code plugin
 packaging. Claude Code can install the skills through its plugin flow. Codex,
 Cursor, and other agent hosts can use the Markdown skill files and the
 host-specific MCP setup guides where their local skill, rule, or context-loading
@@ -15,9 +15,12 @@ workflow supports that pattern.
 |---|---|---|
 | **kitaru-quickstart** | `kitaru-quickstart` (`/kitaru-quickstart` in Claude Code) | Interactive onboarding: scaffolds a personalized demo flow, demonstrates crash recovery with replay, human-in-the-loop with `wait()`, artifact capture, and optional MCP integration |
 | **kitaru-scoping** | `kitaru-scoping` (`/kitaru-scoping` in Claude Code) | Structured interview to validate whether your workflow benefits from durable execution, then designs the flow architecture (checkpoint boundaries, wait points, replay anchors, artifact strategy, operator surface, MVP scope) |
-| **kitaru-authoring** | `kitaru-authoring` (`/kitaru-authoring` in Claude Code) | Guide for writing Kitaru flows, checkpoints, waits, logging, artifacts, `KitaruClient`, replay/resume/retry, deployments, secrets, CLI/MCP tools, and adapters for PydanticAI, OpenAI Agents, LangGraph, and Claude Agent SDK |
+| **kitaru-authoring** | `kitaru-authoring` (`/kitaru-authoring` in Claude Code) | Guide for writing Kitaru flows, checkpoints, waits, logging, artifacts, `KitaruClient`, replay/resume/retry, deployments, secrets, CLI/MCP tools, and adapters for PydanticAI, OpenAI Agents, LangGraph, Claude Agent SDK, and Gemini Interactions |
 | **kitaru-pydantic-ai-migration** | `kitaru-pydantic-ai-migration` (`/kitaru-pydantic-ai-migration` in Claude Code) | Migrate existing PydanticAI agent code to `KitaruAgent` with conservative boundary selection, direct/approximate/absent classification, HITL safety checks, capture policy guidance, and a migration report |
 | **kitaru-openai-agents-migration** | `kitaru-openai-agents-migration` (`/kitaru-openai-agents-migration` in Claude Code) | Migrate existing OpenAI Agents SDK code to `KitaruRunner`, `OpenAIRunRequest`, and `OpenAIRunResult` with checkpoint strategy selection, approval/resume handling, context serialization checks, and a migration report |
+| **kitaru-langgraph-migration** | `kitaru-langgraph-migration` (`/kitaru-langgraph-migration` in Claude Code) | Migrate existing LangGraph, LangChain `create_agent(...)`, or Deep Agents-style code to `KitaruGraphRunner` with honest `graph_call` vs middleware-backed `calls` boundary selection and a migration report |
+| **kitaru-claude-agent-sdk-migration** | `kitaru-claude-agent-sdk-migration` (`/kitaru-claude-agent-sdk-migration` in Claude Code) | Migrate existing Claude Agent SDK code to `KitaruClaudeRunner` with one invocation checkpoint, Claude-owned tool/Bash/MCP/workspace caveats, capture policy review, and a migration report |
+| **kitaru-gemini-interactions-migration** | `kitaru-gemini-interactions-migration` (`/kitaru-gemini-interactions-migration` in Claude Code) | Migrate existing Gemini Interactions, Google GenAI Interactions, or Antigravity managed-agent code to `KitaruGeminiInteractionsRunner` with `requires_action`, polling, function-result, Antigravity, and Google-owned internals caveats |
 
 ### Recommended workflow
 
@@ -32,26 +35,24 @@ For new Kitaru work:
 
 For existing framework code:
 
-1. **Inspect and classify** — use `kitaru-pydantic-ai-migration` or
-   `kitaru-openai-agents-migration` to identify direct, approximate, and absent
-   mappings before editing code
-2. **Migrate the safe boundary** — wrap PydanticAI agents with `KitaruAgent` or
-   move OpenAI Agents runner calls to `KitaruRunner` requests/results
+1. **Inspect and classify** — use the migration skill that matches the source
+   framework: PydanticAI, OpenAI Agents SDK, LangGraph/LangChain, Claude Agent
+   SDK, or Gemini Interactions
+2. **Migrate the safe boundary** — move only the durable seam Kitaru can honestly
+   see: a wrapped PydanticAI run, an OpenAI Agents runner call or observed call,
+   a LangGraph graph call or middleware-observed sync call, one Claude SDK
+   invocation, or one stable Gemini Interactions response
 3. **Review the report** — use the generated `MIGRATION_REPORT.md` to check
-   replay, wait, state, approval/resume, context, and side-effect risks
+   replay, wait, state, approval/resume, interrupt, polling, context, privacy,
+   and side-effect risks
 4. **Author follow-up Kitaru code** — use `kitaru-authoring` for any additional
    flows, checkpoints, artifacts, CLI/MCP usage, or deployment work
 
 In Claude Code, those skills are exposed as slash commands:
 `/kitaru-quickstart`, `/kitaru-scoping`, `/kitaru-authoring`,
-`/kitaru-pydantic-ai-migration`, and `/kitaru-openai-agents-migration`.
-
-LangGraph, Claude Agent SDK, and Gemini Interactions migration skills are
-intentionally deferred to
-[issue #9](https://github.com/zenml-io/kitaru-skills/issues/9). The existing
-`kitaru-authoring` skill still covers current adapter-authoring guidance for
-LangGraph and Claude Agent SDK; it does not mean those migration skills exist
-yet.
+`/kitaru-pydantic-ai-migration`, `/kitaru-openai-agents-migration`,
+`/kitaru-langgraph-migration`, `/kitaru-claude-agent-sdk-migration`, and
+`/kitaru-gemini-interactions-migration`.
 
 ## Installation and usage
 
@@ -67,8 +68,10 @@ marketplace:
 
 Once installed, Claude Code will automatically use the skills based on context.
 You can also invoke them explicitly with `/kitaru-quickstart`,
-`/kitaru-scoping`, `/kitaru-authoring`, `/kitaru-pydantic-ai-migration`, or
-`/kitaru-openai-agents-migration`.
+`/kitaru-scoping`, `/kitaru-authoring`, `/kitaru-pydantic-ai-migration`,
+`/kitaru-openai-agents-migration`, `/kitaru-langgraph-migration`,
+`/kitaru-claude-agent-sdk-migration`, or
+`/kitaru-gemini-interactions-migration`.
 
 For project/team installation, add this to your project's
 `.claude/settings.json`:
@@ -95,6 +98,9 @@ cp -R "$tmpdir/kitaru-skills/skills/kitaru-scoping" .claude/skills/
 cp -R "$tmpdir/kitaru-skills/skills/kitaru-authoring" .claude/skills/
 cp -R "$tmpdir/kitaru-skills/skills/kitaru-pydantic-ai-migration" .claude/skills/
 cp -R "$tmpdir/kitaru-skills/skills/kitaru-openai-agents-migration" .claude/skills/
+cp -R "$tmpdir/kitaru-skills/skills/kitaru-langgraph-migration" .claude/skills/
+cp -R "$tmpdir/kitaru-skills/skills/kitaru-claude-agent-sdk-migration" .claude/skills/
+cp -R "$tmpdir/kitaru-skills/skills/kitaru-gemini-interactions-migration" .claude/skills/
 rm -rf "$tmpdir"
 ```
 
@@ -104,7 +110,7 @@ for MCP setup details.
 ### Codex usage
 
 Codex setup depends on the Codex version and local configuration style you use.
-If your Codex environment supports local skills, copy the five
+If your Codex environment supports local skills, copy the eight
 `skills/kitaru-*` directories into the supported Codex skills location or load
 the relevant `SKILL.md` files as explicit project context.
 
@@ -150,6 +156,7 @@ not have a formal skill or plugin system.
 - "How do I inspect executions, waits, logs, and artifacts from the CLI or MCP?"
 - "Help me add Kitaru durability around a LangGraph graph."
 - "Make this Claude Agent SDK invocation durable without promising granular tool replay."
+- "Add Kitaru durability around this Gemini Interactions flow without treating Antigravity internals as replayable."
 
 **PydanticAI migration:**
 - "Migrate this `pydantic_ai.Agent` to `KitaruAgent` and tell me what is direct vs risky."
@@ -162,6 +169,24 @@ not have a formal skill or plugin system.
 - "Choose `runner_call` vs `calls` for this OpenAI Agents SDK workflow and explain the tradeoff."
 - "Add Kitaru durability around this OpenAI Agents approval flow without hiding resume risks."
 - "Update this OpenAI Agents workflow to use `OpenAIRunRequest` and status-aware `OpenAIRunResult` handling."
+
+**LangGraph migration:**
+- "Migrate this `graph.invoke(...)` LangGraph workflow to `KitaruGraphRunner`."
+- "Choose `graph_call` vs middleware-backed `calls` for this LangGraph app and explain what Kitaru can actually replay."
+- "Add Kitaru durability around this LangGraph interrupt flow without replacing the LangGraph checkpointer."
+- "Review this LangChain `create_agent(...)` code and tell me whether `KitaruLangGraphMiddleware` can give safe call-level checkpoints."
+
+**Claude Agent SDK migration:**
+- "Migrate this `claude_agent_sdk.query(...)` workflow to `KitaruClaudeRunner`."
+- "Make this Claude Agent SDK session durable as one invocation checkpoint and flag workspace/file risks."
+- "Review this Claude Agent SDK tool/Bash/MCP setup and tell me what must stay Claude-owned."
+- "Move durable file or API side effects out of the Claude loop and into Kitaru checkpoints."
+
+**Gemini Interactions migration:**
+- "Migrate this `client.interactions.create(...)` code to `KitaruGeminiInteractionsRunner`."
+- "Handle this Gemini Interactions `requires_action` turn at Kitaru flow scope."
+- "Poll an existing Gemini interaction ID with Kitaru instead of creating duplicate background jobs."
+- "Review this Antigravity managed-agent workflow and flag which Google-owned internals are not replayable."
 
 ## Links
 

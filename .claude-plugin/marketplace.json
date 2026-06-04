@@ -6,8 +6,8 @@
     "url": "https://zenml.io"
   },
   "metadata": {
-    "description": "Five Kitaru Agent Skills for quickstart onboarding, durable flow scoping, authoring with current adapter families, PydanticAI migration, and OpenAI Agents SDK migration",
-    "version": "0.6.0",
+    "description": "Eight Kitaru Agent Skills for quickstart onboarding, durable flow scoping, authoring with current adapter families, and conservative migrations for PydanticAI, OpenAI Agents SDK, LangGraph, Claude Agent SDK, and Gemini Interactions",
+    "version": "0.7.0",
     "homepage": "https://kitaru.ai",
     "repository": "https://github.com/zenml-io/kitaru-skills"
   },
@@ -15,8 +15,8 @@
     {
       "name": "kitaru",
       "source": "./",
-      "description": "Claude Code package bundling five Kitaru Agent Skills: kitaru-quickstart (beginner onboarding with crash recovery, wait(), artifacts, dashboard, and optional MCP), kitaru-scoping (durable flow architecture and adapter boundary choices), kitaru-authoring (flows, checkpoints, waits, KitaruClient, deployments, secrets, CLI/MCP, PydanticAI, OpenAI Agents, LangGraph, and Claude Agent SDK), kitaru-pydantic-ai-migration (conservative PydanticAI to KitaruAgent migration), and kitaru-openai-agents-migration (OpenAI Agents SDK to KitaruRunner migration).",
-      "version": "0.6.0",
+      "description": "Claude Code package bundling eight Kitaru Agent Skills: kitaru-quickstart (beginner onboarding with crash recovery, wait(), artifacts, dashboard, and optional MCP), kitaru-scoping (durable flow architecture and adapter boundary choices), kitaru-authoring (flows, checkpoints, waits, KitaruClient, deployments, secrets, CLI/MCP, and current adapters), kitaru-pydantic-ai-migration (PydanticAI to KitaruAgent), kitaru-openai-agents-migration (OpenAI Agents SDK to KitaruRunner), kitaru-langgraph-migration (LangGraph/LangChain to KitaruGraphRunner), kitaru-claude-agent-sdk-migration (Claude Agent SDK to KitaruClaudeRunner), and kitaru-gemini-interactions-migration (Gemini Interactions/Antigravity to KitaruGeminiInteractionsRunner).",
+      "version": "0.7.0",
       "author": {
         "name": "ZenML",
         "url": "https://kitaru.ai"
@@ -40,7 +40,16 @@
         "openai-agents",
         "openai-agents-migration",
         "langgraph",
+        "langgraph-migration",
+        "langchain",
         "claude-agent-sdk",
+        "claude-agent-sdk-migration",
+        "gemini",
+        "gemini-interactions",
+        "gemini-interactions-migration",
+        "google-genai",
+        "antigravity",
+        "antigravity-migration",
         "mcp",
         "deployments"
       ]

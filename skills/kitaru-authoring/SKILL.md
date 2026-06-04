@@ -5,13 +5,14 @@ description: >
   when creating or refactoring Kitaru flows, checkpoints, waits, logging,
   artifacts, tracked LLM calls, replay/resume/retry flows, KitaruClient usage,
   CLI commands, MCP operations, deployments, secrets, or adapter integrations
-  for PydanticAI, OpenAI Agents, LangGraph, and Claude Agent SDK. Triggers on
-  mentions of kitaru, @flow, @checkpoint, kitaru.wait, kitaru.log,
-  kitaru.save, kitaru.load, KitaruClient, replay, resume, retry,
-  `kitaru executions ...`, MCP tools, `KitaruAgent`, `KitaruRunner`,
-  `KitaruGraphRunner`, `KitaruClaudeRunner`, `wait_for_input`,
-  `wait_for_approval`, `wait_for_interrupt`, or migration from deprecated
-  `wrap(...)`.
+  for PydanticAI, OpenAI Agents, LangGraph, Claude Agent SDK, and Gemini
+  Interactions. Triggers on mentions of kitaru, @flow, @checkpoint,
+  kitaru.wait, kitaru.log, kitaru.save, kitaru.load, KitaruClient, replay,
+  resume, retry, `kitaru executions ...`, MCP tools, `KitaruAgent`,
+  `KitaruRunner`, `KitaruGraphRunner`, `KitaruClaudeRunner`,
+  `KitaruGeminiInteractionsRunner`, `GeminiInteractionRequest`,
+  `wait_for_input`, `wait_for_approval`, `wait_for_interrupt`,
+  `requires_action`, Antigravity, or migration from deprecated `wrap(...)`.
 ---
 
 # Kitaru Authoring Skill
@@ -455,6 +456,30 @@ Use `KitaruClaudeRunner` when one Claude SDK invocation should be durable.
 - If a side effect must be durable, make it a separate Kitaru checkpoint after
   Claude returns.
 
+### Gemini Interactions / `KitaruGeminiInteractionsRunner`
+
+Use `KitaruGeminiInteractionsRunner` when one stable Gemini Interactions
+response should be durable. Use the public module `kitaru.adapters.gemini` and
+keep the user-facing adapter name as Gemini Interactions. Treat Antigravity as a
+managed-agent/preset use case, not as the core adapter identity.
+
+- `checkpoint_strategy="interaction"` is the supported boundary: one stable
+  Gemini interaction response becomes one Kitaru checkpoint. Stable statuses are
+  `completed` and `requires_action`.
+- `GeminiInteractionRequest.start(...)`, `.resume(...)`, `.function_result(...)`,
+  `.poll(...)`, and `.antigravity(...)` describe the interaction turn. Poll an
+  existing unfinished interaction by ID instead of creating a duplicate job.
+- Treat `requires_action` as a handoff back to the Kitaru flow. Run local tool
+  work or `kitaru.wait(...)` at flow scope, then send a later
+  `function_result` request.
+- Google-owned hosted tools, MCP, web/code execution, managed-agent steps, and
+  Antigravity sandbox/environment/filesystem internals are not granular Kitaru
+  checkpoints.
+- Use `cache_identity` when project, region, credentials, or client
+  configuration can change what the same logical request means.
+- Review `GeminiInteractionCapturePolicy` before saving raw prompts, provider
+  payloads, steps, or outputs, because those values can contain user data.
+
 ## Common mistakes checklist
 
 - Calling `my_flow(...)` directly instead of `my_flow.run(...)`
@@ -488,6 +513,12 @@ Use `KitaruClaudeRunner` when one Claude SDK invocation should be durable.
 - Treating LangGraph `InMemorySaver` as durable cross-process storage
 - Expecting Claude Agent SDK `KitaruClaudeRunner` to replay Claude-internal Bash,
   MCP, custom-tool, hook, permission, or workspace side effects granularly
+- Treating Gemini hosted tools, MCP, web/code execution, managed-agent steps, or
+  Antigravity sandbox/filesystem internals as granular Kitaru checkpoints
+- Hiding Gemini `requires_action` work inside the provider-owned interaction
+  instead of returning local tool or human work to Kitaru flow scope
+- Assuming Antigravity remote environments provide Kitaru-owned filesystem
+  durability or replayable sandbox state
 - Wrapping every tiny helper in a checkpoint instead of using meaningful replay
   boundaries
 - Constructing adapter wrappers inside hot checkpoint functions when module-scope

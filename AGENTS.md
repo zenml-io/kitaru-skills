@@ -8,6 +8,9 @@ This repository contains **Kitaru Agent Skills** plus Claude Code plugin metadat
 - `skills/kitaru-authoring/SKILL.md` defines the implementation-authoring skill.
 - `skills/kitaru-pydantic-ai-migration/SKILL.md` defines the PydanticAI migration skill.
 - `skills/kitaru-openai-agents-migration/SKILL.md` defines the OpenAI Agents SDK migration skill.
+- `skills/kitaru-langgraph-migration/SKILL.md` defines the LangGraph migration skill.
+- `skills/kitaru-claude-agent-sdk-migration/SKILL.md` defines the Claude Agent SDK migration skill.
+- `skills/kitaru-gemini-interactions-migration/SKILL.md` defines the Gemini Interactions migration skill.
 - `.claude-plugin/plugin.json` contains Claude Code plugin metadata such as name, version, and repository URL.
 - `.claude-plugin/marketplace.json` defines the Claude Code marketplace entry used for local/plugin testing.
 - `README.md` is the public-facing usage, installation, and host guidance.
@@ -23,7 +26,7 @@ There is no build step in this repo. Most contributor work is editing Markdown a
 - `git diff --stat` gives a compact review of changed files.
 - `jq . .claude-plugin/plugin.json` validates plugin JSON formatting if `jq` is installed.
 
-For manual Claude Code smoke testing, follow the install commands in [`README.md`](README.md) and verify the Claude Code distribution route exposes `/kitaru-quickstart`, `/kitaru-scoping`, `/kitaru-authoring`, `/kitaru-pydantic-ai-migration`, and `/kitaru-openai-agents-migration`.
+For manual Claude Code smoke testing, follow the install commands in [`README.md`](README.md) and verify the Claude Code distribution route exposes `/kitaru-quickstart`, `/kitaru-scoping`, `/kitaru-authoring`, `/kitaru-pydantic-ai-migration`, `/kitaru-openai-agents-migration`, `/kitaru-langgraph-migration`, `/kitaru-claude-agent-sdk-migration`, and `/kitaru-gemini-interactions-migration`.
 
 ## Coding Style & Naming Conventions
 Use Markdown for prose and JSON for Claude Code plugin metadata. Match the existing style:
@@ -53,7 +56,7 @@ When updating the skills package for a new Kitaru release, verify current source
 before editing skill prose:
 
 - Adapter exports under `kitaru/src/kitaru/adapters/*/__init__.py`
-- Current adapter guides for PydanticAI, OpenAI Agents, LangGraph, and Claude Agent SDK
+- Current adapter guides for PydanticAI, OpenAI Agents, LangGraph, Claude Agent SDK, and Gemini Interactions
 - MCP server docs for current tool names and categories
 - `CHANGELOG.md` and `pyproject.toml` for release facts and removed APIs
 - Skill inventory, portable skill names, and Claude Code slash command names across README, AGENTS, CLAUDE, metadata, and frontmatter

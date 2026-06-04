@@ -201,12 +201,12 @@ List anything intentionally left unchanged or blocked.
 - Skill gaps and flags:
   `skills/kitaru-openai-agents-migration/references/gaps-and-flags.md`
 
-## Deferred Adapter Migration Work
+## Other Adapter Migration Skills
 
-LangGraph, Claude Agent SDK, and Gemini Interactions migration skills are not
-part of this migration. Track deferred adapter migration work at
-https://github.com/zenml-io/kitaru-skills/issues/9 rather than creating
-placeholder directories or claiming those skills exist.
+LangGraph, Claude Agent SDK, Gemini Interactions, and PydanticAI migrations are
+not part of this OpenAI Agents SDK migration. Use the matching sibling skill:
+`kitaru-langgraph-migration`, `kitaru-claude-agent-sdk-migration`,
+`kitaru-gemini-interactions-migration`, or `kitaru-pydantic-ai-migration`.
 
 ## Recommended Next Steps
 

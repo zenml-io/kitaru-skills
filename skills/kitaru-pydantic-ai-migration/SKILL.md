@@ -66,7 +66,8 @@ Do not use this skill for:
 
 - OpenAI Agents SDK code using `agents.Agent` or `Runner.run(...)`; use the
   OpenAI Agents migration skill instead.
-- LangGraph, Claude Agent SDK, Gemini, or raw LangChain migrations.
+- LangGraph, Claude Agent SDK, Gemini Interactions, or raw LangChain migrations;
+  use the matching sibling migration skill instead.
 - Rewriting PydanticAI internals or provider-owned native tool behavior.
 - Promising exact replay of side effects that happen outside a Kitaru checkpoint
   boundary.
