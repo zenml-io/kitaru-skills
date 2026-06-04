@@ -13,8 +13,9 @@ description: >-
   waits, needs to choose between SDK / KitaruClient / CLI / MCP control
   surfaces, asks how to handle state across executions, or arrives with a
   workflow that might be too simple or too complex for Kitaru, or needs to
-  choose among PydanticAI, OpenAI Agents, LangGraph, and Claude Agent SDK
-  adapter boundaries. Also use when the user says "I want to build an agent"
+  choose among PydanticAI, OpenAI Agents, LangGraph, Claude Agent SDK, and
+  Gemini Interactions adapter boundaries. Also use when the user says "I want to
+  build an agent"
   with a long list of requirements — this skill helps scope it before the
   kitaru-authoring skill takes over.
 ---
@@ -62,13 +63,14 @@ user-facing surfaces:
   metadata-only secret creation, local-server/status/stack tools, and
   `manage_stack`.
 
-It also ships four adapter families. Scope them as design choices, not as one
+It also ships five adapter families. Scope them as design choices, not as one
 universal answer:
 
 - **PydanticAI** — `KitaruAgent` for durable PydanticAI runs and tool/MCP calls
 - **OpenAI Agents** — `KitaruRunner` for OpenAI Agents SDK runs
 - **LangGraph** — `KitaruGraphRunner` for graph calls or middleware-observed sync calls
 - **Claude Agent SDK** — `KitaruClaudeRunner` for whole Claude SDK invocations
+- **Gemini Interactions** — `KitaruGeminiInteractionsRunner` for stable Gemini Interactions responses
 
 `wrap(...)` still exists as a deprecated PydanticAI migration shim, but new
 designs should use `KitaruAgent(...)` directly.
@@ -421,6 +423,18 @@ Kitaru replay boundaries. If a file write or API call must be durable, put that
 side effect in its own Kitaru checkpoint after Claude returns. Claude session
 resume and Claude file checkpointing are Claude SDK features, not Kitaru replay.
 
+### Gemini Interactions / `KitaruGeminiInteractionsRunner`
+
+Use `KitaruGeminiInteractionsRunner(...)` when a stable Gemini Interactions
+response should become one Kitaru checkpoint. Stable means `completed` or
+`requires_action`. Scope `requires_action` as a handoff back to the Kitaru flow:
+local tool work or human approval should happen in flow scope, then a later
+`function_result` request continues the interaction. Google-owned hosted tools,
+MCP, web/code execution, managed-agent steps, and Antigravity
+sandbox/environment/filesystem internals are not granular Kitaru replay
+boundaries. If project, region, credentials, or client configuration can change
+results, include a `cache_identity` decision in the architecture.
+
 ## Phase 7: Check anti-patterns
 
 Review the proposed design for these smells:
@@ -442,6 +456,14 @@ Review the proposed design for these smells:
 - LangGraph designs that assume Kitaru replaces the graph checkpointer/store
 - Claude Agent SDK designs that expect granular replay of Claude-internal Bash,
   MCP, custom tool, hook, permission, or workspace side effects
+- Gemini Interactions designs that treat Google-owned hosted tools, MCP,
+  web/code execution, managed-agent steps, or Antigravity sandbox/filesystem
+  internals as replayable Kitaru checkpoints
+- Gemini Interactions designs that hide `requires_action` work inside the
+  provider-owned interaction instead of returning local tool or human work to
+  Kitaru flow scope
+- Antigravity designs that assume remote environments provide Kitaru-owned
+  filesystem durability or replayable sandbox state
 - designs that expect Kitaru to provide native durable key-value state
 - cross-flow artifact designs with no plan for how downstream flows receive
   upstream execution IDs

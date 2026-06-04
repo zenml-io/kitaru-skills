@@ -174,11 +174,12 @@ List anything deliberately left unchanged or blocked.
   - `skills/kitaru-pydantic-ai-migration/references/code-patterns.md`
   - `skills/kitaru-pydantic-ai-migration/references/gaps-and-flags.md`
 
-## Deferred Adapter Migration Work
+## Other Adapter Migration Skills
 
-This report covers only PydanticAI to Kitaru's PydanticAI adapter. LangGraph,
-Claude Agent SDK, Gemini Interactions, and other adapter migration skills are
-separate work tracked in https://github.com/zenml-io/kitaru-skills/issues/9.
+This report covers only PydanticAI to Kitaru's PydanticAI adapter. For other
+frameworks, use the matching sibling skill: `kitaru-openai-agents-migration`,
+`kitaru-langgraph-migration`, `kitaru-claude-agent-sdk-migration`, or
+`kitaru-gemini-interactions-migration`.
 
 ## Recommended Next Steps
 

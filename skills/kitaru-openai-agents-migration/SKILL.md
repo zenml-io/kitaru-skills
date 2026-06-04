@@ -78,7 +78,7 @@ Do not use it to:
 - Rewrite the user's agent into a different framework.
 - Claim Kitaru owns OpenAI Agents SDK internals.
 - Add LangGraph, Claude Agent SDK, Gemini Interactions, or PydanticAI migration
-  behavior.
+  behavior; use the matching sibling migration skill instead.
 - Hide replay, state, privacy, or side-effect risks just to produce cleaner
   code.
 - Put Kitaru `wait()` calls inside checkpoints.
