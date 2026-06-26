@@ -6,7 +6,7 @@
     "url": "https://zenml.io"
   },
   "metadata": {
-    "description": "Eight Kitaru Agent Skills for quickstart onboarding, durable flow scoping, authoring with current adapter families, and conservative migrations for PydanticAI, OpenAI Agents SDK, LangGraph, Claude Agent SDK, and Gemini Interactions",
+    "description": "Eight Kitaru Agent Skills for quickstart onboarding, durable flow scoping, replay/override authoring with current adapter families, and conservative migrations for PydanticAI, OpenAI Agents SDK, LangGraph, Claude Agent SDK, and Gemini Interactions",
     "version": "0.7.0",
     "homepage": "https://kitaru.ai",
     "repository": "https://github.com/zenml-io/kitaru-skills"
@@ -15,7 +15,7 @@
     {
       "name": "kitaru",
       "source": "./",
-      "description": "Claude Code package bundling eight Kitaru Agent Skills: kitaru-quickstart (beginner onboarding with crash recovery, wait(), artifacts, dashboard, and optional MCP), kitaru-scoping (durable flow architecture and adapter boundary choices), kitaru-authoring (flows, checkpoints, waits, KitaruClient, deployments, secrets, CLI/MCP, and current adapters), kitaru-pydantic-ai-migration (PydanticAI to KitaruAgent), kitaru-openai-agents-migration (OpenAI Agents SDK to KitaruRunner), kitaru-langgraph-migration (LangGraph/LangChain to KitaruGraphRunner), kitaru-claude-agent-sdk-migration (Claude Agent SDK to KitaruClaudeRunner), and kitaru-gemini-interactions-migration (Gemini Interactions/Antigravity to KitaruGeminiInteractionsRunner).",
+      "description": "Claude Code package bundling eight Kitaru Agent Skills: kitaru-quickstart (beginner onboarding with crash recovery, replay, wait(), artifacts, dashboard, and optional MCP), kitaru-scoping (durable flow architecture and replay override choices), kitaru-authoring (flows, checkpoints, waits, replay/diff/cohort tools, KitaruClient, deployments, secrets, CLI/MCP, and current adapters), kitaru-pydantic-ai-migration (PydanticAI to KitaruAgent), kitaru-openai-agents-migration (OpenAI Agents SDK to KitaruRunner), kitaru-langgraph-migration (LangGraph/LangChain to KitaruGraphRunner), kitaru-claude-agent-sdk-migration (Claude Agent SDK to KitaruClaudeRunner), and kitaru-gemini-interactions-migration (Gemini Interactions/Antigravity to KitaruGeminiInteractionsRunner).",
       "version": "0.7.0",
       "author": {
         "name": "ZenML",
@@ -32,6 +32,10 @@
         "ai-agents",
         "agent-workflows",
         "checkpoints",
+        "replay",
+        "replay-overrides",
+        "execution-diff",
+        "cohort-analysis",
         "human-in-the-loop",
         "migration",
         "adapter-migration",

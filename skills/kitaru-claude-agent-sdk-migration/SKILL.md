@@ -161,6 +161,9 @@ Look for:
   or artifacts only when the privacy policy allows it.
 - Move durable file/tool/API side effects into Kitaru-owned flow steps after
   Claude returns when exact replay matters.
+- For replay planning, there is one invocation checkpoint and one coarse `at`
+  target. Do not promise granular overrides for Claude-internal Bash, tool, MCP,
+  hook, permission, or file-workspace steps.
 - Do not run this adapter inside an existing Kitaru checkpoint unless the user
   explicitly chooses `allow_direct_execution_inside_checkpoint=True` and accepts
   duplicate-invocation risk.
@@ -213,9 +216,10 @@ Every non-trivial migration must include or draft `MIGRATION_REPORT.md` with:
 - direct translations;
 - approximate translations and caveats;
 - flagged items with severity and required action;
-- Claude-specific notes for options, sessions/resume, workspace effects, file
-  checkpointing, transcripts, MCP, hooks, permissions, Bash/tools, capture
-  policy, and direct execution inside checkpoints;
+- Claude-specific notes for the one invocation replay target, options,
+  sessions/resume, workspace effects, file checkpointing, transcripts, MCP,
+  hooks, permissions, Bash/tools, capture policy, and direct execution inside
+  checkpoints;
 - verification plan and whether execution was actually run.
 
 Use `references/report-template.md` when a full report is needed.

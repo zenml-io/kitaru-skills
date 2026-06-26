@@ -82,8 +82,9 @@ Kitaru uses durable rerun-from-top execution.
 - **Retry** continues the same execution after failure.
 - **Resume** continues the same execution after a `wait()` is resolved (manual
   fallback if auto-continuation doesn't trigger).
-- **Replay** starts a new execution derived from an earlier one, using
-  checkpoint selectors (not wait selectors) as replay anchors.
+- **Replay** starts a new execution derived from an earlier one, using `at` to
+  choose a checkpoint invocation, tool call, model call, or unambiguous
+  checkpoint name (not a wait selector).
 - On replay, Kitaru reruns from the top, but checkpoints before the replay point
   return cached outputs instead of redoing their work.
 
@@ -360,13 +361,16 @@ Then design replay anchors deliberately.
 
 ### Replay anchor rules
 
-- Stable checkpoint names are the primary replay anchors
-- `from_` targets checkpoint selectors (checkpoint name, invocation ID, or call
-  ID) — wait selectors are not valid replay anchors
-- Override keys use the `checkpoint.<selector>` namespace only; `wait.*`
-  overrides are not supported in replay
-- If the replayed execution reaches a wait, resolve it operationally via
-  `input`, not via override keys
+- Stable checkpoint names are the primary replay anchors for `at`
+- `at` can target one recorded checkpoint invocation, tool call, model call, or
+  an unambiguous checkpoint name; wait selectors are not valid replay anchors
+- Scope the intended override strategy: `flow_overrides` for top-level flow
+  inputs, `checkpoint_overrides` for every call with a checkpoint name, and
+  `invocation_overrides` for one recorded invocation ID or call ID
+- Checkpoint and invocation overrides can use `input`, `output`, `code`, or
+  `model` fields
+- Waits cannot be overridden; if the replayed execution reaches a wait, resolve
+  it operationally via `input`, not via override keys
 - Duplicate or vague names make replay painful later
 
 ### External state replay caveat
@@ -377,7 +381,8 @@ source execution saw. If that would be unsafe, capture the exact value as a
 checkpoint output or saved artifact first.
 
 When scoping, write down which checkpoint names are intended to be stable public
-replay selectors.
+`at` selectors and whether replay experiments should change flow inputs,
+checkpoint outputs/code, or one exact recorded invocation.
 
 ## Phase 6: Adapter strategy
 
@@ -444,7 +449,8 @@ Review the proposed design for these smells:
 - nested checkpoints or attempts to call flows from flows
 - side effects mixed into planning checkpoints
 - artifact sharing with no naming strategy
-- replay needs discussed abstractly but no concrete checkpoint names chosen
+- replay needs discussed abstractly but no concrete `at` selectors or override
+  strategy chosen
 - assuming CLI, client, and MCP all expose the same controls
 - using `KitaruClient` to launch executions (it can't — use flow objects)
 - using SDK `create_stack(...)` for remote stacks (it's local-only)
@@ -480,7 +486,8 @@ The MVP should usually have:
 - one clear operator surface for the main operational tasks
 - a deliberate state persistence decision (artifacts, external system, or
   neither)
-- a small set of stable replay anchors (checkpoint names)
+- a small set of stable replay anchors (`at` selectors) and an intended
+  override strategy
 - output that is genuinely useful on its own
 
 If the user asks for a huge autonomous platform, help them carve out the first
@@ -514,7 +521,7 @@ guide.
 - **Wait input**: [KitaruClient | CLI | MCP]
 - **Wait abort**: [KitaruClient] (only surface with abort_wait)
 - **Resume**: [KitaruClient | CLI] (not MCP)
-- **Replay / cancel**: [surface]
+- **Replay / cancel**: [surface; include `at` selector source and override style]
 - **Artifact inspection**: [KitaruClient | MCP] (not CLI)
 - **Stack management**: [SDK (local only) | CLI (local + remote) | MCP (local + remote)]
 - **Secrets/auth/diagnostics**: [SDK secret helpers | CLI secrets/auth token/info/clean/analytics | MCP metadata-only secret creation/status]
@@ -526,6 +533,7 @@ guide.
 - **Artifact names**: [stable names and what they store]
 - **Inspection surfaces**: [KitaruClient | MCP | dashboard]
 - **Replay caveat**: [if external mutable state is read]
+- **Replay override strategy**: [flow_overrides | checkpoint_overrides | invocation_overrides | none]
 
 ## Flow Design
 
@@ -537,8 +545,10 @@ guide.
   2. [checkpoint_name] — [what it does] -> [output type]
 - **Wait points**:
   - [wait_name] — [what decision/input is needed, schema type]
-- **Replay anchors** (checkpoint selectors only):
-  - [checkpoint_name] — [why this is a stable restart point]
+- **Replay anchors** (`at` selectors, not waits):
+  - [checkpoint_name_or_invocation_id] — [why this is a stable restart point]
+- **Replay override strategy**: [which flow inputs, checkpoint outputs/code, or
+  invocation-specific model/input/output changes are expected]
 - **Replay story**: [what can be regenerated without redoing everything]
 - **Side effects**: [what external systems are touched and how they are guarded]
 
@@ -551,7 +561,7 @@ and how downstream flows obtain upstream execution IDs for `load(...)` calls. If
 external state is shared across flows, name the owning system and update path explicitly.]
 
 ## Naming Strategy
-- **Stable checkpoint names** (replay anchors): [...]
+- **Stable checkpoint names** (`at` replay anchors): [...]
 - **Stable wait names** (operator input handles): [...]
 - **Artifact naming rules**: [...]
 

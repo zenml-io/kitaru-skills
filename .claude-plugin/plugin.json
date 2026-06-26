@@ -1,6 +1,6 @@
 {
   "name": "kitaru",
-  "description": "Claude Code distribution for eight Kitaru Agent Skills: quickstart onboarding, durable flow scoping, authoring with current adapters, and conservative migrations for PydanticAI, OpenAI Agents SDK, LangGraph, Claude Agent SDK, and Gemini Interactions",
+  "description": "Claude Code distribution for eight Kitaru Agent Skills: quickstart onboarding, durable flow scoping, replay/override authoring with current adapters, and conservative migrations for PydanticAI, OpenAI Agents SDK, LangGraph, Claude Agent SDK, and Gemini Interactions",
   "version": "0.7.0",
   "author": {
     "name": "ZenML",
@@ -16,6 +16,10 @@
     "ai-agents",
     "workflows",
     "checkpoints",
+    "replay",
+    "replay-overrides",
+    "execution-diff",
+    "cohort-analysis",
     "human-in-the-loop",
     "migration",
     "adapter-migration",

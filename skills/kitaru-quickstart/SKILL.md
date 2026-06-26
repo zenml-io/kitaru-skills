@@ -287,13 +287,13 @@ with `uv run kitaru executions input <EXEC_ID> --value true` so the replay can
 finish before handoff. If the user chose guided build, use the parked replay
 execution as the bridge into Phase 2 instead of starting another run.
 
-The helper calls `flow.replay(exec_id, from_="<CHECKPOINT_NAME>")` with the
+The helper calls `flow.replay(exec_id, at="<CHECKPOINT_NAME>")` with the
 track's replay checkpoint. This avoids the known local CLI fallback issue
 where direct CLI replay can fail to resolve the flow object. If the helper is
 not available for some reason, the CLI workaround is:
 
 ```bash
-PYTHONPATH=. uv run kitaru executions replay <FAILED_EXEC_ID> --from <CHECKPOINT_NAME>
+PYTHONPATH=. uv run kitaru executions replay <FAILED_EXEC_ID> --at <CHECKPOINT_NAME>
 ```
 
 ### Step 9: Verify in the dashboard and explain
@@ -679,7 +679,7 @@ Enforce these rules throughout the entire session:
    - Local server/dashboard: `uv run kitaru login`, then open
      `http://127.0.0.1:8383`
    - Guided replay: `uv run python demo_flow.py --replay <id>`
-   - CLI replay workaround: `PYTHONPATH=. uv run kitaru executions replay <id> --from <checkpoint>`
+   - CLI replay workaround: `PYTHONPATH=. uv run kitaru executions replay <id> --at <checkpoint>`
    - Wait input: `uv run kitaru executions input <id> --value <json>`
    - There is no `kitaru ui`, `kitaru dashboard`, or top-level `kitaru run`
      command in this quickstart.

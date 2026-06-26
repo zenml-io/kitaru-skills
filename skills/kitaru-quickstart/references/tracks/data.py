@@ -87,7 +87,7 @@ def data_flow(source: str) -> str:
     return load_data(transformed)
 
 
-REPLAY_FROM = "transform"
+REPLAY_AT = "transform"
 DEFAULT_SOURCE = "sales_data_2026_q1.csv"
 
 
@@ -103,7 +103,7 @@ if __name__ == "__main__":
         if len(sys.argv) < 3:
             _usage()
             raise SystemExit(2)
-        handle = data_flow.replay(sys.argv[2], from_=REPLAY_FROM)
+        handle = data_flow.replay(sys.argv[2], at=REPLAY_AT)
     else:
         source = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else DEFAULT_SOURCE
         handle = data_flow.run(source)
