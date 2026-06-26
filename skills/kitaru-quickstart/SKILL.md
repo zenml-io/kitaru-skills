@@ -287,13 +287,15 @@ with `uv run kitaru executions input <EXEC_ID> --value true` so the replay can
 finish before handoff. If the user chose guided build, use the parked replay
 execution as the bridge into Phase 2 instead of starting another run.
 
-The helper calls `flow.replay(exec_id, at="<CHECKPOINT_NAME>")` with the
-track's replay checkpoint. This avoids the known local CLI fallback issue
+The helper calls `flow.replay(exec_id, from_="<CHECKPOINT_NAME>")` with the
+track's replay checkpoint. The quickstart helper intentionally uses `from_`
+until the minimum quickstart Kitaru version is bumped to a release that ships
+`flow.replay(..., at=...)`. This avoids the known local CLI fallback issue
 where direct CLI replay can fail to resolve the flow object. If the helper is
 not available for some reason, the CLI workaround is:
 
 ```bash
-PYTHONPATH=. uv run kitaru executions replay <FAILED_EXEC_ID> --at <CHECKPOINT_NAME>
+PYTHONPATH=. uv run kitaru executions replay <FAILED_EXEC_ID> --from <CHECKPOINT_NAME>
 ```
 
 ### Step 9: Verify in the dashboard and explain
@@ -674,12 +676,15 @@ Enforce these rules throughout the entire session:
    the user.
 
 8. **Real commands only**: Use only documented Kitaru CLI commands and this
-   quickstart's validated forms:
+   quickstart's validated forms. The rest of the skills may document the newer
+   replay `at` API, but these runnable quickstart templates stay on the released
+   `from_` / `--from` form until the quickstart minimum Kitaru version is
+   deliberately bumped:
    - Install: `uv add 'kitaru[local,mcp]>=0.12.0'`
    - Local server/dashboard: `uv run kitaru login`, then open
      `http://127.0.0.1:8383`
    - Guided replay: `uv run python demo_flow.py --replay <id>`
-   - CLI replay workaround: `PYTHONPATH=. uv run kitaru executions replay <id> --at <checkpoint>`
+   - CLI replay workaround: `PYTHONPATH=. uv run kitaru executions replay <id> --from <checkpoint>`
    - Wait input: `uv run kitaru executions input <id> --value <json>`
    - There is no `kitaru ui`, `kitaru dashboard`, or top-level `kitaru run`
      command in this quickstart.

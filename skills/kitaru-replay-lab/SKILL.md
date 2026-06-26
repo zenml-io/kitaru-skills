@@ -263,8 +263,10 @@ kitaru executions replay kr-a kr-b kr-c \
   --output json
 ```
 
-MCP follows the same pattern: resolve with `kitaru_executions_cohort`, inspect
-the selected IDs, then call `kitaru_executions_replay` with `exec_ids`.
+MCP does not expose a dedicated cohort resolver or diff tool in the current
+public server. Use CLI or SDK to resolve cohorts and diff results. In MCP-only
+flows, list and inspect candidate executions first, then call
+`kitaru_executions_replay` with explicit `exec_ids`.
 
 Completion criterion: the user approved or inspected the selected execution list
 before replay submission.

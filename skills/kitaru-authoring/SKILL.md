@@ -302,9 +302,7 @@ inspection**, not for launching new executions.
 - `get_execution_logs`
 - `kitaru_executions_run` (target format: `<module_or_file>:<flow_name>`)
 - `kitaru_executions_input`, `kitaru_executions_retry`,
-  `kitaru_executions_replay`, `kitaru_executions_cohort`,
-  `kitaru_executions_diff`, `kitaru_executions_diff_matrix`,
-  `kitaru_executions_cancel`
+  `kitaru_executions_replay`, `kitaru_executions_cancel`
 - `kitaru_deployments_deploy`, `kitaru_deployments_invoke`,
   `kitaru_deployments_list`, `kitaru_deployments_get`,
   `kitaru_deployments_delete`, `kitaru_deployments_tag`,

@@ -70,7 +70,7 @@ def coding_flow(issue: str) -> str:
     return apply_patch(patch)
 
 
-REPLAY_AT = "generate_patch"
+REPLAY_FROM = "generate_patch"
 DEFAULT_ISSUE = "fix null pointer in data processor"
 
 
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         if len(sys.argv) < 3:
             _usage()
             raise SystemExit(2)
-        handle = coding_flow.replay(sys.argv[2], at=REPLAY_AT)
+        handle = coding_flow.replay(sys.argv[2], from_=REPLAY_FROM)
     else:
         issue = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else DEFAULT_ISSUE
         handle = coding_flow.run(issue)

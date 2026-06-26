@@ -52,12 +52,12 @@ There is no build step, no linter, no test suite. The deliverables are the nine 
 - The SKILL.md frontmatter (`name`, `description`) is what Claude Code uses for skill matching and trigger detection. Keep trigger keywords accurate.
 - All nine skills share the same Kitaru domain model (surfaces, asymmetries, guardrails). Changes to one skill's representation of a constraint (e.g., "waits cannot go inside checkpoints") should be mirrored where relevant.
 - The authoring skill's "common mistakes checklist" and the scoping skill's "anti-patterns" section overlap intentionally — they serve different audiences (implementer vs architect).
-- The quickstart skill's track templates in `references/tracks/` must use only real, documented Kitaru APIs. Template decorator placement is fixed; only internal business logic is customizable.
+- The quickstart skill's track templates in `references/tracks/` must use only real, documented Kitaru APIs. Template decorator placement is fixed; only internal business logic is customizable. The quickstart replay helper currently uses the released `from_` / `--from` form; do not change those templates to `at` / `--at` until the quickstart minimum Kitaru version is bumped to a release that ships that helper API.
 - Keep replay API language synchronized with the current Kitaru replay docs: use
   `at` / `--at`, `flow_overrides`, `checkpoint_overrides`,
-  `invocation_overrides`, and `ReplaySubmission`. Do not regress to old
-  `from_`, `--from`, flat `overrides=...`, or `--override checkpoint.*`
-  examples.
+  `invocation_overrides`, and `ReplaySubmission`. Outside the quickstart
+  templates' released-compatibility helper, do not regress to old `from_`,
+  `--from`, flat `overrides=...`, or `--override checkpoint.*` examples.
 - Native durable memory APIs were removed in Kitaru 0.11.0. Do not reintroduce old native-memory wording or recommend a Kitaru-owned durable key-value state API. Use external/application-owned stores for mutable cross-execution state and pass explicit values or stable references into flows.
 - Plugin version is in both `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` — bump all version fields consistently when publishing updates.
 

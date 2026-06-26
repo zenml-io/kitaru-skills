@@ -93,13 +93,7 @@ Once configured, the Kitaru MCP server exposes these tools:
 - `kitaru_executions_run` — run a flow
 - `kitaru_executions_input` — provide input to a waiting execution
 - `kitaru_executions_retry` — retry a failed execution
-- `kitaru_executions_replay` — replay explicit executions from `at` with flow,
-  checkpoint, or invocation overrides
-- `kitaru_executions_cohort` — resolve a filtered cohort of execution IDs for
-  replay experiments
-- `kitaru_executions_diff` — compare one original execution with replayed runs
-- `kitaru_executions_diff_matrix` — compare many originals with their replayed
-  runs
+- `kitaru_executions_replay` — replay an execution from a checkpoint
 - `kitaru_executions_cancel` — cancel a running execution
 - `get_execution_logs` — read execution logs when the active log backend has entries
 - `kitaru_deployments_deploy` — create a deployment version from a flow target
