@@ -8,13 +8,13 @@ is not directly supported.
 With uv:
 
 ```bash
-uv add 'kitaru[mcp]>=0.12.0'
+uv add 'kitaru[mcp]>=0.19.0'
 ```
 
 Or with pip:
 
 ```bash
-pip install 'kitaru[mcp]>=0.12.0'
+pip install 'kitaru[mcp]>=0.19.0'
 ```
 
 ## Verify installation from the project environment
@@ -93,7 +93,10 @@ Once configured, the Kitaru MCP server exposes these tools:
 - `kitaru_executions_run` — run a flow
 - `kitaru_executions_input` — provide input to a waiting execution
 - `kitaru_executions_retry` — retry a failed execution
-- `kitaru_executions_replay` — replay an execution from a checkpoint
+- `kitaru_executions_replay` — replay one or more executions from an `at` selector
+- `kitaru_executions_cohort` — dry-run cohort selection for replay planning
+- `kitaru_executions_diff` — compare original/replay executions
+- `kitaru_executions_diff_matrix` — compare many original/replay execution pairs
 - `kitaru_executions_cancel` — cancel a running execution
 - `get_execution_logs` — read execution logs when the active log backend has entries
 - `kitaru_deployments_deploy` — create a deployment version from a flow target

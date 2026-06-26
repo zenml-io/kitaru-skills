@@ -167,9 +167,9 @@ not have a formal skill or plugin system.
 - "Replay execution `kr-a8f3c2` at `write_draft` with a top-level `model`
   flow override, then diff the replay against the original."
 - "Replay this failed execution safely and tell me where to restart from."
-- "Run a no-change replay first, then fork with a different model and diff the outputs."
-- "Use CLI to resolve a cohort of recent failed executions, then replay the
-  explicit IDs with one checkpoint override and summarize every `ReplaySubmission` row."
+- "Run a no-change replay first, then fork with a different model and diff the outputs with CLI or MCP."
+- "Use CLI or MCP to resolve a cohort of recent failed executions, then replay
+  the explicit IDs with one checkpoint override and summarize every `ReplaySubmission` row."
 - "This replay diverged — help me diagnose whether the code, selector, or external data changed."
 
 **Adapter authoring:**

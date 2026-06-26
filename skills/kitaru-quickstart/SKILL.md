@@ -133,7 +133,7 @@ This is a tutorial, not a firehose. Throughout the session:
    cd "$DEMO_DIR"
    pwd
    uv init --no-workspace
-   uv add 'kitaru[local,mcp]>=0.12.0'
+   uv add 'kitaru[local,mcp]>=0.19.0'
    ```
 
    Store the printed `pwd` value as `<ABSOLUTE_DEMO_DIR>`.
@@ -141,8 +141,9 @@ This is a tutorial, not a firehose. Throughout the session:
    If `uv add` says only an older Kitaru version is available, explain that
    an ancestor `exclude-newer` setting may be filtering PyPI. Move the demo
    to a neutral path and retry. If it still fails, stop with the clear
-   message that this quickstart needs Kitaru `>=0.12.0` because it expects the
-   current local server, replay, wait, artifact, and MCP surfaces.
+   message that this quickstart needs Kitaru `>=0.19.0` because
+   it expects the consolidated replay API plus the current local server, wait,
+   artifact, and MCP surfaces.
 
 4. **Initialize and verify Kitaru**:
    ```bash
@@ -166,7 +167,7 @@ This is a tutorial, not a firehose. Throughout the session:
 
    Pause here and wait for acknowledgement. If local server startup fails
    because local dependencies are missing, rerun
-   `uv add 'kitaru[local,mcp]>=0.12.0'` and retry once. If the dashboard is
+   `uv add 'kitaru[local,mcp]>=0.19.0'` and retry once. If the dashboard is
    unavailable but `uv run kitaru status` works, ask whether to continue with
    CLI-only inspection.
 
@@ -287,15 +288,13 @@ with `uv run kitaru executions input <EXEC_ID> --value true` so the replay can
 finish before handoff. If the user chose guided build, use the parked replay
 execution as the bridge into Phase 2 instead of starting another run.
 
-The helper calls `flow.replay(exec_id, from_="<CHECKPOINT_NAME>")` with the
-track's replay checkpoint. The quickstart helper intentionally uses `from_`
-until the minimum quickstart Kitaru version is bumped to a release that ships
-`flow.replay(..., at=...)`. This avoids the known local CLI fallback issue
-where direct CLI replay can fail to resolve the flow object. If the helper is
-not available for some reason, the CLI workaround is:
+The helper calls `flow.replay(exec_id, at="<CHECKPOINT_NAME>")` with the
+track's replay checkpoint. This targets the soon-to-be-released consolidated
+replay API in Kitaru `0.19.0`. If the helper is not
+available for some reason, the CLI equivalent is:
 
 ```bash
-PYTHONPATH=. uv run kitaru executions replay <FAILED_EXEC_ID> --from <CHECKPOINT_NAME>
+PYTHONPATH=. uv run kitaru executions replay <FAILED_EXEC_ID> --at <CHECKPOINT_NAME>
 ```
 
 ### Step 9: Verify in the dashboard and explain
@@ -312,7 +311,7 @@ Tell the user:
 > no burned tokens, no repeated API calls, no lost progress."
 
 **Verification**: If replay fails, read the full output. First retry with the
-`PYTHONPATH=.` CLI workaround above. If that also fails, stop and present the
+`PYTHONPATH=.` CLI command above. If that also fails, stop and present the
 error instead of looping.
 
 End the phase with a plain-language recap and ask whether to continue. If
@@ -473,7 +472,7 @@ If no markers are found or multiple match, ask which host the user is using.
 Phase 0 installs the MCP extra. If that was skipped or changed, run:
 
 ```bash
-uv add 'kitaru[local,mcp]>=0.12.0'
+uv add 'kitaru[local,mcp]>=0.19.0'
 ```
 
 Then verify through the project environment:
@@ -676,15 +675,13 @@ Enforce these rules throughout the entire session:
    the user.
 
 8. **Real commands only**: Use only documented Kitaru CLI commands and this
-   quickstart's validated forms. The rest of the skills may document the newer
-   replay `at` API, but these runnable quickstart templates stay on the released
-   `from_` / `--from` form until the quickstart minimum Kitaru version is
-   deliberately bumped:
-   - Install: `uv add 'kitaru[local,mcp]>=0.12.0'`
+   quickstart's validated forms. This PR/branch targets Kitaru `0.19.0`, so replay examples must use
+   `at` / `--at` consistently:
+   - Install: `uv add 'kitaru[local,mcp]>=0.19.0'`
    - Local server/dashboard: `uv run kitaru login`, then open
      `http://127.0.0.1:8383`
    - Guided replay: `uv run python demo_flow.py --replay <id>`
-   - CLI replay workaround: `PYTHONPATH=. uv run kitaru executions replay <id> --from <checkpoint>`
+   - CLI replay equivalent: `PYTHONPATH=. uv run kitaru executions replay <id> --at <checkpoint>`
    - Wait input: `uv run kitaru executions input <id> --value <json>`
    - There is no `kitaru ui`, `kitaru dashboard`, or top-level `kitaru run`
      command in this quickstart.

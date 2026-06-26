@@ -7,7 +7,9 @@ description: >
   ReplaySubmission, or use SDK/CLI/MCP replay tools on real execution IDs.
   Triggers on kitaru replay lab, replay experiment, reproduce then fork,
   replay failed execution, replay cohort, execution recovery, replay diff,
-  ReplaySubmission, `kitaru executions replay`, or `kitaru_executions_replay`.
+  ReplaySubmission, `kitaru executions replay`, `kitaru_executions_replay`,
+  `kitaru_executions_cohort`, `kitaru_executions_diff`, or
+  `kitaru_executions_diff_matrix`.
 ---
 
 # Kitaru Replay Lab
@@ -221,8 +223,9 @@ CLI:
 kitaru executions diff kr-source kr-baseline kr-variant --output json
 ```
 
-For several originals, use `kitaru.diff_matrix(...)` or
-`kitaru executions diff-matrix ...` after replay children exist.
+For several originals, use `kitaru.diff_matrix(...)`,
+`kitaru executions diff-matrix ...`, or `kitaru_executions_diff_matrix` after
+replay children exist.
 
 Explain the result as a story:
 
@@ -263,10 +266,12 @@ kitaru executions replay kr-a kr-b kr-c \
   --output json
 ```
 
-MCP does not expose a dedicated cohort resolver or diff tool in the current
-public server. Use CLI or SDK to resolve cohorts and diff results. In MCP-only
-flows, list and inspect candidate executions first, then call
-`kitaru_executions_replay` with explicit `exec_ids`.
+MCP also exposes consolidated replay-lab tools. Use
+`kitaru_executions_cohort` for cohort dry-runs, `kitaru_executions_replay` for
+submitting the selected executions, `kitaru_executions_diff` for a small
+original/replay comparison, and `kitaru_executions_diff_matrix` for many
+original/replay pairs. CLI and MCP are both valid for cohort and diff flows; use
+whichever interface the user already has open.
 
 Completion criterion: the user approved or inspected the selected execution list
 before replay submission.
