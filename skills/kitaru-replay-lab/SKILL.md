@@ -144,7 +144,7 @@ Use `flow_overrides` for top-level flow parameters:
 variant = client.executions.replay(
     "kr-source",
     at="write_draft",
-    flow_overrides={"model": "openai:gpt-5-nano"},
+    flow_overrides={"prompt_profile": "concise"},
 )
 ```
 
@@ -174,9 +174,17 @@ variant = client.executions.replay(
 Checkpoint and invocation overrides may use:
 
 - `input` — replace target inputs, then rerun that target and downstream work;
-- `output` — inject a target output; the target does not run;
-- `code` — import a replacement callable when the target reruns;
-- `model` — change a supported LLM checkpoint call only.
+- `output` — inject a target output for downstream consumers; the target does
+  not run, but this is not a general side-effect suppressor;
+- `code` — import a signature-compatible replacement callable when the target
+  reruns; this is only valid for recorded `tool_call` checkpoints;
+- `model` — change a supported `llm_call` checkpoint call only.
+
+Output overrides need a downstream consumer. They can fail before submission if
+there is no later checkpoint input to receive the injected value, and they cannot
+neutralize a final checkpoint that already performs a side effect. For replayed
+side effects, use `kitaru.is_replay()`, idempotency, or a different checkpoint
+design.
 
 Use `skip` only when a later recorded call should reuse its saved output even
 though `at` would normally rerun it. Do not skip and override the same target.
@@ -259,7 +267,7 @@ Then replay the chosen IDs:
 ```bash
 kitaru executions replay kr-a kr-b kr-c \
   --at write_draft \
-  --flow-overrides '{"model":"openai:gpt-5-nano"}' \
+  --flow-overrides '{"prompt_profile":"concise"}' \
   --tag replay-lab-model-swap \
   --wait \
   --on-error collect \
@@ -316,12 +324,18 @@ execution reaches a wait, resolve it with:
 - CLI: `kitaru executions input <exec_id> --value ...`
 - MCP: `kitaru_executions_input`
 
+To abort the pending wait, use `client.executions.abort_wait(...)` or CLI
+`kitaru executions input <exec_id> --abort`. Do not claim MCP wait abort unless
+the MCP server adds a dedicated tool.
+
 ### Runtime-only overrides
 
-`code` overrides and targeted `model` overrides may require the Kitaru flow
-wrapper to be importable from the current project. If Kitaru falls back to a
-lower-level replay path, it may reject those overrides. Run replay from the
-project directory or remove the runtime-only override.
+`code` overrides are runtime-only and only valid for recorded `tool_call`
+targets. Targeted `model` overrides are runtime-only and only valid for
+supported `llm_call` checkpoints. Both may require the Kitaru flow wrapper to be
+importable from the current project. If Kitaru falls back to a lower-level
+replay path, it may reject those overrides. Run replay from the project
+directory or remove the runtime-only override.
 
 ## Adapter honesty
 
@@ -339,9 +353,9 @@ provider or framework internals are replayable.
   replay Google-hosted tools, managed-agent steps, MCP, web/code execution, or
   Antigravity sandbox internals granularly.
 
-If a side effect must be safe under replay, put it in a Kitaru checkpoint that
-Kitaru can see, make it idempotent, or record an explicit artifact/reference for
-inspection.
+If a side effect must be safe under replay, guard it with `kitaru.is_replay()`,
+put it in a Kitaru checkpoint that Kitaru can see, make it idempotent, or record
+an explicit artifact/reference for inspection.
 
 ## Do not regress to old replay APIs
 

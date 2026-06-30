@@ -290,7 +290,9 @@ Good pattern:
 3. commit the side effect in its own checkpoint
 
 Isolate non-idempotent actions such as sending emails, creating PRs, or writing
-to external systems.
+to external systems. Replay from a side-effect checkpoint runs that side effect
+again unless the flow guards it. State whether each side effect is idempotent,
+guarded with `kitaru.is_replay()`, or placed after an approval wait.
 
 ## Phase 4: Choose the operator surface
 
@@ -308,7 +310,7 @@ Ask which surface will be used for each job:
 - cancel a stuck run
 - inspect artifacts
 - create/manage stacks
-- create/read/delete secrets
+- manage secrets, noting which interface can create, read, or delete them
 - obtain short-lived auth tokens for raw HTTP calls
 - generate deployment curl commands for operators or CI
 - reset local/project state with `clean`
@@ -333,7 +335,7 @@ Important asymmetries to account for in the design:
 | Launch new execution | Yes (flow object / Python entrypoint) | No | No top-level run command | Yes |
 | Inspect execution | Limited | Yes | Yes | Yes |
 | Resolve wait input | No | Yes | Yes | Yes |
-| Abort wait | No | Yes | No | No |
+| Abort wait | No | Yes (`abort_wait`) | Yes (`executions input <exec_id> --abort`) | No |
 | Resume paused execution | No | Yes | Yes | No |
 | Replay execution | Yes (flow object) | Yes | Yes | Yes |
 | Browse artifacts | No | Yes | No | Yes |
@@ -368,7 +370,13 @@ Then design replay anchors deliberately.
   inputs, `checkpoint_overrides` for every call with a checkpoint name, and
   `invocation_overrides` for one recorded invocation ID or call ID
 - Checkpoint and invocation overrides can use `input`, `output`, `code`, or
-  `model` fields
+  `model` fields:
+  - `code` is only for recorded `tool_call` checkpoints.
+  - `model` is only for supported `llm_call` checkpoints.
+  - `output` needs a downstream consumer and cannot neutralize terminal side
+    effects.
+- If the design relies on replaying around side effects, explicitly plan
+  `kitaru.is_replay()` guards, idempotency, or approval before the side effect.
 - Waits cannot be overridden; if the replayed execution reaches a wait, resolve
   it operationally via `input`, not via override keys
 - Duplicate or vague names make replay painful later
@@ -519,12 +527,12 @@ guide.
 - **Launch / deploy**: [SDK flow object / Python entrypoint | CLI deploy/invoke | deployment endpoint | MCP] (not KitaruClient for raw new flow launches)
 - **Logs / inspection**: [KitaruClient | CLI | MCP]
 - **Wait input**: [KitaruClient | CLI | MCP]
-- **Wait abort**: [KitaruClient] (only surface with abort_wait)
+- **Wait abort**: [KitaruClient `abort_wait` | CLI `executions input <exec_id> --abort`] (not MCP)
 - **Resume**: [KitaruClient | CLI] (not MCP)
 - **Replay / cancel**: [surface; include `at` selector source and override style]
 - **Artifact inspection**: [KitaruClient | MCP] (not CLI)
 - **Stack management**: [SDK (local only) | CLI (local + remote) | MCP (local + remote)]
-- **Secrets/auth/diagnostics**: [SDK secret helpers | CLI secrets/auth token/info/clean/analytics | MCP metadata-only secret creation/status]
+- **Secrets/auth/diagnostics**: [SDK secret helpers | CLI secrets/auth token/info/clean/analytics | MCP metadata-only secret creation/status, no MCP secret read/delete]
 
 ## State and Artifact Strategy
 - **Execution-linked values**: [what should be saved as artifacts]

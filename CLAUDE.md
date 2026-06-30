@@ -61,6 +61,15 @@ There is no build step, no linter, no test suite. The deliverables are the nine 
   `invocation_overrides`, and `ReplaySubmission`. Do not regress to old `from_`,
   `--from`, flat `overrides=...`, or `--override checkpoint.*` examples,
   except when explicitly warning users not to use the old API.
+- Replay override constraints matter: `code` overrides are only valid for
+  recorded `tool_call` targets, `model` overrides are only valid for supported
+  `llm_call` targets, and `output` overrides need a downstream consumer rather
+  than neutralizing terminal side effects.
+- CLI wait abort exists as `kitaru executions input <exec_id> --abort`; do not
+  describe KitaruClient as the only wait-abort surface.
+- MCP secret support is metadata-only creation through `kitaru_secrets_create`;
+  do not document MCP secret read/delete unless the Kitaru source adds those
+  tools.
 - Native durable memory APIs were removed in Kitaru 0.11.0. Do not reintroduce old native-memory wording or recommend a Kitaru-owned durable key-value state API. Use external/application-owned stores for mutable cross-execution state and pass explicit values or stable references into flows.
 - Plugin version is in both `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` — bump all version fields consistently when publishing updates.
 

@@ -213,9 +213,16 @@ Checkpoint and invocation overrides can use these fields:
 - `input` — replace the target inputs, then rerun that target and downstream
   checkpoints.
 - `output` — inject a value as the target output; the target checkpoint does not
-  run.
-- `code` — import a replacement callable for the target when it reruns.
-- `model` — change the model for supported LLM checkpoint calls only.
+  run. The injected value must feed downstream work; it is not a way to suppress
+  a final checkpoint that performs a side effect.
+- `code` — import a signature-compatible replacement callable for the target
+  when it reruns. This is only valid for recorded `tool_call` checkpoints.
+- `model` — change the model for supported `llm_call` checkpoint calls only.
+
+Replay runs Python from `at` onward. If the replayed work sends a Slack message,
+writes to a database, charges a card, or creates a PR, that action can happen
+again. Use `kitaru.is_replay()`, idempotent external writes, or a replay-safe
+flow design when side effects matter.
 
 `skip` can force a recorded invocation or call to reuse its saved output even
 though it is at or after `at`. Do not both skip and override the same target.
@@ -235,6 +242,8 @@ When a flow hits `wait()`, the execution pauses. The resolution flow is:
    value=...)`, CLI `kitaru executions input`, or MCP
    `kitaru_executions_input`
 2. **Abort a wait** — use `client.executions.abort_wait(exec_id, wait=...)`
+   or CLI `kitaru executions input <exec_id> --abort` (an `input` command mode,
+   not a separate abort command)
 3. **Resume** — if the execution does not continue automatically after input is
    provided, use `client.executions.resume(exec_id)` or
    `kitaru executions resume` as a manual fallback
@@ -288,7 +297,8 @@ inspection**, not for launching new executions.
 - `secrets set / show / list / delete`
 - `build`, `deploy`, `invoke`, `flow deployments list/show/delete/logs/curl`, and `flow tag` / `flow untag`
 - `executions get / list / latest / statistics / logs / input / replay / cohort`
-  (dry-run replay selection) / `diff / diff-matrix / retry / resume / cancel`
+  (dry-run replay selection) / `diff / diff-matrix / retry / resume / cancel`;
+  `executions input` covers both wait values and `--abort`
 - List commands use `--page` / `--size` pagination where documented; `--limit`
   is a first-page shortcut for compatible lists
 - JSON output contract: `--output json` / `-o json` emits
@@ -310,7 +320,7 @@ inspection**, not for launching new executions.
   `kitaru_deployments_delete`, `kitaru_deployments_tag`,
   `kitaru_deployments_untag`
 - `kitaru_artifacts_list`, `kitaru_artifacts_get`
-- `kitaru_secrets_create` (metadata-only secret creation; no MCP delete tool)
+- `kitaru_secrets_create` (metadata-only secret creation; no MCP secret read/delete tools)
 - `kitaru_start_local_server`, `kitaru_stop_local_server`, `kitaru_status`,
   `kitaru_stacks_list`
 - `manage_stack` (create/delete; supports `local`, `kubernetes`, `vertex`,
@@ -323,7 +333,7 @@ inspection**, not for launching new executions.
 | Launch new execution | Yes (flow object / Python entrypoint) | No | No top-level run command | Yes (`kitaru_executions_run`) |
 | Inspect execution | Limited (FlowHandle) | Yes | Yes | Yes |
 | Resolve wait input | No | Yes | Yes | Yes |
-| Abort wait | No | Yes (`abort_wait`) | No | No |
+| Abort wait | No | Yes (`abort_wait`) | Yes (`executions input <exec_id> --abort`) | No |
 | Resume paused execution | No | Yes | Yes | No |
 | Replay execution | Yes (flow object) | Yes | Yes | Yes |
 | Select replay cohort | No | No | Yes | Yes |
@@ -520,6 +530,8 @@ managed-agent/preset use case, not as the core adapter identity.
 - Using old replay APIs: `from_=...`, `--from`, flat `overrides=...`, or
   `--override checkpoint.*` examples
 - Using `wait.*` override keys in replay (they are not supported)
+- Using `code` overrides on anything other than recorded `tool_call` checkpoints
+- Using `output` overrides to suppress a terminal side-effect checkpoint
 - Assuming CLI, client, and MCP expose the same operation set
 - Using `KitaruClient` to launch new executions (it's for
   inspection/control only)
