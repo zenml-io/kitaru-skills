@@ -155,6 +155,11 @@ Look for:
 - Treat `context=` as OpenAI Agents SDK runtime context, not Kitaru metadata.
 - Use `context_cache_identity=` for production context objects so replay does
   not mix tenants, users, threads, or tool settings.
+- For replay planning, `runner_call` gives one outer runner-call `at` target;
+  `calls` can expose supported model/local-tool calls as separate targets. Be
+  cautious with `invocation_overrides` on side-effectful tools or model calls:
+  replay may run the target again unless the side effect is idempotent or moved
+  behind a safer checkpoint.
 - Keep checkpoint outputs serializable. Return Kitaru adapter result envelopes or
   simple values, not arbitrary live SDK objects.
 - Use stable agent and runner names. If names are missing or generated from
@@ -213,6 +218,8 @@ Every non-trivial migration must include or draft `MIGRATION_REPORT.md` with:
 - Direct translations.
 - Approximate translations and caveats.
 - Flagged items with severity and required action.
+- Replay target granularity (`runner_call` versus supported `calls`) and any
+  `invocation_overrides` that could repeat a side-effectful tool/model call.
 - OpenAI-specific notes for result status, approval/resume, context,
   capture/privacy policy, side-effectful tools, SDK version compatibility, and
   API-key handling.

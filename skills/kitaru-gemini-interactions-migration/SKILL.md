@@ -157,6 +157,11 @@ Look for:
   projects, regions, credentials, clients, or environment configuration.
 - Treat statuses other than `completed` and `requires_action` as not safely
   checkpointable final outputs.
+- For replay planning, one stable interaction response becomes the `at` target.
+  Do not promise granular overrides for Google-hosted tools, MCP, web/code
+  execution, managed-agent steps, or Antigravity internals. If replay reaches a
+  `requires_action` / wait path, handle local tool work or human input through
+  normal flow logic and input handling.
 
 ## Gemini Interactions migration quick guide
 
@@ -209,10 +214,11 @@ Every non-trivial migration must include or draft `MIGRATION_REPORT.md` with:
 - direct translations;
 - approximate translations and caveats;
 - flagged items with severity and required action;
-- Gemini-specific notes for stable statuses, `requires_action`, function
-  results, polling/background jobs, model vs agent targets, Antigravity,
-  environments, Vertex/API-key/region/client configuration, `cache_identity`,
-  capture/privacy policy, and hosted tools;
+- Gemini-specific notes for the one stable interaction replay target, stable
+  statuses, `requires_action`, normal flow/input handling after a wait or action
+  request, function results, polling/background jobs, model vs agent targets,
+  Antigravity, environments, Vertex/API-key/region/client configuration,
+  `cache_identity`, capture/privacy policy, and hosted tools;
 - verification plan and whether execution was actually run.
 
 Use `references/report-template.md` when a full report is needed.
