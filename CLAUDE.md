@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-This repository contains **Kitaru Agent Skills** for [Kitaru](https://kitaru.ai) — ZenML's durable execution layer for Python agent workflows — plus Claude Code plugin packaging. It contains no application code; the deliverables are nine Markdown skills plus quickstart and migration references that teach agent hosts how to onboard, scope, author, and migrate Kitaru workflows.
+This repository contains **Kitaru Agent Skills** for [Kitaru](https://kitaru.ai) — ZenML's replay-and-regression layer for agents, built on a durable execution foundation for Python workflows — plus Claude Code plugin packaging. It contains no application code; the deliverables are nine Markdown skills plus quickstart and migration references that teach agent hosts how to onboard, scope, author, and migrate Kitaru workflows.
 
 Claude Code distribution is supported through the `.claude-plugin/` metadata and the Claude Code marketplace entry `zenml-io/kitaru-skills`.
 

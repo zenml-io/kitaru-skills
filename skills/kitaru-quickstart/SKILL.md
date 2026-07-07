@@ -15,6 +15,11 @@ Build and run a working Kitaru demo tailored to the user's domain. Take
 someone from "I've heard of Kitaru" to "I understand crash recovery, replay,
 waits, artifacts, and the dashboard" in a single teaching session.
 
+When narrating, frame the payoff canon-consistently: durable checkpoints and
+waits are the foundation, not the pitch. The point is that Kitaru records real
+runs faithfully enough that you can change your agent and re-run the change
+against what actually happened — and catch what breaks before your users do.
+
 > **Relationship to other skills**:
 > - `kitaru-quickstart` (`/kitaru-quickstart` in Claude Code) → activation and intuition (this skill)
 > - `kitaru-scoping` (`/kitaru-scoping` in Claude Code) → design durability for a real workflow
@@ -247,7 +252,7 @@ Tell the user:
 > everything before that crash is just gone unless you built your own save
 > system. With Kitaru, checkpoint 1 is already persisted. Think of it like a
 > video game save point: we can fix the bug and resume from the save instead
-> of replaying the whole level."
+> of playing the whole level again."
 
 ### Step 6: Fix the code
 
@@ -307,8 +312,10 @@ Tell the user:
 
 > "The important thing is not just that the code ran after the fix. The
 > important thing is where it restarted. Kitaru kept the completed checkpoint
-> and replayed from the named boundary. That's the durable-execution trick:
-> no burned tokens, no repeated API calls, no lost progress."
+> and re-ran your fix from the named boundary against the record of the failed
+> run — no burned tokens, no repeated API calls, no lost progress. Durable
+> checkpoints are the foundation; the payoff is what you just did: change the
+> code and re-run the change against what really happened."
 
 **Verification**: If replay fails, read the full output. First retry with the
 `PYTHONPATH=.` CLI command above. If that also fails, stop and present the

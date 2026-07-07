@@ -1,7 +1,13 @@
 # Kitaru Agent Skills
 
 Reusable Markdown agent skills for discovering, designing, migrating, and
-building durable AI agent workflows with [Kitaru](https://kitaru.ai).
+building agent workflows with [Kitaru](https://kitaru.ai) — the
+replay-and-regression layer for agents.
+
+Observability tools watch your agent. Kitaru turns your production traces into
+a faithful environment you can re-run — so when you change your agent, you
+catch what breaks before your users do. Durable checkpoints, waits, and resume
+are the foundation that replay is built on.
 
 This repository contains nine shared skill directories plus Claude Code plugin
 packaging. Claude Code can install the skills through its plugin flow. Codex,

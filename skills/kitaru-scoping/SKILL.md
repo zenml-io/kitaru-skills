@@ -45,8 +45,10 @@ Your value is to turn that fog into a practical architecture.
 
 ## What Kitaru is
 
-Kitaru is a durable execution layer for Python workflows built around four
-user-facing surfaces:
+Kitaru is **the replay-and-regression layer for agents.** It records real
+executions faithfully enough that a change can be re-run against what actually
+happened. That fidelity rests on a durable execution foundation for Python
+workflows, exposed through four user-facing surfaces:
 
 - **SDK primitives**: `@flow`, `@checkpoint`, `wait()`, `log()`, `save()`,
   `load()`, `llm()`, `current_execution_id()`, plus configuration helpers,
