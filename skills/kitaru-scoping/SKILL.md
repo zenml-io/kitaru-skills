@@ -498,7 +498,7 @@ The MVP should usually have:
   neither)
 - a small set of stable replay anchors (`at` selectors) and an intended
   override strategy
-- output that is genuinely useful on its own
+- output that is useful on its own
 
 If the user asks for a huge autonomous platform, help them carve out the first
 valuable flow instead of agreeing to build the whole city at once.
