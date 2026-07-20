@@ -50,12 +50,24 @@ For a JSONL preview:
 ```bash
 kitaru import langfuse <export.jsonl> \
   --source-project-id <project-id> \
+  --trace-id <selected-trace-id> \
   --agent <agent-name> \
   --agent-version <exact-version> \
   --stack <exact-stack-name-or-id>
 ```
 
-For a known remote trace:
+For a known remote trace, first require the optional Langfuse integration:
+
+```text
+kitaru[langfuse]
+langfuse>=4.7.0,<5
+```
+
+Verify the installed Kitaru release supports this range and that the optional
+SDK imports successfully before requesting credentials or fetching a trace. If
+not, place the remote path on HOLD and show the installation requirement.
+
+Then preview the known trace:
 
 ```bash
 kitaru import langfuse "langfuse://trace/<trace-id>" \
@@ -67,6 +79,10 @@ kitaru import langfuse "langfuse://trace/<trace-id>" \
 The remote form reads `LANGFUSE_PUBLIC_KEY`,
 `LANGFUSE_SECRET_KEY`, and optionally `LANGFUSE_BASE_URL` or
 `LANGFUSE_HOST`. Never print their values.
+
+For JSONL, require the preview to report exactly one selected trace before
+showing storage consent. Preserve the exact `--trace-id` selector in the write
+command.
 
 Show the exact stack selector and its reported storage accessibility in the
 consent card. Reuse the identical preview command for the write so the

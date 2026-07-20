@@ -79,7 +79,9 @@ verdict and actual spend
 CI test path and readiness
 ```
 
-Keep prompts, observation payloads, customer data, tool arguments, tool results,
+Permit approved project-relative source entrypoints and test paths because they
+identify the code under review. Keep absolute user paths, trace-derived paths,
+prompts, observation payloads, customer data, tool arguments, tool results,
 credentials, and secrets out of the case file and visual report.
 
 ## Phase 0: Establish the agent under test
@@ -118,8 +120,11 @@ Resolve the source as one of:
 - Langfuse observations JSONL;
 - read-only discovery through a host-provided Langfuse or browser integration.
 
-For JSONL, enumerate trace identities without writing. For remote Langfuse
-without an exact ID, explain that Kitaru cannot discover traces, show the
+For JSONL, enumerate trace identities without writing. Preserve the selected
+trace with `--trace-id <selected-trace-id>` in preview and write commands. For
+remote Langfuse, verify the supported `kitaru[langfuse]` dependency before
+requesting credentials. Without an exact ID, explain that Kitaru cannot discover
+traces, show the
 candidate criteria from the adaptation contract, and help the user select in
 Langfuse.
 
@@ -140,7 +145,7 @@ Never guess or infer a remote trace ID.
 
 Run Kitaru's dry-run preview first. Validate:
 
-- exactly the selected trace appears;
+- exactly one trace is selected and its ID equals the chosen trace;
 - source attribution is verified or explicitly caller-attributed;
 - no version conflict or rejected outcome exists;
 - graph integrity and fragmentation are disclosed;
@@ -154,9 +159,9 @@ be stored, the stack's reported storage accessibility, and that importing calls
 neither the model nor the agent's tools. Show message-history boundary status as
 HOLD with `adapter validation pending`.
 
-Pause for explicit storage consent. Only then reuse the identical preview
-command and exact `--stack` selector, adding `--write` and
-`--confirm-data-storage`.
+Pause for explicit storage consent only when the preview reports
+`selected_trace_count == 1`. Then reuse the identical `--trace-id` and
+`--stack` selectors, adding `--write` and `--confirm-data-storage`.
 
 Accept a successful created, resumed, or unchanged outcome and capture the
 exact imported execution ID. Inspect it with the normal execution surface.
@@ -299,6 +304,19 @@ check returns the same stored attempt. Otherwise end STOPPED SAFELY.
 Read the CI reference. Propose deterministic scorer, protection, recorded-tool,
 boundary, and idempotency tests before the paid live gate.
 
+Before generating an enabled recurring gate, obtain standing CI authorization
+with a visual card that shows:
+
+- workflow triggers and expected run frequency;
+- the AgentVersion registration performed for each commit;
+- credential and provider scope;
+- maximum spend per run and estimated monthly or scheduled spend;
+- retry and idempotency behavior;
+- who can disable or change the gate.
+
+Without standing authorization, generate the live test disabled behind an
+explicit environment opt-in and credential skip.
+
 Generate the project-specific CI test only after showing:
 
 - exact target path;
@@ -307,8 +325,9 @@ Generate the project-specific CI test only after showing:
 - idempotency strategy;
 - objective and protections;
 - limits;
-- live-provider markers and credential behavior;
-- expected pull-request and scheduled-suite cost.
+- live-provider markers, explicit opt-in, and credential skip behavior;
+- expected pull-request and scheduled-suite cost;
+- whether recurring CI execution has standing authorization.
 
 Run the narrowest available non-live validation. Run the live gate only under a
 separate paid authorization unless it was included in the exact Phase 6
@@ -319,7 +338,9 @@ protection must make the containing CI job required before it blocks a merge.
 
 **Completion criterion:** the proposed or approved test targets the exact
 experiment, uses a commit-derived candidate version, explicit limits, a stable
-idempotency key, and `assert_pass()`. Report merge-gate wiring separately.
+idempotency key, `assert_pass()`, repository live markers, credential skipping,
+and an explicit opt-in unless recurring spend has standing authorization. Report
+merge-gate wiring and recurring authorization separately.
 
 ## Finish
 

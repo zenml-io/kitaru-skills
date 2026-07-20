@@ -50,8 +50,9 @@ Explain the consequence in the user's terms. For example:
 > the real refund function runs. The blocked attempt still tells us whether the
 > candidate tried the forbidden action.
 
-Never make secrets, prompts, file paths, customer data, or raw tool values part
-of a report.
+Permit approved project-relative source and test paths when they identify the
+code under review. Keep absolute user paths, trace-derived paths, secrets,
+prompts, customer data, and raw tool values out of reports.
 
 ## Trace selection
 

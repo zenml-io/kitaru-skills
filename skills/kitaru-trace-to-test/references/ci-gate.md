@@ -17,6 +17,25 @@ A case is eligible only when:
 A root-input replay, divergent tool path, blocked recorded response, missing
 protection, HOLD, or FAIL is not gate-ready.
 
+## Recurring authorization
+
+Treat a live CI gate as standing authorization for future persistent
+registrations and paid replay requests. Before enabling it, show:
+
+| Authorization fact | Required value |
+|---|---|
+| Triggers | pull request, push, schedule, or manual |
+| Frequency | expected runs per day, week, or month |
+| Registration | one immutable AgentVersion per candidate commit |
+| Credentials | provider and CI secret scope |
+| Spend | maximum per run and estimated recurring total |
+| Retries | job retry behavior and idempotency key reuse |
+| Control | who can disable or change the required job |
+
+Obtain explicit standing authorization for that configuration. Without it, keep
+the live test behind `KITARU_RUN_REPLAY_GATE=1` and leave the CI job disabled or
+manual.
+
 ## Exact experiment pattern
 
 Use the exact experiment ID. Register the current candidate with a
@@ -29,15 +48,25 @@ Adapt this shape to the project rather than copying names:
 import hashlib
 import os
 
+import pytest
+
 from kitaru import RegressionLimits
 
 from my_agent.evals import candidate_agent, quality_objective
 
 
 EXPERIMENT_ID = "<exact-experiment-id>"
+PROVIDER_CREDENTIAL = "<PROVIDER_API_KEY>"
+PROVIDER_MARKER = "<repository-provider-marker>"
+
+pytestmark = [pytest.mark.live_llm, getattr(pytest.mark, PROVIDER_MARKER)]
 
 
 def test_incident_regression_gate() -> None:
+    if os.environ.get("KITARU_RUN_REPLAY_GATE") != "1":
+        pytest.skip("set KITARU_RUN_REPLAY_GATE=1 to authorize paid replay")
+    if not os.environ.get(PROVIDER_CREDENTIAL):
+        pytest.skip(f"{PROVIDER_CREDENTIAL} is not configured")
     candidate_ref = os.environ.get("GITHUB_SHA") or os.environ[
         "KITARU_CANDIDATE_LABEL"
     ]
@@ -62,6 +91,10 @@ def test_incident_regression_gate() -> None:
     )
     result.assert_pass()
 ```
+
+Replace the provider credential and marker placeholders with the repository's
+actual values. Keep the opt-in guard even after standing authorization; enable
+it deliberately in the authorized CI job environment.
 
 In CI, `GITHUB_SHA` supplies the immutable candidate identity. For local
 execution, require an explicit `KITARU_CANDIDATE_LABEL` derived from a commit
@@ -109,6 +142,7 @@ Keep the provider test:
 
 - under the repository's live-test location;
 - marked with the repository's provider and live-spend markers;
+- disabled unless `KITARU_RUN_REPLAY_GATE=1`;
 - skipped cleanly when credentials are absent;
 - limited to one trial on pull requests;
 - configured with a short bounded prompt and explicit operational limits.
@@ -126,6 +160,8 @@ Do not place paid provider calls in deterministic test jobs.
 | Spend | one trial and explicit cost, token, and duration limits |
 | Verdict | `assert_pass()` |
 | Local checks | deterministic tests pass |
+| CI authorization | recurring triggers, credentials, registration, spend, and retries are approved |
+| Opt-in | `KITARU_RUN_REPLAY_GATE=1` is set only in the authorized job |
 | CI wiring | containing job exists and credential behavior is documented |
 | Merge protection | required-job configuration is verified or explicitly outstanding |
 
