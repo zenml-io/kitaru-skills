@@ -86,10 +86,10 @@ Ask one precise question:
 
 Do not ask "Continue?" or combine unrelated approvals.
 
-In reduced/demo mode, combine several read-only findings into one pause card,
-but keep storage, paid execution, and file edits as separate authorized actions
-unless one paid-execution card states the exact trace, candidate, limits, and
-expected spend.
+In reduced/demo mode, combine several read-only findings into one pause card.
+Always keep storage, paid execution, and file edits as separate authorized
+actions. A paid-execution card authorizes only the exact trace, candidate,
+limits, and expected spend it states.
 
 ## Required visual outputs
 
