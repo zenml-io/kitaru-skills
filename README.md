@@ -3,7 +3,7 @@
 Reusable Markdown agent skills for discovering, designing, migrating, and
 building durable AI agent workflows with [Kitaru](https://kitaru.ai).
 
-This repository contains nine shared skill directories plus Claude Code plugin
+This repository contains ten shared skill directories plus Claude Code plugin
 packaging. Claude Code can install the skills through its plugin flow. Codex,
 Cursor, and other agent hosts can use the Markdown skill files and the
 host-specific MCP setup guides where their local skill, rule, or context-loading
@@ -16,6 +16,7 @@ workflow supports that pattern.
 | **kitaru-quickstart** | `kitaru-quickstart` (`/kitaru-quickstart` in Claude Code) | Interactive onboarding: scaffolds a personalized demo flow, demonstrates crash recovery with replay, human-in-the-loop with `wait()`, artifact capture, and optional MCP integration |
 | **kitaru-scoping** | `kitaru-scoping` (`/kitaru-scoping` in Claude Code) | Structured interview to validate whether your workflow benefits from durable execution, then designs the flow architecture (checkpoint boundaries, wait points, replay anchors, artifact strategy, operator surface, MVP scope) |
 | **kitaru-authoring** | `kitaru-authoring` (`/kitaru-authoring` in Claude Code) | Guide for writing Kitaru flows, checkpoints, waits, logging, artifacts, `KitaruClient`, replay/resume/retry, deployments, secrets, CLI/MCP tools, and adapters for PydanticAI, OpenAI Agents, LangGraph, Claude Agent SDK, and Gemini Interactions |
+| **kitaru-replay-lab** | `kitaru-replay-lab` (`/kitaru-replay-lab` in Claude Code) | Operational replay lab for existing executions: reproduce first, fork one change, inspect `ReplaySubmission`, diff results, replay cohorts, and diagnose waits, skipped rows, failures, and divergence |
 | **kitaru-trace-to-test** | `kitaru-trace-to-test` (`/kitaru-trace-to-test` in Claude Code) | User-invoked visual investigation that turns one selected Langfuse trace into a safe PydanticAI replay experiment, bounded rerun, and proposed CI regression gate |
 | **kitaru-pydantic-ai-migration** | `kitaru-pydantic-ai-migration` (`/kitaru-pydantic-ai-migration` in Claude Code) | Migrate existing PydanticAI agent code to `KitaruAgent` with conservative boundary selection, direct/approximate/absent classification, HITL safety checks, capture policy guidance, and a migration report |
 | **kitaru-openai-agents-migration** | `kitaru-openai-agents-migration` (`/kitaru-openai-agents-migration` in Claude Code) | Migrate existing OpenAI Agents SDK code to `KitaruRunner`, `OpenAIRunRequest`, and `OpenAIRunResult` with checkpoint strategy selection, approval/resume handling, context serialization checks, and a migration report |
@@ -33,6 +34,8 @@ For new Kitaru work:
    architecture before writing code
 3. **Author** — use `kitaru-authoring` to build the flows defined in your
    `flow_architecture.md`
+4. **Replay Lab** — use `kitaru-replay-lab` when real executions exist and
+   you want to recover, reproduce, fork, diff, or replay a cohort safely
 
 For a production incident captured in Langfuse:
 
@@ -48,21 +51,24 @@ For existing framework code:
 1. **Inspect and classify** — use the migration skill that matches the source
    framework: PydanticAI, OpenAI Agents SDK, LangGraph/LangChain, Claude Agent
    SDK, or Gemini Interactions
-2. **Migrate the safe boundary** — move only the durable seam Kitaru can honestly
-   see: a wrapped PydanticAI run, an OpenAI Agents runner call or observed call,
-   a LangGraph graph call or middleware-observed sync call, one Claude SDK
+2. **Migrate only recorded work** — choose the framework call Kitaru can
+   record honestly: a wrapped PydanticAI run, an OpenAI Agents runner call or
+   observed call, a LangGraph graph call or middleware-observed sync call, one Claude SDK
    invocation, or one stable Gemini Interactions response
 3. **Review the report** — use the generated `MIGRATION_REPORT.md` to check
    replay, wait, state, approval/resume, interrupt, polling, context, privacy,
    and side-effect risks
 4. **Author follow-up Kitaru code** — use `kitaru-authoring` for any additional
    flows, checkpoints, artifacts, CLI/MCP usage, or deployment work
+5. **Operate real executions** — use `kitaru-replay-lab` to reproduce, fork,
+   diff, or diagnose existing executions without inventing replay behavior
 
 In Claude Code, those skills are exposed as slash commands:
 `/kitaru-quickstart`, `/kitaru-scoping`, `/kitaru-authoring`,
-`/kitaru-pydantic-ai-migration`, `/kitaru-openai-agents-migration`,
-`/kitaru-langgraph-migration`, `/kitaru-claude-agent-sdk-migration`,
-`/kitaru-gemini-interactions-migration`, and `/kitaru-trace-to-test`.
+`/kitaru-replay-lab`, `/kitaru-pydantic-ai-migration`,
+`/kitaru-openai-agents-migration`, `/kitaru-langgraph-migration`,
+`/kitaru-claude-agent-sdk-migration`, `/kitaru-gemini-interactions-migration`,
+and `/kitaru-trace-to-test`.
 
 ## Installation and usage
 
@@ -78,12 +84,12 @@ marketplace:
 
 Once installed, Claude Code can use model-invoked skills based on context.
 `kitaru-trace-to-test` is intentionally user-invoked because it can store trace
-content, make paid model calls, and propose CI changes. Invoke skills explicitly
-with `/kitaru-quickstart`,
-`/kitaru-scoping`, `/kitaru-authoring`, `/kitaru-pydantic-ai-migration`,
-`/kitaru-openai-agents-migration`, `/kitaru-langgraph-migration`,
-`/kitaru-claude-agent-sdk-migration`, `/kitaru-gemini-interactions-migration`,
-or `/kitaru-trace-to-test`.
+content, make paid model calls, and propose CI changes. You can invoke skills
+explicitly with `/kitaru-quickstart`, `/kitaru-scoping`,
+`/kitaru-authoring`, `/kitaru-replay-lab`,
+`/kitaru-pydantic-ai-migration`, `/kitaru-openai-agents-migration`,
+`/kitaru-langgraph-migration`, `/kitaru-claude-agent-sdk-migration`,
+`/kitaru-gemini-interactions-migration`, or `/kitaru-trace-to-test`.
 
 For project/team installation, add this to your project's
 `.claude/settings.json`:
@@ -108,6 +114,7 @@ mkdir -p .claude/skills
 cp -R "$tmpdir/kitaru-skills/skills/kitaru-quickstart" .claude/skills/
 cp -R "$tmpdir/kitaru-skills/skills/kitaru-scoping" .claude/skills/
 cp -R "$tmpdir/kitaru-skills/skills/kitaru-authoring" .claude/skills/
+cp -R "$tmpdir/kitaru-skills/skills/kitaru-replay-lab" .claude/skills/
 cp -R "$tmpdir/kitaru-skills/skills/kitaru-pydantic-ai-migration" .claude/skills/
 cp -R "$tmpdir/kitaru-skills/skills/kitaru-openai-agents-migration" .claude/skills/
 cp -R "$tmpdir/kitaru-skills/skills/kitaru-langgraph-migration" .claude/skills/
@@ -123,7 +130,7 @@ for MCP setup details.
 ### Codex usage
 
 Codex setup depends on the Codex version and local configuration style you use.
-If your Codex environment supports local skills, copy the nine
+If your Codex environment supports local skills, copy the ten
 `skills/kitaru-*` directories into the supported Codex skills location or load
 the relevant `SKILL.md` files as explicit project context.
 
@@ -172,6 +179,21 @@ not have a formal skill or plugin system.
 - "Add a flow-level `kitaru.wait()` approval gate before publish."
 - "Add explicit artifact saving to this flow."
 - "How do I inspect executions, waits, logs, and artifacts from the CLI or MCP?"
+- "Show me how to use `--at`, `--flow-overrides`, `--checkpoint-overrides`, and `--invocation-overrides` safely from the CLI."
+- "Add stable checkpoint names so future replays have clear `at` selectors."
+
+**Replay Lab:**
+- "Replay execution `kr-a8f3c2` at `write_draft` with a top-level
+  `prompt_profile` flow override, then diff the replay against the original."
+- "Replay this failed execution safely and tell me where to restart from."
+- "Run a no-change replay first, then fork with a different model and diff the outputs with CLI or MCP."
+- "Use CLI or MCP to resolve a cohort of recent failed executions, then replay
+  the explicit IDs with one checkpoint override and summarize every `ReplaySubmission` row."
+- "This replay diverged — help me diagnose whether the code, selector, or external data changed."
+- "This replay would rerun a side-effectful checkpoint — help me decide whether
+  to use `kitaru.is_replay()`, idempotency, or a different checkpoint design."
+
+**Adapter authoring:**
 - "Help me add Kitaru durability around a LangGraph graph."
 - "Make this Claude Agent SDK invocation durable without promising granular tool replay."
 - "Add Kitaru durability around this Gemini Interactions flow without treating Antigravity internals as replayable."

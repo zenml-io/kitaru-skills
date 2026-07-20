@@ -1,6 +1,6 @@
 {
   "name": "kitaru",
-  "description": "Claude Code distribution for nine Kitaru Agent Skills: quickstart onboarding, durable flow scoping, authoring with current adapters, visual Langfuse trace-to-test investigations, and conservative framework migrations",
+  "description": "Claude Code distribution for ten Kitaru Agent Skills: quickstart onboarding, durable flow scoping, replay/override authoring, replay operations, visual Langfuse trace-to-test investigations, and conservative framework migrations",
   "version": "0.8.0",
   "author": {
     "name": "ZenML",
@@ -16,6 +16,14 @@
     "ai-agents",
     "workflows",
     "checkpoints",
+    "replay",
+    "replay-overrides",
+    "execution-diff",
+    "cohort-analysis",
+    "replay-lab",
+    "replay-experiments",
+    "execution-recovery",
+    "replay-diagnostics",
     "human-in-the-loop",
     "langfuse",
     "imported-replay",

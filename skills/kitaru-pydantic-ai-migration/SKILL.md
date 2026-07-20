@@ -156,6 +156,11 @@ Use the smallest safe Kitaru boundary that makes replay behavior clear:
 7. Do not put `wait()` inside checkpoints. Do not call one checkpoint from
    another checkpoint. Keep checkpoint outputs serializable.
 8. Use stable names for agents, flows, checkpoints, waits, and artifacts.
+9. For replay planning, `checkpoint_strategy="calls"` gives model/tool/MCP calls
+   separate `at` targets when the adapter can observe them. `checkpoint_strategy="turn"`
+   gives one agent-turn target. If replay should change the prompt, customer ID,
+   model profile, or other business input, prefer explicit flow inputs and
+   `flow_overrides` over hidden agent state.
 
 ## PydanticAI migration quick guide
 
@@ -217,8 +222,10 @@ Every migration report must include:
 - direct translations;
 - approximate translations and behavior differences;
 - high-risk and blocker items with severity and required action;
-- adapter-specific notes for stable names, concrete model construction, tool
-  waits, message history, streaming, capture policy, and MCP/toolset handling;
+- adapter-specific notes for stable names, concrete model construction, replay
+  target granularity (`calls` versus `turn`), explicit flow inputs for replay
+  changes, tool waits, message history, streaming, capture policy, and MCP/toolset
+  handling;
 - verification steps and any tests or dry-runs not performed.
 
 Use `references/report-template.md` for the exact structure.

@@ -95,7 +95,7 @@ Use `@flow` for the durable orchestration boundary.
 - Supported decorator overrides: `stack`, `image`, `cache`, `retries`
 - Main entrypoints:
   - `.run(...)` — pass `stack="..."` to target a remote stack
-  - `.replay(exec_id, from_=..., overrides=..., **flow_inputs)`
+  - `.replay(exec_id, at=..., flow_overrides=..., checkpoint_overrides=..., invocation_overrides=..., skip=..., tag=..., wait=..., on_error=...)`
 - Use `current_execution_id()` inside a running flow/checkpoint when code needs
   to record or pass along the active execution ID. It returns `None` outside a
   Kitaru execution.
@@ -187,26 +187,52 @@ Replay is one shared concept exposed through several surfaces.
 
 ### Replay entrypoints
 
-- SDK: `flow.replay(exec_id, from_=..., overrides=..., **flow_inputs)`
-- Client: `KitaruClient().executions.replay(exec_id, from_=..., overrides=...,
-  **flow_inputs)`
-- CLI: `kitaru executions replay <exec_id> --from <selector> [--override
-  checkpoint.<name>=<value>]`
+All replay entrypoints return the shared `ReplaySubmission` model.
+
+- SDK flow object: `flow.replay(exec_id, at=..., flow_overrides=..., checkpoint_overrides=..., invocation_overrides=..., skip=..., tag=..., wait=..., on_error=...)`
+- Client: `KitaruClient().executions.replay(exec_id_or_ids, at=..., flow_overrides=..., checkpoint_overrides=..., invocation_overrides=..., skip=..., tag=..., wait=..., on_error=...)`
+- CLI: `kitaru executions replay <exec_id> --at <selector> --flow-overrides '{...}' --checkpoint-overrides '{...}' --invocation-overrides '{...}'`
 - MCP: `kitaru_executions_replay`
 
-### Replay selector rules
+### Replay selector and override rules
 
-`from_` targets a **checkpoint selector** — a checkpoint name, invocation ID, or
-call ID. Wait selectors are not valid replay anchors.
+`at` targets one recorded checkpoint invocation, tool call, model call, or an
+unambiguous checkpoint name. Wait selectors are not valid replay anchors.
 
-Override keys must use the `checkpoint.<selector>` namespace:
+Replay overrides are grouped by target:
 
-- `checkpoint.<name>` — replace the cached output of that checkpoint
-- `wait.*` overrides are **not supported**; if the replayed execution reaches a
-  wait, resolve it via `client.executions.input(...)` or
-  `kitaru executions input`
+- `flow_overrides` / `--flow-overrides` — top-level flow parameters for the
+  replay run.
+- `checkpoint_overrides` / `--checkpoint-overrides` — every invocation of a
+  checkpoint name.
+- `invocation_overrides` / `--invocation-overrides` — one recorded invocation ID
+  or call ID.
 
-Do not invent alternate replay APIs or made-up override keys.
+Checkpoint and invocation overrides can use these fields:
+
+- `input` — replace the target inputs, then rerun that target and downstream
+  checkpoints.
+- `output` — inject a value as the target output; the target checkpoint does not
+  run. The injected value must feed downstream work; it is not a way to suppress
+  a final checkpoint that performs a side effect.
+- `code` — import a signature-compatible replacement callable for the target
+  when it reruns. This is only valid for recorded `tool_call` checkpoints.
+- `model` — change the model for supported `llm_call` checkpoint calls only.
+
+Replay runs Python from `at` onward. If the replayed work sends a Slack message,
+writes to a database, charges a card, or creates a PR, that action can happen
+again. Use `kitaru.is_replay()`, idempotent external writes, or a replay-safe
+flow design when side effects matter.
+
+`skip` can force a recorded invocation or call to reuse its saved output even
+though it is at or after `at`. Do not both skip and override the same target.
+
+`wait.*` overrides are **not supported**. If the replayed execution reaches a
+wait, resolve it via `client.executions.input(...)`,
+`kitaru executions input`, or `kitaru_executions_input`.
+
+Do not invent alternate replay APIs, flat `overrides=...`, old `from_` / `--from`
+selectors, or `checkpoint.<selector>` override namespaces.
 
 ## Wait resolution lifecycle
 
@@ -216,6 +242,8 @@ When a flow hits `wait()`, the execution pauses. The resolution flow is:
    value=...)`, CLI `kitaru executions input`, or MCP
    `kitaru_executions_input`
 2. **Abort a wait** — use `client.executions.abort_wait(exec_id, wait=...)`
+   or CLI `kitaru executions input <exec_id> --abort` (an `input` command mode,
+   not a separate abort command)
 3. **Resume** — if the execution does not continue automatically after input is
    provided, use `client.executions.resume(exec_id)` or
    `kitaru executions resume` as a manual fallback
@@ -268,7 +296,9 @@ inspection**, not for launching new executions.
 - `model register / list`
 - `secrets set / show / list / delete`
 - `build`, `deploy`, `invoke`, `flow deployments list/show/delete/logs/curl`, and `flow tag` / `flow untag`
-- `executions get / list / logs / input / replay / retry / resume / cancel`
+- `executions get / list / latest / statistics / logs / input / replay / cohort`
+  (dry-run replay selection) / `diff / diff-matrix / retry / resume / cancel`;
+  `executions input` covers both wait values and `--abort`
 - List commands use `--page` / `--size` pagination where documented; `--limit`
   is a first-page shortcut for compatible lists
 - JSON output contract: `--output json` / `-o json` emits
@@ -277,17 +307,20 @@ inspection**, not for launching new executions.
 
 ### MCP tools (exact names)
 
-- `kitaru_executions_list`, `kitaru_executions_get`, `kitaru_executions_latest`
+- `kitaru_executions_list`, `kitaru_executions_get`, `kitaru_executions_latest`,
+  `kitaru_executions_statistics`
 - `get_execution_logs`
 - `kitaru_executions_run` (target format: `<module_or_file>:<flow_name>`)
 - `kitaru_executions_input`, `kitaru_executions_retry`,
-  `kitaru_executions_replay`, `kitaru_executions_cancel`
+  `kitaru_executions_replay`, `kitaru_executions_cohort`,
+  `kitaru_executions_diff`, `kitaru_executions_diff_matrix`,
+  `kitaru_executions_cancel`
 - `kitaru_deployments_deploy`, `kitaru_deployments_invoke`,
   `kitaru_deployments_list`, `kitaru_deployments_get`,
   `kitaru_deployments_delete`, `kitaru_deployments_tag`,
   `kitaru_deployments_untag`
 - `kitaru_artifacts_list`, `kitaru_artifacts_get`
-- `kitaru_secrets_create` (metadata-only secret creation; no MCP delete tool)
+- `kitaru_secrets_create` (metadata-only secret creation; no MCP secret read/delete tools)
 - `kitaru_start_local_server`, `kitaru_stop_local_server`, `kitaru_status`,
   `kitaru_stacks_list`
 - `manage_stack` (create/delete; supports `local`, `kubernetes`, `vertex`,
@@ -300,9 +333,11 @@ inspection**, not for launching new executions.
 | Launch new execution | Yes (flow object / Python entrypoint) | No | No top-level run command | Yes (`kitaru_executions_run`) |
 | Inspect execution | Limited (FlowHandle) | Yes | Yes | Yes |
 | Resolve wait input | No | Yes | Yes | Yes |
-| Abort wait | No | Yes (`abort_wait`) | No | No |
+| Abort wait | No | Yes (`abort_wait`) | Yes (`executions input <exec_id> --abort`) | No |
 | Resume paused execution | No | Yes | Yes | No |
 | Replay execution | Yes (flow object) | Yes | Yes | Yes |
+| Select replay cohort | No | No | Yes | Yes |
+| Diff replay results | Yes | No | Yes | Yes |
 | Browse artifacts | No | Yes | No | Yes |
 | List pending waits | No | Yes (`pending_waits`) | No | No |
 | Create local stack | Yes | No | Yes | Yes |
@@ -492,7 +527,11 @@ managed-agent/preset use case, not as the core adapter identity.
 - Reusing artifact names so `load()` becomes ambiguous
 - Treating Kitaru as a durable key-value store instead of using artifacts or an
   external store
+- Using old replay APIs: `from_=...`, `--from`, flat `overrides=...`, or
+  `--override checkpoint.*` examples
 - Using `wait.*` override keys in replay (they are not supported)
+- Using `code` overrides on anything other than recorded `tool_call` checkpoints
+- Using `output` overrides to suppress a terminal side-effect checkpoint
 - Assuming CLI, client, and MCP expose the same operation set
 - Using `KitaruClient` to launch new executions (it's for
   inspection/control only)

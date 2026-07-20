@@ -154,7 +154,13 @@ Look for:
   granular checkpoints.
 - Keep LangGraph checkpointers/stores in place. Kitaru records its own boundary;
   it does not replace LangGraph's persistence layer.
+- For replay planning, `graph_call` gives one outer graph-call `at` target;
+  middleware-observed `calls` can add supported sync model/tool targets. LangGraph
+  state, `thread_id`, checkpoint IDs, and graph-local time travel are not Kitaru
+  override state; keep those decisions in the LangGraph request/config.
 - Preserve stable `thread_id` handling. If the source has no stable thread ID,
+  flag it before migration.
+- If the source relies on graph-local time travel or checkpoint IDs, preserve and
   flag it before migration.
 - Treat callbacks, events, and streams as observability unless a concrete Kitaru
   checkpoint boundary stores a final serializable value.
@@ -219,9 +225,9 @@ Every non-trivial migration must include or draft `MIGRATION_REPORT.md` with:
 - direct translations;
 - approximate translations and caveats;
 - flagged items with severity and required action;
-- LangGraph-specific notes for `thread_id`, checkpointers/stores,
-  interrupts/resume, middleware/calls mode, streams/events, Deep Agents, capture
-  policy, and side effects;
+- LangGraph-specific notes for `graph_call` versus middleware-observed `calls`
+  replay targets, `thread_id`, checkpointers/stores, interrupts/resume,
+  streams/events, Deep Agents, capture policy, and side effects;
 - verification plan and whether execution was actually run.
 
 Use `references/report-template.md` when a full report is needed.

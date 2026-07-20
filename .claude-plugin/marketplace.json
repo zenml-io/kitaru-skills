@@ -6,7 +6,7 @@
     "url": "https://zenml.io"
   },
   "metadata": {
-    "description": "Nine Kitaru Agent Skills for onboarding, durable flow design, authoring, visual Langfuse trace-to-test investigations, and conservative framework migrations",
+    "description": "Ten Kitaru Agent Skills for onboarding, durable flow design, authoring, replay operations, visual Langfuse trace-to-test investigations, and conservative framework migrations",
     "version": "0.8.0",
     "homepage": "https://kitaru.ai",
     "repository": "https://github.com/zenml-io/kitaru-skills"
@@ -15,7 +15,7 @@
     {
       "name": "kitaru",
       "source": "./",
-      "description": "Claude Code package bundling nine Kitaru Agent Skills for onboarding, scoping, authoring, visual Langfuse trace-to-test replay investigations, and migrations for PydanticAI, OpenAI Agents SDK, LangGraph, Claude Agent SDK, and Gemini Interactions.",
+      "description": "Claude Code package bundling ten Kitaru Agent Skills for onboarding, scoping, authoring, replay operations, visual Langfuse trace-to-test investigations, and migrations for PydanticAI, OpenAI Agents SDK, LangGraph, Claude Agent SDK, and Gemini Interactions.",
       "version": "0.8.0",
       "author": {
         "name": "ZenML",
@@ -32,6 +32,14 @@
         "ai-agents",
         "agent-workflows",
         "checkpoints",
+        "replay",
+        "replay-overrides",
+        "execution-diff",
+        "cohort-analysis",
+        "replay-lab",
+        "replay-experiments",
+        "execution-recovery",
+        "replay-diagnostics",
         "human-in-the-loop",
         "langfuse",
         "imported-replay",

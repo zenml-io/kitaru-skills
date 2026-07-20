@@ -67,7 +67,7 @@ def support_flow(ticket: str) -> str:
     return escalate(ticket, response)
 
 
-REPLAY_FROM = "draft_response"
+REPLAY_AT = "draft_response"
 DEFAULT_TICKET = "billing charge incorrect on invoice #1234"
 
 
@@ -83,7 +83,13 @@ if __name__ == "__main__":
         if len(sys.argv) < 3:
             _usage()
             raise SystemExit(2)
-        handle = support_flow.replay(sys.argv[2], from_=REPLAY_FROM)
+        submission = support_flow.replay(sys.argv[2], at=REPLAY_AT, wait=False)
+        row = submission.results[0]
+        handle = row.handle
+        if handle is None:
+            raise RuntimeError(
+                f"Replay did not return a live handle: {row.replay_exec_id}"
+            )
     else:
         ticket = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else DEFAULT_TICKET
         handle = support_flow.run(ticket)
