@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-This repository contains **Kitaru Agent Skills** for [Kitaru](https://kitaru.ai) — ZenML's durable execution layer for Python agent workflows — plus Claude Code plugin packaging. It contains no application code; the deliverables are eight Markdown skills plus quickstart and migration references that teach agent hosts how to onboard, scope, author, and migrate Kitaru workflows.
+This repository contains **Kitaru Agent Skills** for [Kitaru](https://kitaru.ai) — ZenML's durable execution layer for Python agent workflows — plus Claude Code plugin packaging. It contains no application code; the deliverables are nine Markdown skills plus quickstart, replay, and migration references that teach agent hosts how to onboard, scope, author, and migrate Kitaru workflows.
 
 Claude Code distribution is supported through the `.claude-plugin/` metadata and the Claude Code marketplace entry `zenml-io/kitaru-skills`.
 
@@ -24,6 +24,7 @@ skills/
   kitaru-langgraph-migration/       # LangGraph to KitaruGraphRunner migration skill + references
   kitaru-claude-agent-sdk-migration/ # Claude Agent SDK to KitaruClaudeRunner migration skill + references
   kitaru-gemini-interactions-migration/ # Gemini Interactions to KitaruGeminiInteractionsRunner migration skill + references
+  kitaru-trace-to-test/             # Langfuse trace to visual replay evidence and CI gate
 ```
 
 - **kitaru-quickstart** (`/kitaru-quickstart` in Claude Code) — interactive onboarding that scaffolds a personalized demo flow, demonstrates crash recovery with replay, human-in-the-loop with `wait()`, artifact capture, and optional MCP integration.
@@ -34,12 +35,13 @@ skills/
 - **kitaru-langgraph-migration** (`/kitaru-langgraph-migration` in Claude Code) — conservative migration guide for existing LangGraph/LangChain code moving to `KitaruGraphRunner`, with `graph_call` vs middleware-backed `calls` boundary reporting.
 - **kitaru-claude-agent-sdk-migration** (`/kitaru-claude-agent-sdk-migration` in Claude Code) — conservative migration guide for existing Claude Agent SDK code moving to `KitaruClaudeRunner`, with one-invocation checkpointing and Claude-owned tool/Bash/MCP/workspace caveats.
 - **kitaru-gemini-interactions-migration** (`/kitaru-gemini-interactions-migration` in Claude Code) — conservative migration guide for existing Gemini Interactions, Google GenAI Interactions, or Antigravity managed-agent code moving to `KitaruGeminiInteractionsRunner`, with `requires_action`, polling, function-result, and Google-owned internals reporting.
+- **kitaru-trace-to-test** (`/kitaru-trace-to-test` in Claude Code): user-invoked visual workflow that turns one selected Langfuse trace into safe PydanticAI replay evidence, a bounded experiment, and a proposed CI gate.
 
-The intended user workflow is: quickstart → scope → author for new work, or migration skill → report review → author for existing PydanticAI, OpenAI Agents SDK, LangGraph, Claude Agent SDK, or Gemini Interactions code.
+The intended user workflow is: quickstart → scope → author for new work; migration skill → report review → author for existing framework code; or trace-to-test for a production incident already captured in Langfuse.
 
 ## How to work on this repo
 
-There is no build step, no linter, no test suite. The deliverables are the eight `SKILL.md` files plus the quickstart and migration reference files. Quality comes from:
+There is no build step, no linter, no test suite. The deliverables are the nine `SKILL.md` files plus the quickstart and migration reference files. Quality comes from:
 
 1. **Accuracy against the Kitaru SDK** — every primitive, API surface, and constraint described in the skills must match the current Kitaru release. Cross-reference with the [Kitaru SDK repo](https://github.com/zenml-io/kitaru) and [docs](https://kitaru.ai/docs).
 2. **Completeness of asymmetry tables** — the skills document capability differences across SDK, KitaruClient, CLI, MCP, deployments, secrets, and adapter surfaces. These tables must stay synchronized between the scoping and authoring skills.
@@ -47,8 +49,8 @@ There is no build step, no linter, no test suite. The deliverables are the eight
 
 ## Key constraints when editing skills
 
-- The SKILL.md frontmatter (`name`, `description`) is what Claude Code uses for skill matching and trigger detection. Keep trigger keywords accurate.
-- All eight skills share the same Kitaru domain model (surfaces, asymmetries, guardrails). Changes to one skill's representation of a constraint (e.g., "waits cannot go inside checkpoints") should be mirrored where relevant.
+- The SKILL.md frontmatter controls skill identity and invocation. Keep user-invoked skills explicit and model-invoked trigger descriptions accurate.
+- All nine skills share the same Kitaru domain model (surfaces, asymmetries, guardrails). Changes to one skill's representation of a constraint (e.g., "waits cannot go inside checkpoints") should be mirrored where relevant.
 - The authoring skill's "common mistakes checklist" and the scoping skill's "anti-patterns" section overlap intentionally — they serve different audiences (implementer vs architect).
 - The quickstart skill's track templates in `references/tracks/` must use only real, documented Kitaru APIs. Template decorator placement is fixed; only internal business logic is customizable.
 - Native durable memory APIs were removed in Kitaru 0.11.0. Do not reintroduce old native-memory wording or recommend a Kitaru-owned durable key-value state API. Use external/application-owned stores for mutable cross-execution state and pass explicit values or stable references into flows.
@@ -71,4 +73,5 @@ cp -R skills/kitaru-openai-agents-migration .claude/skills/
 cp -R skills/kitaru-langgraph-migration .claude/skills/
 cp -R skills/kitaru-claude-agent-sdk-migration .claude/skills/
 cp -R skills/kitaru-gemini-interactions-migration .claude/skills/
+cp -R skills/kitaru-trace-to-test .claude/skills/
 ```

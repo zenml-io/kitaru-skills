@@ -1,0 +1,7 @@
+interface:
+  display_name: "Kitaru Trace to Test"
+  short_description: "Turn a Langfuse trace into a regression gate"
+  default_prompt: "Use $kitaru-trace-to-test to turn a selected Langfuse incident trace into a safe Kitaru replay and bounded CI regression test."
+
+policy:
+  allow_implicit_invocation: false

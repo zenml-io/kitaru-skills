@@ -1,7 +1,7 @@
 {
   "name": "kitaru",
-  "description": "Claude Code distribution for eight Kitaru Agent Skills: quickstart onboarding, durable flow scoping, authoring with current adapters, and conservative migrations for PydanticAI, OpenAI Agents SDK, LangGraph, Claude Agent SDK, and Gemini Interactions",
-  "version": "0.7.0",
+  "description": "Claude Code distribution for nine Kitaru Agent Skills: quickstart onboarding, durable flow scoping, authoring with current adapters, visual Langfuse trace-to-test investigations, and conservative framework migrations",
+  "version": "0.8.0",
   "author": {
     "name": "ZenML",
     "url": "https://kitaru.ai"
@@ -17,6 +17,10 @@
     "workflows",
     "checkpoints",
     "human-in-the-loop",
+    "langfuse",
+    "imported-replay",
+    "regression-gate",
+    "ci",
     "migration",
     "adapter-migration",
     "pydantic-ai",
