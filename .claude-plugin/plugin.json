@@ -1,7 +1,7 @@
 {
   "name": "kitaru",
-  "description": "Claude Code distribution for nine Kitaru Agent Skills: quickstart onboarding, durable flow scoping, replay/override authoring, kitaru-replay-lab operations for real executions, and conservative migrations for PydanticAI, OpenAI Agents SDK, LangGraph, Claude Agent SDK, and Gemini Interactions",
-  "version": "0.7.0",
+  "description": "Investigate Kitaru agent sessions with human-reviewed evidence, durable annotations, versioned cohorts, and optional evaluators",
+  "version": "0.8.0",
   "author": {
     "name": "ZenML",
     "url": "https://kitaru.ai"
@@ -12,35 +12,16 @@
   "keywords": [
     "kitaru",
     "zenml",
-    "durable-execution",
     "ai-agents",
-    "workflows",
-    "checkpoints",
-    "replay",
-    "replay-overrides",
-    "execution-diff",
+    "agent-evaluation",
+    "error-discovery",
+    "trace-analysis",
+    "trace-review",
+    "investigations",
+    "annotations",
     "cohort-analysis",
-    "replay-lab",
-    "replay-experiments",
-    "execution-recovery",
-    "replay-diagnostics",
     "human-in-the-loop",
-    "migration",
-    "adapter-migration",
-    "pydantic-ai",
-    "pydantic-ai-migration",
-    "openai-agents",
-    "openai-agents-migration",
-    "langgraph",
-    "langgraph-migration",
-    "langchain",
-    "claude-agent-sdk",
-    "claude-agent-sdk-migration",
-    "gemini",
-    "gemini-interactions",
-    "gemini-interactions-migration",
-    "google-genai",
-    "antigravity",
-    "antigravity-migration"
+    "evaluators",
+    "mcp"
   ]
 }

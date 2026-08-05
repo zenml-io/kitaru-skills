@@ -6,8 +6,8 @@
     "url": "https://zenml.io"
   },
   "metadata": {
-    "description": "Nine Kitaru Agent Skills for quickstart onboarding, durable flow scoping, replay/override authoring, kitaru-replay-lab operations for real executions, and conservative migrations for PydanticAI, OpenAI Agents SDK, LangGraph, Claude Agent SDK, and Gemini Interactions",
-    "version": "0.7.0",
+    "description": "Investigate Kitaru agent sessions with human-reviewed evidence, durable annotations, versioned cohorts, and optional evaluators",
+    "version": "0.8.0",
     "homepage": "https://kitaru.ai",
     "repository": "https://github.com/zenml-io/kitaru-skills"
   },
@@ -15,8 +15,8 @@
     {
       "name": "kitaru",
       "source": "./",
-      "description": "Claude Code package bundling nine Kitaru Agent Skills: kitaru-quickstart (beginner onboarding with crash recovery, replay, wait(), artifacts, dashboard, and optional MCP), kitaru-scoping (durable flow architecture and replay override choices), kitaru-authoring (flows, checkpoints, waits, replay/diff/cohort tools, KitaruClient, deployments, secrets, CLI/MCP, and current adapters), kitaru-replay-lab (operational replay experiments, recovery, cohorts, ReplaySubmission inspection, diffing, and divergence diagnosis), kitaru-pydantic-ai-migration (PydanticAI to KitaruAgent), kitaru-openai-agents-migration (OpenAI Agents SDK to KitaruRunner), kitaru-langgraph-migration (LangGraph/LangChain to KitaruGraphRunner), kitaru-claude-agent-sdk-migration (Claude Agent SDK to KitaruClaudeRunner), and kitaru-gemini-interactions-migration (Gemini Interactions/Antigravity to KitaruGeminiInteractionsRunner).",
-      "version": "0.7.0",
+      "description": "Claude Code package for kitaru-investigation, a human-in-the-loop workflow for trace-first debugging, cold-start error discovery, durable review, cohort creation, and optional evaluator authoring.",
+      "version": "0.8.0",
       "author": {
         "name": "ZenML",
         "url": "https://kitaru.ai"
@@ -28,38 +28,17 @@
       "keywords": [
         "kitaru",
         "zenml",
-        "durable-execution",
         "ai-agents",
-        "agent-workflows",
-        "checkpoints",
-        "replay",
-        "replay-overrides",
-        "execution-diff",
+        "agent-evaluation",
+        "error-discovery",
+        "trace-analysis",
+        "trace-review",
+        "investigations",
+        "annotations",
         "cohort-analysis",
-        "replay-lab",
-        "replay-experiments",
-        "execution-recovery",
-        "replay-diagnostics",
         "human-in-the-loop",
-        "migration",
-        "adapter-migration",
-        "pydantic-ai",
-        "pydantic-ai-migration",
-        "openai-agents",
-        "openai-agents-migration",
-        "langgraph",
-        "langgraph-migration",
-        "langchain",
-        "claude-agent-sdk",
-        "claude-agent-sdk-migration",
-        "gemini",
-        "gemini-interactions",
-        "gemini-interactions-migration",
-        "google-genai",
-        "antigravity",
-        "antigravity-migration",
-        "mcp",
-        "deployments"
+        "evaluators",
+        "mcp"
       ]
     }
   ]
