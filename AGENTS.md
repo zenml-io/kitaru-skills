@@ -2,12 +2,15 @@
 
 ## Project structure
 
-This repository distributes one public Kitaru agent skill plus Claude Code
-plugin metadata. It is not a Python package.
+This repository distributes public Kitaru agent skills plus Claude Code plugin
+metadata. It is not a Python package.
 
 - `skills/kitaru-investigation/SKILL.md` is the public routing playbook.
 - `skills/kitaru-investigation/references/` contains method, transport, and
   evaluator details loaded only when needed.
+- `skills/build-kitaru-importer/SKILL.md` guides custom importer development.
+- `skills/build-kitaru-importer/references/` contains parser, normalization,
+  validation, and recovery details loaded only when needed.
 - `.claude-plugin/plugin.json` defines the Claude Code plugin.
 - `.claude-plugin/marketplace.json` defines its marketplace entry.
 - `README.md` is the public installation and usage guide.
@@ -52,6 +55,10 @@ host environment.
 - Distinguish shipped Kitaru operations, planned frontend behavior, and
   unresolved product contracts.
 - Preserve the human-review boundary. Agent suggestions are not human labels.
+- Treat raw trace exports as sensitive, keep them out of version control, and
+  use redacted fixtures for importer development.
+- Treat installed Kitaru schemas as authoritative when importer commands or
+  parser contracts differ from branch examples.
 - Do not recommend direct REST calls or local files to bypass missing Kitaru
   persistence contracts.
 - Do not reintroduce removed Kitaru-owned durable memory APIs.

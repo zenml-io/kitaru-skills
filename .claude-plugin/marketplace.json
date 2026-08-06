@@ -6,8 +6,8 @@
     "url": "https://zenml.io"
   },
   "metadata": {
-    "description": "Investigate Kitaru agent sessions with human-reviewed evidence, durable annotations, versioned cohorts, and optional evaluators",
-    "version": "0.8.0",
+    "description": "Import unsupported trace formats and investigate Kitaru agent sessions with human-reviewed evidence, versioned cohorts, and optional evaluators",
+    "version": "0.9.0",
     "homepage": "https://kitaru.ai",
     "repository": "https://github.com/zenml-io/kitaru-skills"
   },
@@ -15,8 +15,8 @@
     {
       "name": "kitaru",
       "source": "./",
-      "description": "Claude Code package for kitaru-investigation, a human-in-the-loop workflow for trace-first debugging, cold-start error discovery, durable review, cohort creation, and optional evaluator authoring.",
-      "version": "0.8.0",
+      "description": "Claude Code package for custom Kitaru importer development and human-in-the-loop trace investigation, durable review, cohort creation, and optional evaluator authoring.",
+      "version": "0.9.0",
       "author": {
         "name": "ZenML",
         "url": "https://kitaru.ai"
@@ -33,6 +33,8 @@
         "error-discovery",
         "trace-analysis",
         "trace-review",
+        "trace-import",
+        "custom-importers",
         "investigations",
         "annotations",
         "cohort-analysis",

@@ -4,16 +4,23 @@ Shared contributor guidance lives in [`AGENTS.md`](AGENTS.md). Follow it first.
 
 ## What this repository distributes
 
-The repository contains one public skill, `kitaru-investigation`, plus Claude
-Code plugin packaging. The skill conducts evidence-grounded review of Kitaru
-agent sessions and can turn an accepted behavior into a versioned cohort and
-optional evaluator.
+The repository contains public Kitaru skills plus Claude Code plugin packaging.
+`kitaru-investigation` conducts evidence-grounded review of Kitaru agent
+sessions and can turn an accepted behavior into a versioned cohort and optional
+evaluator. `build-kitaru-importer` builds and validates a private or packaged
+importer when a trace provider has no suitable built-in integration.
 
 ```text
 .claude-plugin/
   plugin.json
   marketplace.json
 skills/
+  build-kitaru-importer/
+    SKILL.md
+    references/
+      failure-and-validation.md
+      importer-contract.md
+      normalization-patterns.md
   kitaru-investigation/
     SKILL.md
     references/
@@ -22,8 +29,9 @@ skills/
       kitaru-operations.md
 ```
 
-Claude Code exposes the skill as `/kitaru-investigation` and may also select
-it automatically from the frontmatter description.
+Claude Code exposes the skills as `/kitaru-investigation` and
+`/build-kitaru-importer` and may also select them automatically from their
+frontmatter descriptions.
 
 ## Editing the skill
 
@@ -45,11 +53,19 @@ it automatically from the frontmatter description.
 - Treat frontend onboarding as the doorway into the skill, not a separate
   workflow owner. Drive either the seed-session or bounded-discovery flow and
   do not bounce the user back into a circular handoff.
+- Route unsupported-provider setup to `build-kitaru-importer`, then return to
+  `kitaru-investigation` only after usable sessions exist.
+- Keep importer orchestration and approval gates in its `SKILL.md`; keep parser
+  contracts, normalization, validation, and recovery detail in its references.
+- Preserve a private script importer as a complete outcome. Do not require
+  package publication or an upstream contribution.
+- Keep raw trace exports out of version control and require redacted fixtures.
 
 ## Local Claude Code testing
 
 ```bash
 mkdir -p .claude/skills
+cp -R skills/build-kitaru-importer .claude/skills/
 cp -R skills/kitaru-investigation .claude/skills/
 ```
 
