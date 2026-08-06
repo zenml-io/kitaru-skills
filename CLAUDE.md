@@ -9,6 +9,8 @@ The repository contains public Kitaru skills plus Claude Code plugin packaging.
 sessions and can turn an accepted behavior into a versioned cohort and optional
 evaluator. `build-kitaru-importer` builds and validates a private or packaged
 importer when a trace provider has no suitable built-in integration.
+`kitaru-adapter-builder` builds a project-local Python or TypeScript adapter
+when an agent framework has no suitable supported integration.
 
 ```text
 .claude-plugin/
@@ -21,6 +23,13 @@ skills/
       failure-and-validation.md
       importer-contract.md
       normalization-patterns.md
+  kitaru-adapter-builder/
+    SKILL.md
+    references/
+      adapter-method.md
+      python-adapters.md
+      typescript-adapters.md
+      validation-and-reporting.md
   kitaru-investigation/
     SKILL.md
     references/
@@ -30,8 +39,8 @@ skills/
 ```
 
 Claude Code exposes the skills as `/kitaru-investigation` and
-`/build-kitaru-importer` and may also select them automatically from their
-frontmatter descriptions.
+`/build-kitaru-importer` and `/kitaru-adapter-builder`, and may also select them
+automatically from their frontmatter descriptions.
 
 ## Editing the skill
 
@@ -60,12 +69,20 @@ frontmatter descriptions.
 - Preserve a private script importer as a complete outcome. Do not require
   package publication or an upstream contribution.
 - Keep raw trace exports out of version control and require redacted fixtures.
+- Route unsupported in-process framework integration to
+  `kitaru-adapter-builder`. Check supported adapters, importers, and OTLP first.
+- Keep adapter routing and approval gates in its `SKILL.md`; keep the shared
+  method, language-specific SDK contracts, and validation detail in its four
+  references.
+- Preserve project-local adapter success as the ordinary outcome. Treat an OSS
+  contribution as a separately approved final step.
 
 ## Local Claude Code testing
 
 ```bash
 mkdir -p .claude/skills
 cp -R skills/build-kitaru-importer .claude/skills/
+cp -R skills/kitaru-adapter-builder .claude/skills/
 cp -R skills/kitaru-investigation .claude/skills/
 ```
 

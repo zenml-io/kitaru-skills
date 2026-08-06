@@ -11,6 +11,10 @@ metadata. It is not a Python package.
 - `skills/build-kitaru-importer/SKILL.md` guides custom importer development.
 - `skills/build-kitaru-importer/references/` contains parser, normalization,
   validation, and recovery details loaded only when needed.
+- `skills/kitaru-adapter-builder/SKILL.md` guides project-local adapter
+  development for unsupported Python and TypeScript frameworks.
+- `skills/kitaru-adapter-builder/references/` separates the shared method,
+  Python and TypeScript SDK contracts, and validation and reporting rules.
 - `.claude-plugin/plugin.json` defines the Claude Code plugin.
 - `.claude-plugin/marketplace.json` defines its marketplace entry.
 - `README.md` is the public installation and usage guide.
@@ -59,6 +63,13 @@ host environment.
   use redacted fixtures for importer development.
 - Treat installed Kitaru schemas as authoritative when importer commands or
   parser contracts differ from branch examples.
+- Treat the user's installed framework and Kitaru SDK as authoritative when
+  adapter contracts differ from draft reference branches.
+- Keep adapter implementations user-project-first. Require separate approval
+  before installing dependencies, creating remote sessions, allowing live tool
+  passthrough, or preparing an upstream contribution.
+- Distinguish application streaming, observation of the stream lifecycle, and
+  replay of original chunks or timing.
 - Do not recommend direct REST calls or local files to bypass missing Kitaru
   persistence contracts.
 - Do not reintroduce removed Kitaru-owned durable memory APIs.

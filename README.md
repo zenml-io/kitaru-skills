@@ -1,15 +1,15 @@
 # Kitaru Agent Skills
 
-This repository contains agent skills for bringing traces into
-[Kitaru](https://kitaru.ai) and turning recorded sessions into human-reviewed
-evidence. They support custom importer development, trace-first debugging,
-cold-start error discovery, durable annotations, versioned cohorts, and
-optional evaluator authoring.
+This repository contains agent skills for connecting agent frameworks and trace
+exports to [Kitaru](https://kitaru.ai), then turning recorded sessions into
+human-reviewed evidence. They support custom adapter and importer development,
+trace-first debugging, cold-start error discovery, durable annotations,
+versioned cohorts, and optional evaluator authoring.
 
 Kitaru records agent runs as full traces, including model calls, tool calls,
-and decisions. The skills help a coding agent import unsupported trace formats
-and organize the resulting sessions into a bounded investigation without
-replacing human judgment.
+and decisions. The skills help a coding agent record an unsupported framework,
+import an unsupported trace format, and organize the resulting sessions into a
+bounded investigation without replacing human judgment.
 
 ## Skill
 
@@ -17,6 +17,7 @@ replacing human judgment.
 |---|---|---|
 | [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | `/kitaru-investigation` | Map the registered agent and its operating context, review a known bad session or discover candidate failure modes, persist human annotations, create an accepted cohort, and optionally author one narrow evaluator. |
 | [`build-kitaru-importer`](skills/build-kitaru-importer/SKILL.md) | `/build-kitaru-importer` | Build and locally validate a private or packaged importer for an unsupported provider or export format, with conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
+| [`kitaru-adapter-builder`](skills/kitaru-adapter-builder/SKILL.md) | `/kitaru-adapter-builder` | Build a project-local Python or TypeScript adapter for an unsupported agent framework, with explicit recording and replay boundaries, partial-trace handling, side-effect controls, and separately approved upstream contribution. |
 
 The workflow keeps human observations separate from agent suggestions. It
 uses a Kitaru frontend review block when that route is available and falls
@@ -32,6 +33,9 @@ operations in the meantime.
 - "Build a private Kitaru importer for this provider's JSONL trace export."
 - "These traces store each conversation turn separately. Join them safely when importing into Kitaru."
 - "Help me understand whether this partial import is safe to retry."
+- "Build a Kitaru adapter for this Python agent framework."
+- "Add Kitaru recording and safe replay to this TypeScript agent without changing its public API."
+- "Can this framework support a Kitaru adapter, including streaming and tool replay?"
 
 ## Requirements
 
@@ -41,7 +45,10 @@ the user wants to understand, or explore a bounded session population for
 recurring problems and unexpectedly good behavior. If an unsupported provider
 prevents sessions from entering Kitaru, the importer-builder skill creates and
 validates the missing integration, then hands usable sessions back to the
-investigation flow.
+investigation flow. If the application needs in-process recording or replay and
+no supported framework integration exists, the adapter-builder skill verifies
+the installed SDK and public framework hooks before building a project-local
+adapter.
 
 For the most direct agent experience, configure the native Kitaru MCP server
 in `standard` mode so the host can read investigations and create review,
@@ -63,7 +70,8 @@ before enabling write or destructive capabilities.
 ```
 
 Claude Code selects a skill from context. You can also invoke
-`/kitaru-investigation` or `/build-kitaru-importer` explicitly.
+`/kitaru-investigation`, `/build-kitaru-importer`, or
+`/kitaru-adapter-builder` explicitly.
 
 For project or team installation, add the plugin to
 `.claude/settings.json`:
@@ -84,13 +92,14 @@ For manual local testing:
 ```bash
 mkdir -p .claude/skills
 cp -R skills/build-kitaru-importer .claude/skills/
+cp -R skills/kitaru-adapter-builder .claude/skills/
 cp -R skills/kitaru-investigation .claude/skills/
 ```
 
 ### Codex, Cursor, and other hosts
 
-Copy either skill directory into the host's supported skills location, or load
-its `SKILL.md` as explicit project context. Configure Kitaru MCP separately
+Copy the relevant skill directory into the host's supported skills location, or
+load its `SKILL.md` as explicit project context. Configure Kitaru MCP separately
 according to the host and the official Kitaru MCP server guide.
 
 ## Repository structure
@@ -102,6 +111,14 @@ skills/build-kitaru-importer/
     failure-and-validation.md
     importer-contract.md
     normalization-patterns.md
+
+skills/kitaru-adapter-builder/
+  SKILL.md
+  references/
+    adapter-method.md
+    python-adapters.md
+    typescript-adapters.md
+    validation-and-reporting.md
 
 skills/kitaru-investigation/
   SKILL.md
