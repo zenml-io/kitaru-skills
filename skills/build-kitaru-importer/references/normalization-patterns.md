@@ -43,8 +43,10 @@ Recommended shapes:
 
 ```text
 session external_id = <source-instance>:<native-session-or-trace-id>
-node external_id    = <native-trace-id>:<native-span-run-or-event-id>
+node external_id    = <source-instance>:<native-trace-id>:<native-span-run-or-event-id>
 ```
+
+The source-instance node prefix may be omitted only when the provider guarantees that native trace and node identities are globally unique across every source instance handled by the registered importer.
 
 The importer registration's provider value and the session external ID form the remote deduplication key. Include any additional account or project scope in the external ID when the same registered provider can import several isolated source instances.
 

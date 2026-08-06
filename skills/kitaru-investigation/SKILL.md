@@ -152,7 +152,7 @@ Use this path when the user supplies or identifies a seed session.
 
 Use this path when the user has a bounded population but no confident starting failure.
 
-1. Define the eligible session population and time or version boundary.
+1. Define the eligible session population and time or version boundary. Exclude known importer smoke-test session IDs and disposable-agent or isolated-source markers carried from a builder checkpoint.
 2. Run selected low-cost deterministic analyses explicitly. Import alone must not trigger analysis.
 3. Build a diverse initial worklist, normally 15 to 30 sessions, using roughly 60 to 70 percent coverage-oriented examples and 30 to 40 percent random examples.
 4. Record the population, seed, selection method revision, and reason each session was selected.

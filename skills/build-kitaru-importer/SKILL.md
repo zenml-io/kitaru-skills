@@ -62,7 +62,7 @@ Before writing a fixture:
 
 1. Keep the raw export outside the repository.
 2. Minimize it to the smallest records that preserve the behavior under test.
-3. Redact prompts, completions, tool arguments, end-user identifiers, credentials, and provider-specific secrets.
+3. Redact prompts, completions, tool arguments and results, end-user identifiers, credentials, provider-specific secrets, span and resource attributes, request and response headers, URLs and query strings, file contents and attachments, and error or exception details.
 4. Review the minimized fixture for residual secrets and direct identifiers.
 5. Preserve field shapes, relationships, and ordering evidence needed by assertions.
 
@@ -146,7 +146,7 @@ After approval, register once. Preserve the importer ID, exact version, source d
 
 Proceed only when the user also approves uploading a bounded redacted payload.
 
-Show the exact importer version, agent version, target tenant or project, payload, parameters, persistence, expected session identities, and the fact that this skill has no automatic cleanup path. Prefer a disposable agent or isolated source identity.
+Show the exact importer version, agent version, target tenant or project, payload, parameters, persistence, expected session identities, and the fact that this skill has no automatic cleanup path. Require a disposable agent or a clearly marked isolated source identity before proceeding. Do not write minimized smoke fixtures into the ordinary production session population without a marker that the investigation flow can exclude.
 
 Create one import job and wait only through the installed supported mechanism. A local wait timeout does not stop the remote job. Preserve the blob, job, task, session, and terminal receipt identifiers.
 
@@ -172,6 +172,6 @@ Remember that session creation can succeed before node ingestion fails. A direct
 When local validation or the requested smoke import succeeds:
 
 1. Return the exact artifacts, supported source shapes, fidelity limits, and verification results.
-2. Route the user back to `kitaru-investigation` when usable sessions now exist.
+2. Return every smoke-test session ID and its disposable-agent or isolated-source marker. Route the user back to `kitaru-investigation` when usable non-smoke sessions now exist, carrying the exclusion set forward.
 3. Ask whether they want to keep the importer private, package it for their environment, or consider contributing it upstream.
 4. Do not publish, contribute, or broaden provider support without a separate request.
