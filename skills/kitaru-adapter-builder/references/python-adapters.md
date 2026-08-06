@@ -8,7 +8,7 @@ versions before writing code.
 
 - [Establish the installed contract](#establish-the-installed-contract)
 - [Use the current reference carefully](#use-the-current-reference-carefully)
-- [Require an async framework boundary](#require-an-async-framework-boundary)
+- [Choose a safe Python boundary](#choose-a-safe-python-boundary)
 - [Map one invocation to Kitaru](#map-one-invocation-to-kitaru)
 - [Resolve input and replay context](#resolve-input-and-replay-context)
 - [Record model and tool work](#record-model-and-tool-work)
@@ -22,8 +22,13 @@ Inspect the project's lockfile and environment. Record the exact versions of
 Python, Kitaru, the framework, the model-provider package, and the test runner.
 
 Resolve imports and signatures from the installed package rather than assuming
-the latest source tree. For the current Python v1 SDK shape, verify whether the
-installed package exposes:
+the latest source tree. First identify which public recording boundary the
+installed package exposes. Kitaru 0.21.0, for example, exposed synchronous
+`flow`, `checkpoint`, and `log` boundaries in the smolagents holdout rather than
+the session-node client shape below.
+
+Only when using the session-node path, verify whether the installed package
+exposes:
 
 - `KitaruAPIClient` from `kitaru.client`;
 - `client.sessions.create(...)`;
@@ -58,12 +63,15 @@ location: plugins/adapters/pydantic_ai/
 tests: plugins/tests/adapters/pydantic_ai/test_adapter.py
 ```
 
-Refresh the branch and commit before relying on it. At this revision the adapter
-is under `plugins/`, not in the Python wheel, and Kitaru exposes no general
-published Python adapter base. Do not import it from a user project or copy the
-module wholesale.
+Refresh the branch and commit before relying on it. If the pinned revision
+cannot be resolved, report the reference as unavailable, treat its lessons as
+unverified, and rely only on installed public symbols and types. At this
+revision the adapter is under `plugins/`, not in the Python wheel, and Kitaru
+exposes no general published Python adapter base. Do not import it from a user
+project or copy the module wholesale.
 
-Extract only verified design lessons:
+When the revision resolves and the relevant behavior is verified, extract only
+these design lessons:
 
 - compose through a public framework wrapper or capability;
 - create fresh run state and a client for each invocation;
@@ -78,10 +86,17 @@ Extract only verified design lessons:
 The reference's broad Pydantic serialization is not a reusable privacy policy.
 Define a narrower project-specific projection.
 
-## Require an async framework boundary
+## Choose a safe Python boundary
 
-The public Python client is async. Require a documented async framework
-entrypoint or capability that encloses the real invocation.
+The session-node Python client shape is async. Require a documented async
+framework entrypoint only when the adapter depends on that shape.
+
+When the installed Kitaru package instead exposes documented synchronous
+boundaries such as `flow`, `checkpoint`, and `log`, a coarser whole-invocation
+recording adapter may use the public decorator contract if it meets the user's
+goal and preserves the framework's exact return and exception behavior. Report
+only that boundary. Do not translate it into session-node, child-event, or
+replay claims.
 
 When the application calls only a synchronous framework API, do not add
 `asyncio.run`, start a private event loop, block an existing loop, or move work
@@ -92,14 +107,19 @@ Offer one of these outcomes:
 
 1. adapt an existing public async entrypoint and leave sync mode unsupported;
 2. use a released, documented synchronous Kitaru contract when the installed
-   package exposes one and the full lifecycle can be tested;
+   package exposes one and its claimed boundary can be tested;
 3. stop with the exact async or sync contract that is missing.
 
-Do not infer that an exported sync client is suitable merely from its name.
-Verify that it exposes the session, node-ingestion, replay, and cleanup methods
-the adapter needs and that the framework hook can safely call them.
+Do not infer that an exported sync client or decorator is suitable merely from
+its name. Inspect its installed signature and behavior, then limit the adapter
+and report to the operations that public contract actually supports.
 
 ## Map one invocation to Kitaru
+
+Use this session-node mapping only when the installed public client exposes the
+required methods and the user's goal needs this granularity. For a synchronous
+decorator path, wrap only the whole invocation, preserve its return or
+exception, and do not claim the state, nodes, or replay behavior below.
 
 Keep one private run-state object per invocation. It normally needs:
 
@@ -237,10 +257,14 @@ and snapshots for them.
 ## Test the Python adapter
 
 Use the project's test runner, a deterministic fake model, inert local tools,
-and a fake Kitaru client by default. Do not require provider credentials or a
-remote Kitaru server.
+and fakes for the exact installed public Kitaru boundary. Fake and inspect the
+client and request models for a session-node adapter, or the installed
+decorators for a coarser synchronous adapter. Do not require provider
+credentials or a remote Kitaru server.
 
-Cover at least:
+For every adapter, cover exact application return and exception behavior, the
+declared availability policy, bounded projection, and credential sentinels.
+For a session-node adapter, also cover at least:
 
 - session creation and root initialization;
 - normal completion and exact application return value;
@@ -260,6 +284,8 @@ Cover at least:
   claimed;
 - sync-only refusal when no safe public contract exists.
 
-Inspect the fake client's stored session and node tree after each lifecycle
-case. A passing framework return-value assertion alone does not prove the
-adapter recorded correct evidence.
+For a session-node path, inspect the fake client's stored session and node tree
+after each lifecycle case. For a decorator path, inspect calls through the
+installed public boundary and assert that the report makes no unsupported node
+or replay claim. A passing framework return-value assertion alone does not prove
+the adapter recorded correct evidence.

@@ -43,22 +43,29 @@ Begin in the project that contains the real agent entrypoint.
 2. Identify the package manager, lockfile, runtime, language, framework and
    version, Kitaru package and version, public agent entrypoint, and invocation
    modes the application actually uses.
-3. Search the project, installed packages, and current Kitaru documentation for
-   a compatible adapter. Also check whether an existing importer or OTLP path
-   already provides the required evidence.
-4. Read [the adapter method](references/adapter-method.md) and create the adapter
-   assessment before editing code.
-5. Route by the entrypoint's runtime:
+3. Route by the entrypoint's runtime:
    - For Python, read [the Python adapter reference](references/python-adapters.md).
    - For TypeScript, read
      [the TypeScript adapter reference](references/typescript-adapters.md).
    - For another runtime, stop with an unsupported-language report.
-6. Read [validation and reporting](references/validation-and-reporting.md) before
+4. Read [the adapter method](references/adapter-method.md), search the project,
+   installed packages, and current Kitaru documentation for a compatible
+   adapter, importer, or OTLP path, and create the adapter assessment before
+   editing code.
+5. Read [validation and reporting](references/validation-and-reporting.md) before
    finalizing the design or writing tests.
 
 In a mixed repository, route from the process that executes the agent. Do not
 load both language references merely because both languages exist somewhere in
 the repository.
+
+If the framework already exports traces in a format no built-in importer
+supports and that post-hoc evidence meets the user's goal, continue with
+`build-kitaru-importer` instead of wrapping the live entrypoint. Carry forward
+the repository and revision, public entrypoint, framework and version, export
+source and shape, Kitaru package and version, target agent and version, and
+requested evidence. Choose this route once; do not bounce back merely because
+the importer mentions an adapter as an alternative.
 
 ## Establish the requested fidelity
 

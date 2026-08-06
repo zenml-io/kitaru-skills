@@ -70,6 +70,10 @@ Refresh the branch and commit before relying on it. At this revision:
 - the packages are draft, experimental references, not unconditional evidence
   that npm users can install them.
 
+If the branch or pinned commit cannot be resolved, treat these draft lessons as
+unverified. Rely on the installed package's public types and symbols, and report
+that the draft reference was unavailable.
+
 Do not copy package source into the user's project. Do not add an unpublished
 workspace dependency without approval. When the user wants to test the draft,
 offer an exact locally built tarball or workspace-link path and ask before using
@@ -128,11 +132,19 @@ At the inspected draft revision, `RunRecorder` demonstrates this lifecycle:
 4. `complete(result)` waits for queued steps, replaces the root as completed,
    and updates the session;
 5. `fail(error)` stores the first failure and best-effort writes failed policy
-   outcomes, root state, and session state.
+   outcomes, root state, and session state, but does not await the queued step
+   chain at pinned commit `8022098b61546326e1e00609cca221bfaba92624`.
 
-Use the installed implementation rather than duplicating it. Verify whether it
-closes or owns any client resource; the draft TypeScript client uses `fetch` and
-does not mirror Python client ownership.
+Do not use that `fail()` implementation unmodified for a failure path. Verify
+the installed implementation first. Failure finalization must stop accepting
+framework events, prevent new writes from entering the queue, and wait for all
+queued writes to settle. Retain a queued-write rejection as secondary evidence
+without letting it replace the primary application error. Only then write the
+failed root and failed session.
+
+Use the installed implementation when it satisfies these invariants rather than
+duplicating it. Verify whether it closes or owns any client resource; the draft
+TypeScript client uses `fetch` and does not mirror Python client ownership.
 
 When implementing against the public client without these primitives, reproduce
 the shared lifecycle invariants from `adapter-method.md`, not the private class
@@ -261,6 +273,9 @@ Cover at least:
 - callback composition and callback failure;
 - session creation, initialization, normal completion, and partial failure;
 - first-failure preservation;
+- a delayed queued-write rejection during failure finalization, proving that
+  finalization waits for the queue, preserves the primary application error,
+  and writes the failed root and session afterward;
 - stable node indexes across transient upsert retry;
 - concurrent invocations and concurrent local tools;
 - earlier policy failure blocking later side effects;

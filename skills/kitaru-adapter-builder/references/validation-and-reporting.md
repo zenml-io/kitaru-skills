@@ -12,7 +12,7 @@ again before handoff to verify every capability claim.
 - [Test streaming and concurrency](#test-streaming-and-concurrency)
 - [Test the privacy boundary](#test-the-privacy-boundary)
 - [Inspect remote data policy](#inspect-remote-data-policy)
-- [Forward-test the skill](#forward-test-the-skill)
+- [Forward-test the skill (maintainers only)](#forward-test-the-skill-maintainers-only)
 - [Write the capability report](#write-the-capability-report)
 
 ## Set the verification level
@@ -61,8 +61,10 @@ State and test the Kitaru-availability policy:
   must expose a machine-detectable degraded recording outcome and must never
   label the trace complete.
 
-Do not add best effort unless the framework API has a reliable way to expose the
-degraded state and the user accepts the tradeoff.
+Allow best effort only when the unchanged framework API has a reliable
+machine-detectable diagnostic or status channel, or the project exposes a
+separate secondary status API. A log line alone is insufficient. Otherwise
+choose fail-fast.
 
 For every test, assert the framework result or error and the recorded artifact:
 
@@ -212,7 +214,10 @@ Stop when the destination conflicts with the project's data policy or required
 facts cannot be established. Do not send production prompts merely to validate
 the adapter. Use synthetic redacted data and inert tools.
 
-## Forward-test the skill
+## Forward-test the skill (maintainers only)
+
+This section validates the published skill itself. Runtime adapter builds must
+skip it.
 
 After the skill text is stable, use fresh agent contexts and disposable projects.
 Do not supply the expected implementation or hidden conclusions.
