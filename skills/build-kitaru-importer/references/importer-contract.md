@@ -29,16 +29,16 @@ kitaru schema session import
 
 Confirm the installed parser import path in the active Python environment. Record this fingerprint:
 
-| Capability | Required evidence |
+| Capability | Evidence to record |
 |---|---|
 | Parser types | `Parser`, `ParsedSession`, `ParsedNode`, and `ImportFailure` import successfully |
-| Scaffold | Exact destination and overwrite behavior are visible in the schema |
-| Local test | Entrypoint, payload, params, timeout, and code-execution warning are visible |
-| Registration | Script/package choice, entrypoint, provider, and version behavior are visible |
-| Version registration | Existing importer can receive an immutable new version |
-| Session import | Exact importer and agent versions, payload, params, and wait behavior are visible |
+| Scaffold | Exact destination and overwrite behavior, or that manual file creation is required |
+| Local test | Entrypoint, payload, params, timeout, and code-execution warning, or the project-native isolated test path |
+| Registration | Script/package choice, entrypoint, provider, and version behavior when remote registration is requested |
+| Version registration | Whether an existing importer can receive an immutable new version when that remote action is requested |
+| Session import | Exact importer and agent versions, payload, params, and wait behavior when a remote import is requested |
 
-When any required capability is absent, stop with the missing item. Do not upgrade Kitaru or substitute draft syntax without the user's separate direction.
+Stop only when a capability required by the requested outcome is absent. Parser types are required to author against the installed contract. Missing scaffold or local-test helpers may use explicit file creation and project-native isolated tests when those paths still exercise the installed parser contract. Missing registration or session-import capabilities limit remote actions; they do not prevent completing a locally validated importer. Do not upgrade Kitaru or substitute draft syntax without the user's separate direction.
 
 ## Parser contract
 

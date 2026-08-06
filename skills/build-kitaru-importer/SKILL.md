@@ -161,10 +161,11 @@ Before proposing any retry, classify each relevant external identity:
 | Untouched | No session exists and the item did not run |
 | Complete | Session and expected nodes exist |
 | Skipped duplicate | The provider and external ID already existed |
+| Stale duplicate | Existing digest differs or the local joined export contains more turns |
 | Incomplete | Session exists but expected node ingestion did not finish |
 | Unrecoverable here | Installed Kitaru exposes no safe repair or deletion path |
 
-Remember that session creation can succeed before node ingestion fails. A direct rerun may then skip the existing external ID instead of repairing the session. Preserve evidence, patch and version the importer locally if needed, and propose only recovery operations the installed product actually exposes.
+Remember that session creation can succeed before node ingestion fails. A direct rerun may then skip the existing external ID instead of repairing the session. A growing joined conversation can produce the same skip while the existing session contains fewer turns. Compare readable digest and trace-count metadata before classifying the skip; if the installed surface cannot expose that metadata, do not use incremental joined-conversation imports. Preserve evidence, patch and version the importer locally if needed, and propose only recovery operations the installed product actually exposes.
 
 ## Finish
 

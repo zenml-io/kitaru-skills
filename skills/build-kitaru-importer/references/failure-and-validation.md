@@ -176,6 +176,7 @@ Re-read current state and classify each relevant external identity:
 | Untouched | No matching session; item never ran | Include only this item in a newly approved import when supported |
 | Complete | Session and expected node set exist | Keep it; do not rerun |
 | Skipped duplicate | Matching provider/external ID already exists | Inspect the existing session and its digest/provenance |
+| Stale duplicate | Existing digest differs or the local joined export has more turns | Stop; require a frozen snapshot or an installed targeted repair path |
 | Incomplete | Session exists but expected nodes or payloads are missing | Stop; use an installed targeted repair path only if one exists |
 | Unrecoverable here | Incomplete state and no safe repair/delete operation exists | Preserve IDs and escalate the product limitation |
 

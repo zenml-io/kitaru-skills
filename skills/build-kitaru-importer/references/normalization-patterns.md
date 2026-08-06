@@ -97,6 +97,8 @@ Sorting by timestamp and trace ID is not enough when clocks differ, precision cr
 
 Preserve every turn's original trace ID and root tree. Do not fabricate a parent edge between turn roots merely to make one connected tree.
 
+Before remotely importing joined turns, establish whether the source conversation is closed or can still receive turns. A provider plus session external ID is a snapshot identity, not an append operation. For a growing conversation, wait for a frozen export boundary or use a provider-native immutable segment identity. Do not import an early snapshot under the final conversation identity and expect a later export to extend it; deduplication can preserve the shorter session.
+
 ## Build the node tree
 
 Validate topology per native trace before yielding a session:
@@ -199,4 +201,4 @@ The digest must:
 - remain stable for exact duplicate source records;
 - change when mapped semantic content, identity, hierarchy, status, or order changes.
 
-Use it to warn about changed content under an existing external ID before a remote import. It does not change Kitaru's deduplication key or repair an existing session.
+Before a remote import, compare the local digest and `source_trace_count` with the existing session metadata for each expected external ID when the installed session-read surface exposes them. A differing digest or larger local turn count is a stale duplicate, not a harmless skip: stop and report that the existing session will not be extended automatically. When the existing metadata cannot be read, treat incremental imports of joined conversations as unsupported and require a frozen snapshot. The digest does not change Kitaru's deduplication key or repair an existing session.
