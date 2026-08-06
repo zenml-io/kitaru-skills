@@ -53,8 +53,8 @@ Reject conflicting required identity inside one source group. Do not silently se
 ## Parse and group deterministically
 
 1. Check the byte-size limit before decoding.
-2. Decode with a safe loader and validate the supported top-level shape.
-3. Enforce explicit record-count and structural-depth limits.
+2. Enforce structural depth while tokenizing or decoding; do not materialize an arbitrarily nested object first.
+3. Decode with a safe loader and validate the supported top-level shape and record-count limit.
 4. Convert records into a small internal representation with native identity, parent identity, time, type, content, and source location.
 5. Detect exact duplicates. Ignore them only when their canonical source content matches.
 6. Isolate groups containing conflicting duplicate identities.

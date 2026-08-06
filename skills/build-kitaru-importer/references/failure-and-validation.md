@@ -54,10 +54,12 @@ Record numeric limits in the source map and test each boundary. Select values fr
 Apply limits in this order:
 
 1. byte size before decode;
-2. safe deserialization with no object construction or external entity resolution;
-3. top-level record count;
-4. nested value depth;
+2. nesting depth during tokenization or decoding, before a complete object tree is materialized;
+3. safe deserialization with no object construction or external entity resolution;
+4. top-level record count, preferably during streaming decode when the format permits it;
 5. per-group node count when a single group can exhaust memory.
+
+Use a decoder with an enforced depth limit or a streaming, string-aware structural pre-check. Do not fully deserialize an arbitrarily nested value and then walk it to measure depth. Convert decoder recursion or resource-limit errors into one bounded task-level payload failure without copying source content into the diagnostic.
 
 Never use `pickle`, unsafe YAML loading, entity-resolving XML parsers, or an archive extractor without path and expansion limits.
 
@@ -98,6 +100,7 @@ Use small redacted fixtures. Split them when one combined payload makes an expec
 | Valid incomplete group | Session retained with exact warnings and readiness reasons |
 | Malformed item among valid items | One `ImportFailure`; valid sessions remain |
 | Payload boundary | Clear task-level rejection before expensive normalization |
+| Nesting at and beyond the limit | Boundary value accepted; excess rejected during decode with a bounded diagnostic |
 | Reordered records | Identical sessions, node order, and content digest |
 | Same identity, changed content | Same external ID, different content digest, explicit conflict warning before remote retry |
 
