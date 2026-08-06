@@ -131,7 +131,11 @@ Scaffolding writes one file and conflicts when the destination exists unless an 
 
 Local testing validates the script source, imports the entrypoint in a child process, invokes it when a payload is supplied, and checks yielded types and counts. It captures bounded output and enforces a timeout. It does not prove semantic mapping, join correctness, topology, replay readiness, or safety. It is not a sandbox.
 
-Install script dependencies in the local environment before running the local test. The remote worker's dependency installation does not make them available locally.
+Before installing local dependencies, show the user the exact pinned dependencies, their provenance, and the isolated target environment. Ask for explicit approval to install that exact set. Record `none` when the importer uses only the standard library. The remote worker's dependency installation does not make dependencies available locally.
+
+Before running the local importer test, separately show the exact command, importer path, fixture, parameters, and isolation controls. Ask for explicit approval to execute it. Do not treat dependency-installation approval as approval to run importer code.
+
+Run any untrusted importer or importer newly generated in the current task only in a credential-free isolated environment that prevents access to ambient project and cloud credentials. Stop when suitable isolation is unavailable; do not fall back to the normal project shell. The child process used by Kitaru constrains duration and output, but it is not a security sandbox.
 
 ## Installation modes
 
@@ -145,7 +149,7 @@ Use one script with one top-level attribute entrypoint. Prefer the standard libr
 # ///
 ```
 
-Review the dependency's provenance. Test unfamiliar code in an isolated environment without ambient project credentials. Inline dependencies are executable supply-chain input to the worker, not harmless metadata.
+Review the dependency's provenance. Install the exact version only after the local dependency approval described above. Test untrusted or newly generated code in the required credential-free isolated environment. Inline dependencies are executable supply-chain input to the worker, not harmless metadata.
 
 Choose script mode when the importer is private, small, or used by one project. A local script can be a complete deliverable without being copied into Kitaru's OSS repository.
 

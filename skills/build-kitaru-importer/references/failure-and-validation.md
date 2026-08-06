@@ -74,15 +74,17 @@ Assume prompts, completions, tool arguments, user identifiers, and attributes ca
 
 ### Code and dependencies
 
-Local importer testing executes the file. A timeout and child process constrain duration and output, not file, credential, subprocess, or network access.
+Local importer testing executes the file. A timeout and child process constrain duration and output, not file, credential, subprocess, or network access. It is not a security sandbox.
 
-Before testing code not authored in the current task:
+Before testing any untrusted importer or importer newly generated in the current task:
 
 1. confirm its provenance;
 2. inspect imports and top-level execution;
-3. use an isolated environment without ambient project or cloud credentials;
-4. pin and review dependencies;
-5. stop if isolation is unavailable and the code is not trusted.
+3. pin and review every dependency, or record that there are none;
+4. show the exact dependencies and isolated target environment, then obtain explicit approval before installing them;
+5. use a credential-free isolated environment without ambient project or cloud credentials;
+6. show the exact test command, importer, fixture, and parameters, then obtain separate explicit approval before executing it;
+7. stop if suitable isolation is unavailable; do not run the importer in the normal project shell.
 
 The parser itself must not perform network calls, filesystem writes, subprocess execution, or credential reads. Put authenticated or paginated export acquisition in a separate tool and provide the importer with static bytes.
 

@@ -19,6 +19,8 @@ Finish locally by default. Register code or upload trace data only when the user
 - Preserve useful incomplete evidence. Distinguish an unreadable payload, an invalid item, and a valid but incomplete session.
 - Join traces conservatively. A common key is insufficient without source-instance scope and meaningful turn order.
 - Do not overwrite an existing importer file, register executable code, upload trace data, or retry a partial import without an explicit checkpoint.
+- Ask separately before installing the exact importer dependencies and before running a local importer test.
+- Run any untrusted or newly generated importer, including code created in the current task, only in a credential-free isolated environment. Stop if that isolation is unavailable.
 - Treat local importer testing as code execution in a bounded child process, not as a security sandbox.
 - Offer packaging or upstream contribution only after local success. Do not make either a completion requirement.
 

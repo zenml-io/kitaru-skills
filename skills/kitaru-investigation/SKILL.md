@@ -93,6 +93,13 @@ The light Kitaru frontend onboarding may direct the user to this skill. Treat it
 
 When sessions are not ready, guide the smallest current registration, recording, or import path through supported Kitaru CLI, MCP, or frontend actions. Verify the installed Kitaru surface before giving exact commands. Re-read the registered agent and available sessions afterward, and do not ask the user to repeat information Kitaru now exposes.
 
+Route a missing integration only when it blocks the sessions needed for this investigation:
+
+- If the user has existing traces but no built-in importer supports their provider or export format, continue with `build-kitaru-importer`. Carry forward the provider, export shape, target agent and version, current registration or import state, and investigation goal.
+- If the user needs in-process recording but no supported adapter covers the installed framework and invocation mode, continue with `kitaru-adapter-builder`. Carry forward the repository, public agent entrypoint, language, installed framework and Kitaru versions, requested recording fidelity, target agent and version, and investigation goal.
+
+Use one route based on the evidence. Do not bounce between builder skills merely because either mentions the other as an alternative. Resume this investigation only when relevant sessions are usable or the builder returns an exact blocker; preserve its checkpoint instead of repeating discovery.
+
 ## Map the agent before interviewing the user
 
 Resolve the source repository and public agent entrypoint. Prefer the current coding-agent workspace when it contains the registered agent, but reconcile it with the registered version and the versions attached to reviewed sessions.
