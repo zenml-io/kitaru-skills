@@ -30,14 +30,20 @@ Measure one observable criterion. Define `Pass` and `Fail` explicitly and allow 
 
 Use two to four reviewed examples with at least one example of each verdict. Explain every example with session or node evidence. Do not claim hidden intent or require the agent to copy a preferred tool sequence or reference wording.
 
-Require structured evaluator output containing:
+Return Kitaru's installed `EvaluationResult` model, or a nonempty list of uniquely named results. A binary evaluator needs a stable `name`, a boolean `score` or string `value`, and may also set `passed` and `explanation`. For example:
 
-```json
-{
-  "reason": "short trace-grounded explanation",
-  "verdict": "Pass or Fail"
-}
+```python
+from kitaru.task.evaluator import EvaluationResult
+
+return EvaluationResult(
+    name="accepted_behavior",
+    score=passed,
+    passed=passed,
+    explanation="Short trace-grounded explanation.",
+)
 ```
+
+If an LLM judge first emits an internal object such as `{reason, verdict}`, validate that object and translate it into `EvaluationResult`; do not return the judge object directly.
 
 Treat missing evidence, timeouts, credential failures, invalid judge output, and evaluator crashes as infrastructure errors rather than automatic negative scores for the agent.
 
@@ -73,10 +79,11 @@ Ask the user to accept, edit, or reject this exact revision. Do not treat earlie
 
 1. Scaffold a local evaluator file when code is required.
 2. Implement the narrow criterion without unrelated framework or scoring machinery.
-3. Test it locally against the selected reviewed examples.
-4. Register a new immutable evaluator version. Use the CLI for local script upload; use MCP only when the implementation already exists as a server blob or exact package pin.
-5. Re-read the registered evaluator and version.
-6. Return the exact evaluator ID, evaluator-version ID, cohort-version ID, and accepted rubric revision in a checkpoint card.
+3. Write project-native unit or fixture tests that invoke it with representative `SessionView` values from the selected reviewed examples and assert exact `EvaluationResult` values.
+4. Run `kitaru evaluator test` only as a separate load-and-signature check. It executes local code in a bounded child process but is not a sandbox, and it does not invoke the evaluator against reviewed sessions. Review the code and use a credential-free isolated environment before running it.
+5. Register a new immutable evaluator version. Use the CLI for local script upload; use MCP only when the implementation already exists as a server blob or exact package pin.
+6. Re-read the registered evaluator and version.
+7. Return the exact evaluator ID, evaluator-version ID, cohort-version ID, and accepted rubric revision in a checkpoint card.
 
 Do not deploy the evaluator or change the agent automatically.
 

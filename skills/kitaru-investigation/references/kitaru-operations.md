@@ -49,12 +49,18 @@ Do not use direct REST calls to fill a missing CLI or MCP contract.
 | Answer investigation question | `kitaru annotation create --investigation-session ID --question-key KEY --value JSON [--selector JSON]` | `kitaru_review_manage`, `answer_question` |
 | Read or revise annotation | `kitaru annotation list|get|update` | `kitaru_review_read`, `list` or `get`; `kitaru_review_manage`, `update_annotation` |
 | Create cohort snapshot | `kitaru cohort create NAME --agent AGENT --session SESSION...`; later `kitaru cohort version create` | `kitaru_cohorts_manage`, `create` or `create_version` |
-| Scaffold and test evaluator file | `kitaru evaluator scaffold NAME`; `kitaru evaluator test PATH --entrypoint NAME` | Local coding-agent work, no MCP equivalent |
+| Scaffold and load-check evaluator file | `kitaru evaluator scaffold NAME`; `kitaru evaluator test PATH --entrypoint NAME` | Local coding-agent work, no MCP equivalent; the CLI test does not invoke the evaluator against sessions |
 | Register immutable evaluator version | `kitaru evaluator register NAME --script PATH --entrypoint NAME`; later `kitaru evaluator version register EVALUATOR` | `kitaru_evaluators_manage`; MCP requires an existing script blob or exact package pin |
 | Start evaluation batch | `kitaru session evaluate ... --evaluator EVALUATOR@VERSION`, optionally `--wait` | `kitaru_workflow_start`, `evaluation` |
 | Inspect evaluation work | `kitaru job get|watch`; `kitaru evaluation list|get` | `kitaru_activity_read`, job or evaluation and bounded children |
 
 ## Resource contracts
+
+### MCP bounds
+
+- MCP list operations return one page of at most 100 items. Continue through opaque cursors rather than requesting an unbounded population.
+- MCP investigation creation accepts at most 100 questions and 100 sessions. Split larger review rounds into explicit follow-up investigations.
+- MCP evaluation starts accept at most 100 session IDs, 100 evaluator selections, and 100 total session/evaluator pairs. Split a larger matrix into separately identified batches.
 
 ### Pre-investigation setup
 
@@ -87,7 +93,7 @@ Do not use direct REST calls to fill a missing CLI or MCP contract.
 - A manual annotation uses `session_id`, optional selector, and JSON value.
 - An investigation answer uses `investigation_session_id`, stable `question_key`, optional selector, and JSON value. The session ID is derived from the linked session.
 - Repeating an investigation answer for the same investigation-session and question key upserts that answer.
-- A selector may target a node, its input, output, error, or metadata, a JSON Pointer within that payload, and an optional character span.
+- A selector may target a node's input, output, error, metadata, attributes, or model parameters, a JSON Pointer within that payload, and an optional character span.
 - A null selector targets the whole session.
 - Annotation update replaces only the value. Deletion is a separate exact-ID destructive operation.
 - Manual annotations are independent of an investigation. Investigation answers are deleted with their investigation.

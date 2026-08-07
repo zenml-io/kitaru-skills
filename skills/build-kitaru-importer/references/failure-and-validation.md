@@ -20,7 +20,7 @@ Use three outcomes:
 |---|---|---|
 | Whole payload is unsafe or uninterpretable | Size/depth/count limit exceeded, invalid encoding, unsupported top-level shape, unsafe serialization, no usable records | Raise a clear parser exception; the task cannot safely continue |
 | One item or source group is invalid | Conflicting identity, parent cycle, no root, conflicting duplicate span, strict join path missing | Yield `ImportFailure` with a source location or line, external ID when known, and actionable error; continue with independent groups |
-| Session is valid but incomplete | Missing parent, several roots, flat export, missing optional input/output, missing usage/cost, incomplete tool fields, unsupported DAG relation | Yield `ParsedSession`; preserve evidence and report completeness, warnings, and replay readiness |
+| Session is valid but incomplete | Missing parent, several roots, flat export, missing optional input/output, missing usage/cost, incomplete tool fields, unrepresentable source relation | Yield `ImportedSession`; preserve evidence and report completeness, warnings, and replay readiness |
 
 Do not convert every imperfect trace into a failure. Do not hide an invalid identity or unsafe graph behind a warning merely to maximize import counts.
 
@@ -39,7 +39,7 @@ Common incomplete cases and honest behavior:
 | Tool name without input/output | Tool node and available fields | Tool not replayable |
 | Implicit tool-like span | Span and source attributes | Tool boundary not established |
 | Missing tokens or cost | `None` | Source did not expose the value |
-| Secondary DAG link | Primary tree plus bounded relation metadata | Topology fidelity loss |
+| Secondary DAG link | Explicit indexed node plus `secondary_parent_indexes` when the installed contract supports it | Exact preserved parents, or a named topology loss when it cannot be represented |
 
 Warnings must identify the affected trace or node where possible. Keep them deterministic and bounded. Do not copy raw prompt or tool content into warning strings.
 
@@ -123,10 +123,11 @@ Expected outputs must come from provider documentation or an independently revie
 For every parsed session, assert the applicable fields:
 
 - exact external ID and source-instance scope;
-- status, error, start/end time, session input, output, and expected value;
+- status, error, start/end time, session input, output, and framework;
 - original trace IDs and deterministic turn order;
-- exact root order and child topology;
+- exact root order, primary child topology, and secondary parents;
 - node types, identities, statuses, errors, inputs, and outputs;
+- text and system-prompt selectors plus visible reasoning when the source exposes them;
 - model, provider, usage, cost, tool, and subagent fields;
 - bounded provider metadata and intentionally unsupported fields;
 - completeness and ordered normalization warnings;
@@ -187,6 +188,6 @@ Do not infer untouched items merely from the failure sample: the reference recei
 
 A waiter timeout does not cancel the job. Read job state before retrying or creating another job.
 
-A parser may yield valid sessions before crashing. Session creation may also succeed before node ingestion fails. Because reruns deduplicate on provider and external ID, a direct retry can skip the incomplete session rather than repair it.
+A parser may yield valid sessions before crashing. Session creation may also succeed before node ingestion fails. With a stable nonempty registered provider, reruns deduplicate on provider and external ID, so a direct retry can skip the incomplete session rather than repair it. Without a provider, do not assume a retry will skip duplicates.
 
 Patch the importer locally, create a new immutable version after approval, and propose the smallest recovery payload only when the installed product exposes a safe route. Never delete, reimport, or change external IDs merely to bypass a collision without explicit user direction and a documented provenance consequence.

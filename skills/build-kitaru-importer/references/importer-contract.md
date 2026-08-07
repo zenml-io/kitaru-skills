@@ -14,7 +14,7 @@ Use this reference to inspect the installed importer surface, implement the pars
 
 ## Authority and capability fingerprint
 
-Treat the installed Kitaru version and offline schema as authoritative. The current reference design was verified against Kitaru commit `d5c11987625aa144dc73ddf94981b8527549b2d6` on `codex/v2-importer-braintrust-otlp`; it may be newer than the user's installation.
+Treat the installed Kitaru version and offline schema as authoritative. This reference design was verified against Kitaru commit `c8d9a5c9df0452fc5be1fc6cb63cb1c4e888375a` on `codex/v2-importer-braintrust-otlp`; refresh that pinned revision before treating it as current.
 
 Inspect read-only before emitting exact commands:
 
@@ -31,7 +31,7 @@ Confirm the installed parser import path in the active Python environment. Recor
 
 | Capability | Evidence to record |
 |---|---|
-| Parser types | `Parser`, `ParsedSession`, `ParsedNode`, and `ImportFailure` import successfully |
+| Parser types | `Parser`, `ImportedSession`, `ImportedNode`, and `ImportFailure` import successfully |
 | Scaffold | Exact destination and overwrite behavior, or that manual file creation is required |
 | Local test | Entrypoint, payload, params, timeout, and code-execution warning, or the project-native isolated test path |
 | Registration | Script/package choice, entrypoint, provider, and version behavior when remote registration is requested |
@@ -48,12 +48,12 @@ The reference parser shape is:
 from collections.abc import Iterator
 from typing import Any
 
-from kitaru.task.importer import ImportFailure, ParsedSession, Parser
+from kitaru.task.importer import ImportFailure, ImportedSession, Parser
 
 
 def parse(
     payload: bytes, params: dict[str, Any]
-) -> Iterator[ParsedSession | ImportFailure]:
+) -> Iterator[ImportedSession | ImportFailure]:
     ...
 
 
@@ -62,37 +62,45 @@ parser: Parser = parse
 
 The worker passes the complete payload as `bytes` and one JSON-compatible parameters object. It advances the iterator one item at a time. A parser exception while creating or advancing the iterator is a task-level parser failure; a yielded `ImportFailure` is one isolated failed item.
 
-### Parsed session fields
+### Imported session fields
 
 | Field | Meaning |
 |---|---|
-| `external_id` | Stable source identity used with the registered provider for deduplication |
+| `external_id` | Stable source identity used with a nonempty registered provider for deduplication |
 | `status` | Installed `SessionStatus` value |
 | `name` | Useful source-derived label or `None` |
-| `inputs`, `outputs`, `expected` | JSON-compatible session-level content |
+| `inputs`, `outputs` | JSON-compatible session-level content |
 | `error` | Root/session failure, not every failed descendant |
 | `started_at`, `ended_at` | Aware timestamps when available |
 | `metadata` | Bounded source and fidelity metadata |
-| `nodes` | Root `ParsedNode` trees in deterministic order |
+| `framework` | Source framework when it can be established |
+| `nodes` | Root `ImportedNode` trees or an explicitly indexed flat node list in deterministic order |
 
-### Parsed node fields
+### Imported node fields
 
 Map the installed model rather than copying this list blindly. The reference includes:
 
+- optional `index`, `parent_index`, and `secondary_parent_indexes` for an explicitly indexed flat list;
 - `external_id`, `trace_id`, `node_type`, `name`, and `status`;
 - `error`, `started_at`, and `ended_at`;
+- `input_text_selector`, `output_text_selector`, `system_prompt_selector`, and visible `reasoning`;
 - `inputs`, `outputs`, `attributes`, and bounded `metadata`;
 - `requested_model`, served `model`, model `provider`, `model_params`;
 - `tokens`, `cost`, `tool_name`, and `subagent_id`;
-- `children`, which Kitaru flattens depth-first with each parent before its children.
+- `children`, which Kitaru flattens depth-first with each primary parent before its children when explicit indexes are not used.
 
 Reference node types are `llm_call`, `tool_call`, `subagent_call`, and `span`. Do not infer a semantic type merely from a suggestive name when the provider exposes a stronger field.
 
-The reference parsed tree has one primary parent per node. If the installed contract supports secondary parents only after flattening, keep one evidence-backed primary edge and record unsupported secondary relations in provider metadata rather than inventing a different tree.
+Use exactly one of the two current topology forms:
+
+- nested root nodes with `children`, which Kitaru flattens depth-first; or
+- a flat list in which every node has an explicit `index`, with `parent_index` and `secondary_parent_indexes` set where applicable.
+
+Explicitly indexed nodes cannot have `children`, and every primary or secondary parent index must precede the child index. Preserve source DAG edges with `secondary_parent_indexes` when the installed contract exposes them. Record a topology limitation in metadata only when the source relation cannot be represented by the installed model.
 
 ## Identity and deduplication
 
-Kitaru deduplicates imported sessions on the registered `provider` plus session `external_id`. Agent, agent version, owner, and content are not part of that key in the reference design.
+With a nonempty registered `provider`, Kitaru deduplicates imported sessions on that provider plus session `external_id`. Agent, agent version, owner, and content are not part of that key. Require a stable nonempty provider before claiming retry or duplicate-skip guarantees. Current registration permits an omitted provider, but provider-less imports are not reliably deduplicated because the stored uniqueness key contains a null value.
 
 Construct a namespaced external ID from:
 
@@ -100,7 +108,7 @@ Construct a namespaced external ID from:
 <normalized source instance>:<native session or trace id>
 ```
 
-The registered provider already supplies the outer namespace. Include account, workspace, project, collector, or tenant information in `source instance` whenever the source can reuse native IDs across those scopes. Require an explicit `source_instance` parameter when the export cannot establish one safely.
+The nonempty registered provider supplies the outer namespace. Include account, workspace, project, collector, or tenant information in `source instance` whenever the source can reuse native IDs across those scopes. Require an explicit `source_instance` parameter when the export cannot establish one safely.
 
 Construct node IDs from native trace plus span, run, or event identity. Scope them consistently when the source can reuse IDs across accounts.
 
@@ -118,7 +126,7 @@ Use a deterministic content digest to detect changed content locally before a re
 Use only commands confirmed by the installed schema. The reference forms are:
 
 ```text
-kitaru importer scaffold PROVIDER --path path/to/provider_importer.py
+kitaru importer scaffold NAME --path path/to/provider_importer.py
 
 kitaru importer test path/to/provider_importer.py \
   --entrypoint parse \

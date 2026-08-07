@@ -7,7 +7,7 @@ the installed package proves that they are available.
 ## Contents
 
 - [Establish the installed package surface](#establish-the-installed-package-surface)
-- [Use the draft references carefully](#use-the-draft-references-carefully)
+- [Use the historical draft references carefully](#use-the-historical-draft-references-carefully)
 - [Choose the supported implementation path](#choose-the-supported-implementation-path)
 - [Preserve the framework type surface](#preserve-the-framework-type-surface)
 - [Use the adapter primitives when available](#use-the-adapter-primitives-when-available)
@@ -37,18 +37,20 @@ Verify the installed signatures and request types. Do not write direct REST
 calls when a method is absent.
 
 Then test whether the project can resolve `@zenml-io/kitaru/adapter` and inspect
-its actual exports. Current draft exports include `RunRecorder`, per-run state,
-normalized step helpers, replay parsing and resolution, and tool-policy helpers.
-Use only the exports present in the installed or explicitly approved local
-package.
+its actual exports. The pinned historical draft exports include `RunRecorder`,
+per-run state, normalized step helpers, replay parsing and resolution, and
+tool-policy helpers. Use only the exports present in the installed or explicitly
+approved local package.
 
 If neither a sufficient public client nor the adapter subpath is available,
-propose the exact published dependency that supplies it and ask before changing
-the project. Stop when none exists.
+propose an exact published dependency only when installed metadata or an
+approved registry check proves that it exists, then ask before changing the
+project. Otherwise report publication as unverified and stop.
 
-## Use the draft references carefully
+## Use the historical draft references carefully
 
-The current TypeScript reference is Kitaru draft PR #679:
+The available TypeScript reference is a historical snapshot from Kitaru draft
+PR #679 on a different branch:
 
 ```text
 branch: feat/ts-support
@@ -58,7 +60,8 @@ Mastra adapter: packages/mastra/
 Vercel AI adapter: packages/vercel-ai/
 ```
 
-Refresh the branch and commit before relying on it. At this revision:
+These package directories are not tracked at the current
+`codex/v2-importer-braintrust-otlp` revision. At the pinned revision:
 
 - `@zenml-io/kitaru` is `0.1.0-experimental.0` and declares ESM plus a narrow
   Node 22 engine range;
@@ -69,6 +72,13 @@ Refresh the branch and commit before relying on it. At this revision:
   `generateText`;
 - the packages are draft, experimental references, not unconditional evidence
   that npm users can install them.
+
+The pinned recorder also sends the removed session `expected` field, so it is
+not schema-compatible evidence for the current Python server contract. Do not
+build or link this snapshot against a current server until its generated types,
+session request fields, and integration tests have been reconciled with that
+server. Refresh both branches and record the exact compatible revisions before
+using it as implementation evidence.
 
 If the branch or pinned commit cannot be resolved, treat these draft lessons as
 unverified. Rely on the installed package's public types and symbols, and report

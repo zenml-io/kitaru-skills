@@ -135,12 +135,12 @@ Proceed only when the user requests registration.
 Before approval, show:
 
 - the active Kitaru principal and target tenant or project;
-- importer name, provider, exact source path, entrypoint, and dependency route;
+- importer name, stable nonempty provider, exact source path, entrypoint, and dependency route;
 - whether this creates a parent plus first version or another immutable version;
 - that executable source or a package reference becomes remote state;
 - the exact installed command and the receipt fields that will be preserved.
 
-After approval, register once. Preserve the importer ID, exact version, source digest, and any blob or task identifiers. If parent creation succeeds and version creation fails, do not repeat the parent-creation command blindly.
+Require a stable nonempty provider before registration when remote deduplication or retry safety matters. Current Kitaru accepts an omitted provider, but provider-less imports are not reliably deduplicated. After approval, register once. Preserve the importer ID, exact version, source digest, and any blob or task identifiers. If parent creation succeeds and version creation fails, do not repeat the parent-creation command blindly.
 
 ## Gate the first smoke import separately
 
@@ -160,12 +160,12 @@ Before proposing any retry, classify each relevant external identity:
 |---|---|
 | Untouched | No session exists and the item did not run |
 | Complete | Session and expected nodes exist |
-| Skipped duplicate | The provider and external ID already existed |
+| Skipped duplicate | The same nonempty provider and external ID already existed |
 | Stale duplicate | Existing digest differs or the local joined export contains more turns |
 | Incomplete | Session exists but expected node ingestion did not finish |
 | Unrecoverable here | Installed Kitaru exposes no safe repair or deletion path |
 
-Remember that session creation can succeed before node ingestion fails. A direct rerun may then skip the existing external ID instead of repairing the session. A growing joined conversation can produce the same skip while the existing session contains fewer turns. Compare readable digest and trace-count metadata before classifying the skip; if the installed surface cannot expose that metadata, do not use incremental joined-conversation imports. Preserve evidence, patch and version the importer locally if needed, and propose only recovery operations the installed product actually exposes.
+Remember that session creation can succeed before node ingestion fails. With a stable nonempty registered provider, a direct rerun may then skip the existing external ID instead of repairing the session. Without one, a rerun may create another session instead. A growing joined conversation can produce a skip while the existing session contains fewer turns. Compare readable digest and trace-count metadata before classifying the skip; if the installed surface cannot expose that metadata, do not use incremental joined-conversation imports. Preserve evidence, patch and version the importer locally if needed, and propose only recovery operations the installed product actually exposes.
 
 ## Finish
 

@@ -48,7 +48,7 @@ node external_id    = <source-instance>:<native-trace-id>:<native-span-run-or-ev
 
 The source-instance node prefix may be omitted only when the provider guarantees that native trace and node identities are globally unique across every source instance handled by the registered importer.
 
-The importer registration's provider value and the session external ID form the remote deduplication key. Include any additional account or project scope in the external ID when the same registered provider can import several isolated source instances.
+A nonempty importer registration provider and the session external ID form the remote deduplication key. Include any additional account or project scope in the external ID when the same registered provider can import several isolated source instances. Provider-less imports are not reliably deduplicated; require a stable provider before depending on duplicate skips or safe retries.
 
 Reject conflicting required identity inside one source group. Do not silently select one of two conversation IDs or merge records from different account scopes.
 
@@ -113,7 +113,7 @@ Validate topology per native trace before yielding a session:
 - sort each parent's children deterministically;
 - keep parents before children in the emitted tree.
 
-When the source is a DAG but the parsed contract exposes one parent, choose the evidence-backed primary parent. Record secondary relations under an allowlisted provider metadata key and mark the topology loss. Do not duplicate the node to simulate several parents.
+When the source is a DAG, choose one evidence-backed primary parent and preserve other representable parents through `secondary_parent_indexes`. Use the explicitly indexed flat-node form so every referenced parent precedes the child. Record secondary relations in provider metadata only when the installed contract cannot represent them, and mark that topology loss. Do not duplicate a node to simulate several parents.
 
 ## Map node semantics
 
@@ -159,7 +159,7 @@ Use this projection only when the installed Kitaru contract or importer-owned me
 
 ## Report completeness and replay readiness
 
-Verify where fidelity fields belong in the installed parsed contract. The reference design stores them in session metadata. When no first-class fields exist, use an importer-owned namespace or documented common metadata keys rather than passing unsupported model fields.
+Verify where fidelity fields belong in the installed importer contract. The reference design stores them in session metadata. When no first-class fields exist, use an importer-owned namespace or documented common metadata keys rather than passing unsupported model fields.
 
 Useful common metadata:
 

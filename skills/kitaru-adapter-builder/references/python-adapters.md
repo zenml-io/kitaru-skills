@@ -23,9 +23,11 @@ Python, Kitaru, the framework, the model-provider package, and the test runner.
 
 Resolve imports and signatures from the installed package rather than assuming
 the latest source tree. First identify which public recording boundary the
-installed package exposes. Kitaru 0.21.0, for example, exposed synchronous
-`flow`, `checkpoint`, and `log` boundaries in the smolagents holdout rather than
-the session-node client shape below.
+installed package exposes. Do not infer the API from the version string alone:
+the current Kitaru source identifies as 0.21.0 but does not export the historical
+`flow`, `checkpoint`, or `log` decorators. A separately built holdout artifact
+with the same version string may expose different symbols, so record its exact
+source or revision before relying on it.
 
 Only when using the session-node path, verify whether the installed package
 exposes:
@@ -54,11 +56,12 @@ package confirms it. Never copy tokens into code, fixtures, logs, or reports.
 
 ## Use the current reference carefully
 
-The current Python example is the PydanticAI adapter on Kitaru draft PR #670:
+The pinned Python reference is the PydanticAI adapter on the Kitaru importer
+branch:
 
 ```text
 branch: codex/v2-importer-braintrust-otlp
-commit: d5c11987625aa144dc73ddf94981b8527549b2d6
+commit: c8d9a5c9df0452fc5be1fc6cb63cb1c4e888375a
 location: plugins/adapters/pydantic_ai/
 tests: plugins/tests/adapters/pydantic_ai/test_adapter.py
 ```
@@ -77,6 +80,8 @@ these design lessons:
 - create fresh run state and a client for each invocation;
 - record one in-progress session and root before agent work;
 - buffer child nodes while preserving stable indexes;
+- record input, output, and system-prompt JSON Pointer selectors plus visible
+  reasoning only when the framework exposes them;
 - replace the root and then update the session at the terminal state;
 - preserve the original agent exception when recording failure follows it;
 - close the per-run client on setup, success, and failure;
@@ -91,11 +96,11 @@ Define a narrower project-specific projection.
 The session-node Python client shape is async. Require a documented async
 framework entrypoint only when the adapter depends on that shape.
 
-When the installed Kitaru package instead exposes documented synchronous
-boundaries such as `flow`, `checkpoint`, and `log`, a coarser whole-invocation
-recording adapter may use the public decorator contract if it meets the user's
-goal and preserves the framework's exact return and exception behavior. Report
-only that boundary. Do not translate it into session-node, child-event, or
+When a separately verified installed Kitaru artifact exposes a documented
+synchronous recording boundary, a coarser whole-invocation adapter may use that
+public contract if it meets the user's goal and preserves the framework's exact
+return and exception behavior. Report only that observed boundary. Do not infer
+it from `0.21.0`, and do not translate it into session-node, child-event, or
 replay claims.
 
 When the application calls only a synchronous framework API, do not add
