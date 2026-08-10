@@ -1,7 +1,7 @@
 {
   "name": "kitaru",
   "description": "Build Kitaru adapters and importers for unsupported agent systems, then investigate sessions with human-reviewed evidence and versioned cohorts",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "author": {
     "name": "ZenML",
     "url": "https://kitaru.ai"

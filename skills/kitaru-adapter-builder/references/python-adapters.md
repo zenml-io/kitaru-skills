@@ -56,25 +56,34 @@ package confirms it. Never copy tokens into code, fixtures, logs, or reports.
 
 ## Use the current reference carefully
 
-The pinned Python reference is the PydanticAI adapter on the Kitaru importer
-branch:
+The checked `v2-spec-consolidated` source at commit
+`16de433f164a1f9fce0bee87196c36d2dd661b6e` contains independently versioned
+adapter distributions:
 
-```text
-branch: codex/v2-importer-braintrust-otlp
-commit: c8d9a5c9df0452fc5be1fc6cb63cb1c4e888375a
-location: plugins/adapters/pydantic_ai/
-tests: plugins/tests/adapters/pydantic_ai/test_adapter.py
-```
+| Framework | Distribution | Checked source | Advertised capability |
+|---|---|---|---|
+| PydanticAI | `kitaru-pydantic-ai` 0.1.0 | `plugins/packages/pydantic-ai/` | Recording and replay |
+| LangGraph, LangChain, and Deep Agents | `kitaru-langgraph` 0.1.0 | `plugins/packages/langgraph/` | Recording and replay |
+| OpenAI Agents SDK | `kitaru-openai-agents` 0.1.0 | `plugins/packages/openai-agents/` | Recording |
 
-Refresh the branch and commit before relying on it. If the pinned revision
-cannot be resolved, report the reference as unavailable, treat its lessons as
-unverified, and rely only on installed public symbols and types. At this
-revision the adapter is under `plugins/`, not in the Python wheel, and Kitaru
-exposes no general published Python adapter base. Do not import it from a user
-project or copy the module wholesale.
+Their tests live under `plugins/tests/adapters/pydantic_ai/`,
+`plugins/tests/adapters/langgraph/`, and
+`plugins/tests/adapters/openai_agents/`. Adapter distributions are installed by
+agent projects rather than bundled into the core Kitaru wheel. This inventory
+describes the checked source tree, not what is installed in the user's project
+or proof that a registry currently serves the package.
 
-When the revision resolves and the relevant behavior is verified, extract only
-these design lessons:
+Check the project's installed distributions and current Kitaru documentation
+before designing a custom adapter. When one of these packages supports the
+installed framework version and requested invocation mode, use it instead of
+building a duplicate. Otherwise record the exact missing boundary. Kitaru still
+exposes no general adapter base in the core wheel, so do not import repository
+source into a user project or copy a package wholesale.
+
+Re-check the source revision before relying on implementation details. If it
+cannot be resolved, report the reference as unavailable and rely only on
+installed public symbols and types. When the relevant behavior is verified,
+extract only these design lessons:
 
 - compose through a public framework wrapper or capability;
 - create fresh run state and a client for each invocation;

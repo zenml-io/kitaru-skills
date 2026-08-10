@@ -8,8 +8,8 @@ metadata. It is not a Python package.
 - `skills/kitaru-investigation/SKILL.md` is the public routing playbook.
 - `skills/kitaru-investigation/references/` contains method, transport, and
   evaluator details loaded only when needed.
-- `skills/build-kitaru-importer/SKILL.md` guides custom importer development.
-- `skills/build-kitaru-importer/references/` contains parser, normalization,
+- `skills/kitaru-importer-builder/SKILL.md` guides custom importer development.
+- `skills/kitaru-importer-builder/references/` contains parser, normalization,
   validation, and recovery details loaded only when needed.
 - `skills/kitaru-adapter-builder/SKILL.md` guides project-local adapter
   development for unsupported Python and TypeScript frameworks.

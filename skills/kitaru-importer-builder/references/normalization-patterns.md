@@ -39,12 +39,14 @@ Normalize the source instance explicitly. Prefer a provider account, workspace, 
 
 Use stable source values rather than array offsets, timestamps alone, random UUIDs, or hashes of mutable content for external IDs.
 
-Recommended shapes:
+Recommended shapes use a stable URI path-segment encoding for every component:
 
 ```text
-session external_id = <source-instance>:<native-session-or-trace-id>
-node external_id    = <source-instance>:<native-trace-id>:<native-span-run-or-event-id>
+session external_id = <encoded-source-instance>/<encoded-native-session-or-trace-id>
+node external_id    = <encoded-source-instance>/<encoded-native-trace-id>/<encoded-native-span-run-or-event-id>
 ```
+
+Percent-encode each UTF-8 component independently, including `/`, `%`, and `:`, then join the encoded segments with `/`. Test separator-containing and non-ASCII values. Do not join raw components with a delimiter because different component tuples can otherwise produce the same external ID.
 
 The source-instance node prefix may be omitted only when the provider guarantees that native trace and node identities are globally unique across every source instance handled by the registered importer.
 
@@ -77,7 +79,7 @@ A valid group key contains:
 registered provider + source instance/account + project/tenant when present + conversation key
 ```
 
-Built-in patterns may expose native fields such as a session ID, conversation ID, or a configurable dotted/JSON Pointer path. Treat configured paths as strict: when a record is expected to contain the selected path but does not, yield an isolated failure rather than silently changing the grouping rule.
+Built-in patterns may expose native fields such as a session ID or conversation ID. The dedicated `kitaru session import --join-on` option accepts an RFC 6901 JSON Pointer. A custom parser may separately accept a dotted or JSON Pointer path through its documented `--params`; do not imply that the dedicated CLI option accepts dotted paths. Treat every configured path as strict: when a record is expected to contain the selected path but does not, yield an isolated failure rather than silently changing the grouping rule.
 
 For implicit provider keys:
 
@@ -121,7 +123,7 @@ Prefer explicit provider semantics over names:
 
 | Source evidence | Node type and fields |
 |---|---|
-| Model/generation operation | `llm_call`; requested and served model, provider, model params, usage, cost |
+| Model/generation operation | `llm_call`; requested and served model, `model_provider`, model params, usage, cost |
 | Tool execution operation | `tool_call`; canonical tool name, structured inputs and outputs |
 | Delegated agent operation | `subagent_call`; subagent identity and available inputs/outputs |
 | Other timed operation | `span`; bounded attributes and metadata |
@@ -180,14 +182,15 @@ root_inputs_available: boolean
 graph_complete: boolean
 tool_call_count: integer
 replayable_tool_call_count: integer
+tool_activity_observable: boolean
 reasons: ordered list of concrete limitations
 ```
 
 Suggested reduction:
 
 - `unavailable`: any required turn root input is missing;
-- `ready`: root inputs exist, the graph is complete, and every tool call has a name, input, and output;
-- `partial`: root inputs exist but graph or tool fidelity is incomplete.
+- `ready`: root inputs exist, the graph is complete, tool activity is observably complete, and every observed tool call has a name, input, and output. An explicit source guarantee that no tools ran also satisfies tool observability;
+- `partial`: root inputs exist but graph completeness, tool observability, or tool fidelity is incomplete.
 
 This is an evidence report, not a promise that every agent can be replayed. Keep unsupported model behavior, external effects, memory, and tool environment limitations visible.
 

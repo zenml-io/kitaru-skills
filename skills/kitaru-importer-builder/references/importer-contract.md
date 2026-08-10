@@ -14,7 +14,7 @@ Use this reference to inspect the installed importer surface, implement the pars
 
 ## Authority and capability fingerprint
 
-Treat the installed Kitaru version and offline schema as authoritative. This reference design was verified against Kitaru commit `c8d9a5c9df0452fc5be1fc6cb63cb1c4e888375a` on `codex/v2-importer-braintrust-otlp`; refresh that pinned revision before treating it as current.
+Treat the installed Kitaru version and offline schema as authoritative. This reference design was checked against Kitaru commit `16de433f164a1f9fce0bee87196c36d2dd661b6e` on `v2-spec-consolidated`; re-check the current installed schema before relying on it.
 
 Inspect read-only before emitting exact commands:
 
@@ -36,7 +36,7 @@ Confirm the installed parser import path in the active Python environment. Recor
 | Local test | Entrypoint, payload, params, timeout, and code-execution warning, or the project-native isolated test path |
 | Registration | Script/package choice, entrypoint, provider, and version behavior when remote registration is requested |
 | Version registration | Whether an existing importer can receive an immutable new version when that remote action is requested |
-| Session import | Exact importer and agent versions, payload, params, and wait behavior when a remote import is requested |
+| Session import | Exact importer and agent versions, payload, params, optional RFC 6901 `join_on`, durable tags, and wait behavior when a remote import is requested |
 
 Stop only when a capability required by the requested outcome is absent. Parser types are required to author against the installed contract. Missing scaffold or local-test helpers may use explicit file creation and project-native isolated tests when those paths still exercise the installed parser contract. Missing registration or session-import capabilities limit remote actions; they do not prevent completing a locally validated importer. Do not upgrade Kitaru or substitute draft syntax without the user's separate direction.
 
@@ -85,7 +85,7 @@ Map the installed model rather than copying this list blindly. The reference inc
 - `error`, `started_at`, and `ended_at`;
 - `input_text_selector`, `output_text_selector`, `system_prompt_selector`, and visible `reasoning`;
 - `inputs`, `outputs`, `attributes`, and bounded `metadata`;
-- `requested_model`, served `model`, model `provider`, `model_params`;
+- `requested_model`, served `model`, `model_provider`, and `model_params`;
 - `tokens`, `cost`, `tool_name`, and `subagent_id`;
 - `children`, which Kitaru flattens depth-first with each primary parent before its children when explicit indexes are not used.
 
@@ -102,15 +102,17 @@ Explicitly indexed nodes cannot have `children`, and every primary or secondary 
 
 With a nonempty registered `provider`, Kitaru deduplicates imported sessions on that provider plus session `external_id`. Agent, agent version, owner, and content are not part of that key. Require a stable nonempty provider before claiming retry or duplicate-skip guarantees. Current registration permits an omitted provider, but provider-less imports are not reliably deduplicated because the stored uniqueness key contains a null value.
 
-Construct a namespaced external ID from:
+Construct a collision-free namespaced external ID from stable encoded components. One readable form is to percent-encode every UTF-8 component as a URI path segment and join the encoded segments with `/`:
 
 ```text
-<normalized source instance>:<native session or trace id>
+<encoded source instance>/<encoded native session or trace id>
 ```
+
+Use one specified encoding everywhere and test values containing `/`, `%`, `:`, and non-ASCII text. Do not concatenate raw components with a delimiter that may also appear inside a component.
 
 The nonempty registered provider supplies the outer namespace. Include account, workspace, project, collector, or tenant information in `source instance` whenever the source can reuse native IDs across those scopes. Require an explicit `source_instance` parameter when the export cannot establish one safely.
 
-Construct node IDs from native trace plus span, run, or event identity. Scope them consistently when the source can reuse IDs across accounts.
+Construct node IDs from separately encoded source-instance, native-trace, and span, run, or event components. Scope them consistently when the source can reuse IDs across accounts.
 
 Consequences:
 
@@ -207,8 +209,17 @@ kitaru session import path/to/redacted-export.json \
   --importer IMPORTER@VERSION \
   --agent AGENT@VERSION \
   --params '{"source_instance":"workspace"}' \
+  --tag 'kitaru-importer-smoke:provider-unique-id' \
   --wait
 ```
+
+For an eligible per-turn export, add the dedicated join option only when the installed schema exposes it and the mapping establishes a strict conversation key:
+
+```text
+  --join-on '/conversation/id'
+```
+
+The CLI `--join-on` value is an RFC 6901 JSON Pointer. Dotted paths, when a particular parser supports them, belong in that parser's documented `--params` instead of this dedicated option.
 
 Use exact importer and agent versions. Import uploads the payload, creates a job, and may create persistent sessions. A local timeout ends waiting, not the remote job. Tags may be applied after import and can fail separately; preserve the session and job receipt before attempting follow-on mutations.
 

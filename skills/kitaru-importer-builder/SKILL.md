@@ -1,9 +1,9 @@
 ---
-name: build-kitaru-importer
+name: kitaru-importer-builder
 description: Build and validate a custom Kitaru trace importer when a provider, observability platform, export format, or agent framework has no suitable built-in importer. Use when a user wants to map provider traces into Kitaru sessions and nodes, join per-turn traces into longer sessions, preserve incomplete or failed trace evidence, choose script or package installation, test importer fidelity, register an importer version, import a bounded sample, or diagnose a partial import. A private or project-local importer is a complete outcome; packaging or an OSS contribution is optional.
 ---
 
-# Build a Kitaru importer
+# Kitaru importer builder
 
 Turn a representative provider export into a locally validated Kitaru importer. Keep the path from source evidence to normalized sessions explicit so the user can see what is preserved, approximated, or unavailable.
 
@@ -54,6 +54,8 @@ If importer scaffolding, local testing, registration, exact-version import, or t
 
 If `kitaru-investigation` routed the user here, retain the agent and investigation context. Return to the investigation only after relevant sessions are actually usable.
 
+If the source exists only behind a live framework entrypoint and no usable static export can meet the user's goal, continue with `kitaru-adapter-builder`. Carry forward the repository and revision, public entrypoint, language, installed framework and Kitaru versions, requested evidence, target agent and version, and investigation goal. Choose this route once; do not bounce back merely because the adapter mentions importers as an alternative.
+
 ## Acquire a safe representative sample
 
 Prefer an existing static export. When the provider offers only an authenticated or paginated API, treat export acquisition as a separate task with its own approval, credentials, pagination, rate limits, and resumability.
@@ -96,7 +98,7 @@ Mark every relevant source field as mapped, preserved as bounded metadata, or in
 5. Yield valid sessions and isolated item failures incrementally.
 6. Keep provider-specific helpers private to the file unless package mode is already justified.
 7. Use only safe deserializers. Reject unsafe formats or convert them in the separate acquisition step.
-8. Apply the declared byte limit before decoding and the record and depth limits before expensive normalization.
+8. Apply the declared byte limit before decoding, enforce the depth limit during tokenization or decoding before full materialization, and apply the record limit before expensive normalization.
 
 Use [references/normalization-patterns.md](references/normalization-patterns.md) for identities, joins, topology, status, metadata, readiness, and content digests.
 
@@ -146,9 +148,9 @@ Require a stable nonempty provider before registration when remote deduplication
 
 Proceed only when the user also approves uploading a bounded redacted payload.
 
-Show the exact importer version, agent version, target tenant or project, payload, parameters, persistence, expected session identities, and the fact that this skill has no automatic cleanup path. Require a disposable agent or a clearly marked isolated source identity before proceeding. Do not write minimized smoke fixtures into the ordinary production session population without a marker that the investigation flow can exclude.
+Show the exact importer version, agent version, target tenant or project, payload, parameters, persistence, expected session identities, and the fact that this skill has no automatic cleanup path. When the installed schema exposes `--tag`, require one unique durable smoke tag and include `--wait` because current post-import tagging requires it. If tagging is unavailable, require a disposable agent or a clearly marked isolated source identity instead. Do not write minimized smoke fixtures into the ordinary production session population without a marker that the investigation flow can exclude.
 
-Create one import job and wait only through the installed supported mechanism. A local wait timeout does not stop the remote job. Preserve the blob, job, task, session, and terminal receipt identifiers.
+Create one import job and wait only through the installed supported mechanism. A local wait timeout does not stop the remote job. Preserve the smoke tag plus the blob, job, task, session, and terminal receipt identifiers. Tag application can fail after session import succeeds, so retain the session receipt and report that partial state rather than rerunning the import.
 
 Classify the result as created, skipped duplicate, failed, or still running. Inspect representative imported sessions rather than trusting counts alone.
 
@@ -172,6 +174,6 @@ Remember that session creation can succeed before node ingestion fails. With a s
 When local validation or the requested smoke import succeeds:
 
 1. Return the exact artifacts, supported source shapes, fidelity limits, and verification results.
-2. Return every smoke-test session ID and its disposable-agent or isolated-source marker. Route the user back to `kitaru-investigation` when usable non-smoke sessions now exist, carrying the exclusion set forward.
+2. Return the durable smoke tag, every smoke-test session ID, and any disposable-agent or isolated-source marker. Route the user back to `kitaru-investigation` when usable non-smoke sessions now exist, carrying the exclusion set forward.
 3. Ask whether they want to keep the importer private, package it for their environment, or consider contributing it upstream.
 4. Do not publish, contribute, or broaden provider support without a separate request.

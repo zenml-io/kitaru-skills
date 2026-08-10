@@ -61,7 +61,7 @@ the repository.
 
 If the framework already exports traces in a format no built-in importer
 supports and that post-hoc evidence meets the user's goal, continue with
-`build-kitaru-importer` instead of wrapping the live entrypoint. Carry forward
+`kitaru-importer-builder` instead of wrapping the live entrypoint. Carry forward
 the repository and revision, public entrypoint, framework and version, export
 source and shape, Kitaru package and version, target agent and version, and
 requested evidence. Choose this route once; do not bounce back merely because

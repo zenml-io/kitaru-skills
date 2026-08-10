@@ -6,17 +6,18 @@ human-reviewed evidence. They support custom adapter and importer development,
 trace-first debugging, cold-start error discovery, durable annotations,
 versioned cohorts, and optional evaluator authoring.
 
-Kitaru records agent runs as full traces, including model calls, tool calls,
-and decisions. The skills help a coding agent record an unsupported framework,
-import an unsupported trace format, and organize the resulting sessions into a
-bounded investigation without replacing human judgment.
+Kitaru records agent runs as evidence-rich sessions. Model and tool activity is
+recorded when the integration exposes it, and the skills make observability gaps
+explicit. They help a coding agent record an unsupported framework, import an
+unsupported trace format, and organize the resulting sessions into a bounded
+investigation without replacing human judgment.
 
 ## Skill
 
 | Skill | Claude Code invocation | Purpose |
 |---|---|---|
 | [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | `/kitaru-investigation` | Map the registered agent and its operating context, review a known bad session or discover candidate failure modes, persist human annotations, create an accepted cohort, and optionally author one narrow evaluator. |
-| [`build-kitaru-importer`](skills/build-kitaru-importer/SKILL.md) | `/build-kitaru-importer` | Build and locally validate a private or packaged importer for an unsupported provider or export format, with conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
+| [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | `/kitaru-importer-builder` | Build and locally validate a private or packaged importer for an unsupported provider or export format, with conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
 | [`kitaru-adapter-builder`](skills/kitaru-adapter-builder/SKILL.md) | `/kitaru-adapter-builder` | Build a project-local Python or TypeScript adapter for an unsupported agent framework, with explicit recording and replay boundaries, partial-trace handling, side-effect controls, and separately approved upstream contribution. |
 
 The workflow keeps human observations separate from agent suggestions. It
@@ -62,6 +63,13 @@ before enabling write or destructive capabilities.
 
 ## Installation and usage
 
+Use the cross-host installer when the agent host supports the Agent Skills
+standard:
+
+```bash
+npx skills add zenml-io/kitaru-skills
+```
+
 ### Claude Code plugin
 
 ```bash
@@ -70,7 +78,7 @@ before enabling write or destructive capabilities.
 ```
 
 Claude Code selects a skill from context. You can also invoke
-`/kitaru-investigation`, `/build-kitaru-importer`, or
+`/kitaru-investigation`, `/kitaru-importer-builder`, or
 `/kitaru-adapter-builder` explicitly.
 
 For project or team installation, add the plugin to
@@ -91,7 +99,7 @@ For manual local testing:
 
 ```bash
 mkdir -p .claude/skills
-cp -R skills/build-kitaru-importer .claude/skills/
+cp -R skills/kitaru-importer-builder .claude/skills/
 cp -R skills/kitaru-adapter-builder .claude/skills/
 cp -R skills/kitaru-investigation .claude/skills/
 ```
@@ -105,7 +113,7 @@ according to the host and the official Kitaru MCP server guide.
 ## Repository structure
 
 ```text
-skills/build-kitaru-importer/
+skills/kitaru-importer-builder/
   SKILL.md
   references/
     failure-and-validation.md

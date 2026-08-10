@@ -60,8 +60,8 @@ Mastra adapter: packages/mastra/
 Vercel AI adapter: packages/vercel-ai/
 ```
 
-These package directories are not tracked at the current
-`codex/v2-importer-braintrust-otlp` revision. At the pinned revision:
+These package directories are not tracked at the checked
+`v2-spec-consolidated` revision. At the historical pinned revision:
 
 - `@zenml-io/kitaru` is `0.1.0-experimental.0` and declares ESM plus a narrow
   Node 22 engine range;

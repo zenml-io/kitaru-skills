@@ -38,9 +38,9 @@ Do not use direct REST calls to fill a missing CLI or MCP contract.
 |---|---|---|
 | Check connection and worker readiness | `kitaru status`; use `kitaru doctor` for independent diagnostics | No single equivalent; use bounded reads only after the server is configured |
 | Resolve agent or version | `kitaru agent get AGENT`; `kitaru agent version get AGENT@VERSION` | `kitaru_registry_read`, `get` or `get_version`, kind `agent` |
-| Import a local trace payload | `kitaru session import FILE --importer IMPORTER@VERSION --agent AGENT@VERSION`, optionally `--wait` | `kitaru_session_import` uses an existing payload blob and exact importer and agent versions; it cannot read a local file |
+| Import a local trace payload | `kitaru session import FILE --importer IMPORTER@VERSION --agent AGENT@VERSION`, optionally `--join-on JSON_POINTER`, `--tag TAG`, and `--wait`; current tag application requires waiting | `kitaru_session_import` uses an existing payload blob and exact importer and agent versions; it cannot read a local file |
 | Record a new agent run | Use the repository's verified Kitaru-integrated agent entrypoint | No generic MCP operation; running the agent may execute tools or mutate external state |
-| List eligible sessions | `kitaru session list --agent AGENT` with bounded filters and pagination | `kitaru_activity_read`, `list`, kind `session` |
+| List eligible sessions | `kitaru session list --agent AGENT` with bounded filters and pagination; use `--tag TAG` to find or exclude a marked smoke population | `kitaru_activity_read`, `list`, kind `session` |
 | Read a complete session | `kitaru session get SESSION`; `kitaru session nodes SESSION --include-payloads` with pagination | `kitaru_activity_read`, `get` session then `list_children` session nodes with payloads |
 | Create investigation and fixed worklist | `kitaru investigation create NAME --agent AGENT --question KEY=QUESTION --session UUID [--session-view 'UUID=JSON']` | `kitaru_review_manage`, `create_investigation` |
 | Read or resume investigation | `kitaru investigation get ID`; `kitaru investigation session list ID` | `kitaru_review_read`, `get` investigation then `list_sessions` |

@@ -95,7 +95,7 @@ When sessions are not ready, guide the smallest current registration, recording,
 
 Route a missing integration only when it blocks the sessions needed for this investigation:
 
-- If the user has existing traces but no built-in importer supports their provider or export format, continue with `build-kitaru-importer`. Carry forward the provider, export shape, target agent and version, current registration or import state, and investigation goal.
+- If the user has existing traces but no built-in importer supports their provider or export format, continue with `kitaru-importer-builder`. Carry forward the provider, export shape, target agent and version, current registration or import state, and investigation goal.
 - If the user needs in-process recording but no supported adapter covers the installed framework and invocation mode, continue with `kitaru-adapter-builder`. Carry forward the repository, public agent entrypoint, language, installed framework and Kitaru versions, requested recording fidelity, target agent and version, and investigation goal.
 
 Use one route based on the evidence. Do not bounce between builder skills merely because either mentions the other as an alternative. Resume this investigation only when relevant sessions are usable or the builder returns an exact blocker; preserve its checkpoint instead of repeating discovery.
@@ -152,7 +152,7 @@ Use this path when the user supplies or identifies a seed session.
 
 Use this path when the user has a bounded population but no confident starting failure.
 
-1. Define the eligible session population and time or version boundary. Exclude known importer smoke-test session IDs and disposable-agent or isolated-source markers carried from a builder checkpoint.
+1. Define the eligible session population and time or version boundary. Exclude the durable importer smoke-test tag carried from a builder checkpoint with `kitaru session list --tag TAG` when available, plus any known smoke-test session IDs and disposable-agent or isolated-source markers.
 2. Run selected low-cost deterministic analyses explicitly. Import alone must not trigger analysis.
 3. Build a diverse initial worklist, normally 15 to 30 sessions, using roughly 60 to 70 percent coverage-oriented examples and 30 to 40 percent random examples.
 4. Record the population, seed, selection method revision, and reason each session was selected.
