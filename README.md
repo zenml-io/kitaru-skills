@@ -15,12 +15,12 @@ investigation without replacing human judgment.
 
 ## Skills
 
-| Skill | Claude Code invocation | Purpose |
-|---|---|---|
-| [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | `/kitaru-investigation` | Map the registered agent and its operating context, review a known bad session or discover candidate failure modes, persist human annotations, create an accepted cohort, and select a built-in evaluator or author one narrow custom evaluator. |
-| [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | `/kitaru-replay-experiment` | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
-| [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | `/kitaru-importer-builder` | Build and locally validate a private or packaged importer for an unsupported provider or export format, with conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
-| [`kitaru-adapter-builder`](skills/kitaru-adapter-builder/SKILL.md) | `/kitaru-adapter-builder` | Build a project-local Python or TypeScript adapter for an unsupported agent framework, with explicit recording and replay boundaries, partial-trace handling, side-effect controls, and separately approved upstream contribution. |
+| Skill | Purpose |
+|---|---|
+| [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Map the registered agent and its operating context, review a known bad session or discover candidate failure modes, persist human annotations, create an accepted cohort, and select a built-in evaluator or author one narrow custom evaluator. |
+| [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
+| [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
+| [`kitaru-adapter-builder`](skills/kitaru-adapter-builder/SKILL.md) | Build a project-local Python or TypeScript adapter for an unsupported agent framework, with explicit recording and replay boundaries, partial-trace handling, side-effect controls, and separately approved upstream contribution. |
 
 The workflow keeps human observations separate from agent suggestions. It
 uses a Kitaru frontend review block when that route is available and falls
@@ -73,53 +73,39 @@ before enabling write or destructive capabilities.
 
 ## Installation and usage
 
-Use the cross-host installer when the agent host supports the Agent Skills
-standard:
+Install the skills with the cross-host Agent Skills installer. This is the
+recommended route for Codex, Cursor, Claude Code, and other compatible hosts:
 
 ```bash
 npx skills add zenml-io/kitaru-skills
 ```
 
-### Claude Code plugin
+Your agent can select a skill from context, or you can ask it to use a skill by
+name. For example: "Use `kitaru-investigation` to investigate why this Kitaru
+session gave a bad support answer." Exact invocation syntax varies by host.
+
+Configure Kitaru MCP separately according to your host and the official Kitaru
+MCP server guide.
+
+### Optional Claude Code plugin installation
+
+Claude Code users who prefer its plugin marketplace can install the same skills
+as a plugin:
 
 ```bash
 /plugin marketplace add zenml-io/kitaru-skills
 /plugin install kitaru@kitaru
 ```
 
-Claude Code selects a skill from context. You can also invoke
+You can then invoke
 `/kitaru-investigation`, `/kitaru-replay-experiment`,
 `/kitaru-importer-builder`, or `/kitaru-adapter-builder` explicitly.
 
-For project or team installation, add the plugin to
-`.claude/settings.json`:
+### Manual installation
 
-```json
-{
-  "plugins": {
-    "kitaru": {
-      "source": "zenml-io/kitaru-skills",
-      "name": "kitaru"
-    }
-  }
-}
-```
-
-For manual local testing:
-
-```bash
-mkdir -p .claude/skills
-cp -R skills/kitaru-importer-builder .claude/skills/
-cp -R skills/kitaru-adapter-builder .claude/skills/
-cp -R skills/kitaru-investigation .claude/skills/
-cp -R skills/kitaru-replay-experiment .claude/skills/
-```
-
-### Codex, Cursor, and other hosts
-
-Copy the relevant skill directory into the host's supported skills location, or
-load its `SKILL.md` as explicit project context. Configure Kitaru MCP separately
-according to the host and the official Kitaru MCP server guide.
+If your host does not support the installer, copy the relevant skill directory
+into its skills location or load the skill's `SKILL.md` as explicit project
+context.
 
 ## Repository structure
 
