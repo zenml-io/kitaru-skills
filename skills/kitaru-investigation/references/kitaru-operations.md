@@ -127,7 +127,7 @@ Do not improvise around these boundaries. Preserve what can be preserved in Kita
 ## Mutation and retry rules
 
 - Explain the exact remote object or compute job before creating it.
-- Require exact confirmation for cohort membership and evaluator rubrics.
+- Require exact confirmation for cohort membership. Treat an evaluator card that preserves an already accepted behavior as a checksum; require a new decision only when it changes a boundary, permitted equivalence, or missing-evidence rule.
 - After a dropped response, read current state before retrying. General request idempotency is not guaranteed.
 - Treat annotation question upsert as scoped only to the same investigation-session and question key.
 - Never use destructive deletion as investigation cancellation.

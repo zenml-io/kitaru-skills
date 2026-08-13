@@ -4,7 +4,8 @@ This repository contains agent skills for connecting agent frameworks and trace
 exports to [Kitaru](https://kitaru.ai), then turning recorded sessions into
 human-reviewed evidence. They support custom adapter and importer development,
 trace-first debugging, cold-start error discovery, durable annotations,
-versioned cohorts, and optional evaluator authoring.
+versioned cohorts, built-in or custom evaluator selection, and bounded replay
+experiments.
 
 Kitaru records agent runs as evidence-rich sessions. Model and tool activity is
 recorded when the integration exposes it, and the skills make observability gaps
@@ -12,11 +13,12 @@ explicit. They help a coding agent record an unsupported framework, import an
 unsupported trace format, and organize the resulting sessions into a bounded
 investigation without replacing human judgment.
 
-## Skill
+## Skills
 
 | Skill | Claude Code invocation | Purpose |
 |---|---|---|
-| [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | `/kitaru-investigation` | Map the registered agent and its operating context, review a known bad session or discover candidate failure modes, persist human annotations, create an accepted cohort, and optionally author one narrow evaluator. |
+| [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | `/kitaru-investigation` | Map the registered agent and its operating context, review a known bad session or discover candidate failure modes, persist human annotations, create an accepted cohort, and select a built-in evaluator or author one narrow custom evaluator. |
+| [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | `/kitaru-replay-experiment` | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
 | [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | `/kitaru-importer-builder` | Build and locally validate a private or packaged importer for an unsupported provider or export format, with conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
 | [`kitaru-adapter-builder`](skills/kitaru-adapter-builder/SKILL.md) | `/kitaru-adapter-builder` | Build a project-local Python or TypeScript adapter for an unsupported agent framework, with explicit recording and replay boundaries, partial-trace handling, side-effect controls, and separately approved upstream contribution. |
 
@@ -31,6 +33,8 @@ operations in the meantime.
 - "Help me discover recurring failure modes in last week's agent sessions."
 - "Resume investigation `INVESTIGATION_ID` and show me what remains."
 - "Turn this accepted behavior and cohort into a narrow evaluator."
+- "Replay this cohort with the new prompt and tell me whether it helped."
+- "Run a safe experiment with history-backed tools and no live passthrough."
 - "Build a private Kitaru importer for this provider's JSONL trace export."
 - "These traces store each conversation turn separately. Join them safely when importing into Kitaru."
 - "Help me understand whether this partial import is safe to retry."
@@ -50,6 +54,12 @@ investigation flow. If the application needs in-process recording or replay and
 no supported framework integration exists, the adapter-builder skill verifies
 the installed SDK and public framework hooks before building a project-local
 adapter.
+
+After investigation accepts a behavior and cohort, it checks the installed
+evaluator catalog before proposing custom evaluator code. If the user wants to
+test one change, the replay-experiment skill preflights adapter support and tool
+effects, shows one run card, supervises the bounded run, and explains the exact
+case-level evidence.
 
 For the most direct agent experience, configure the native Kitaru MCP server
 in `standard` mode so the host can read investigations and create review,
@@ -78,8 +88,8 @@ npx skills add zenml-io/kitaru-skills
 ```
 
 Claude Code selects a skill from context. You can also invoke
-`/kitaru-investigation`, `/kitaru-importer-builder`, or
-`/kitaru-adapter-builder` explicitly.
+`/kitaru-investigation`, `/kitaru-replay-experiment`,
+`/kitaru-importer-builder`, or `/kitaru-adapter-builder` explicitly.
 
 For project or team installation, add the plugin to
 `.claude/settings.json`:
@@ -102,6 +112,7 @@ mkdir -p .claude/skills
 cp -R skills/kitaru-importer-builder .claude/skills/
 cp -R skills/kitaru-adapter-builder .claude/skills/
 cp -R skills/kitaru-investigation .claude/skills/
+cp -R skills/kitaru-replay-experiment .claude/skills/
 ```
 
 ### Codex, Cursor, and other hosts
@@ -131,9 +142,18 @@ skills/kitaru-adapter-builder/
 skills/kitaru-investigation/
   SKILL.md
   references/
+    deterministic-evaluators.md
     evaluator-authoring.md
     investigation-method.md
     kitaru-operations.md
+
+skills/kitaru-replay-experiment/
+  SKILL.md
+  agents/
+    openai.yaml
+  references/
+    experiment-contract.md
+    experiment-method.md
 ```
 
 Each `SKILL.md` is a routing playbook. Reference files are loaded only for the

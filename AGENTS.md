@@ -8,6 +8,12 @@ metadata. It is not a Python package.
 - `skills/kitaru-investigation/SKILL.md` is the public routing playbook.
 - `skills/kitaru-investigation/references/` contains method, transport, and
   evaluator details loaded only when needed.
+- `skills/kitaru-replay-experiment/SKILL.md` guides one safe, bounded candidate
+  comparison against an accepted cohort and exact evaluator set.
+- `skills/kitaru-replay-experiment/references/` separates current Kitaru replay
+  contracts from the comparison and interpretation method.
+- `skills/kitaru-replay-experiment/agents/openai.yaml` contains host-facing
+  display metadata for the replay skill.
 - `skills/kitaru-importer-builder/SKILL.md` guides custom importer development.
 - `skills/kitaru-importer-builder/references/` contains parser, normalization,
   validation, and recovery details loaded only when needed.
@@ -70,6 +76,15 @@ host environment.
   passthrough, or preparing an upstream contribution.
 - Distinguish application streaming, observation of the stream lifecycle, and
   replay of original chunks or timing.
+- Prefer installed descriptive and configured evaluators before custom
+  authoring, and report evaluator evidence as facts rather than maturity labels.
+- Describe experiment replay as a fresh task from stored top-level inputs. Do
+  not imply arbitrary checkpoint, process-memory, or external-world restoration.
+- Require an explicit tool policy for tool-using replays because an omitted
+  policy can execute live tools. Verify adapter and construction-path support
+  before presenting an actionable run card.
+- Keep failures and missing evaluations outside quality denominators. Do not
+  turn directional experiment evidence into a winner, deployment, or CI verdict.
 - Do not recommend direct REST calls or local files to bypass missing Kitaru
   persistence contracts.
 - Do not reintroduce removed Kitaru-owned durable memory APIs.

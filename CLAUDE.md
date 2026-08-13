@@ -7,8 +7,10 @@ Shared contributor guidance lives in [`AGENTS.md`](AGENTS.md). Follow it first.
 The repository contains public Kitaru skills plus Claude Code plugin packaging.
 `kitaru-investigation` conducts evidence-grounded review of Kitaru agent
 sessions and can turn an accepted behavior into a versioned cohort and optional
-evaluator. `kitaru-importer-builder` builds and validates a private or packaged
-importer when a trace provider has no suitable built-in integration.
+installed or custom evaluator. `kitaru-replay-experiment` safely compares one
+candidate against an exact cohort and evaluator set. `kitaru-importer-builder`
+builds and validates a private or packaged importer when a trace provider has
+no suitable built-in integration.
 `kitaru-adapter-builder` builds a project-local Python or TypeScript adapter
 when an agent framework has no suitable supported integration.
 
@@ -33,14 +35,23 @@ skills/
   kitaru-investigation/
     SKILL.md
     references/
+      deterministic-evaluators.md
       evaluator-authoring.md
       investigation-method.md
       kitaru-operations.md
+  kitaru-replay-experiment/
+    SKILL.md
+    agents/
+      openai.yaml
+    references/
+      experiment-contract.md
+      experiment-method.md
 ```
 
-Claude Code exposes the skills as `/kitaru-investigation` and
-`/kitaru-importer-builder` and `/kitaru-adapter-builder`, and may also select them
-automatically from their frontmatter descriptions.
+Claude Code exposes the skills as `/kitaru-investigation`,
+`/kitaru-replay-experiment`, `/kitaru-importer-builder`, and
+`/kitaru-adapter-builder`, and may also select them automatically from their
+frontmatter descriptions.
 
 ## Editing the skill
 
@@ -49,8 +60,15 @@ automatically from their frontmatter descriptions.
   `references/investigation-method.md`.
 - Keep exact CLI/MCP routing and current product gaps in
   `references/kitaru-operations.md`.
-- Load evaluator guidance only after the user accepts a behavior or supplies
-  equivalent reviewed evidence.
+- Check installed evaluators after the user accepts a behavior and cohort. Load
+  custom evaluator guidance only when no installed evaluator fits or the user
+  supplies equivalent reviewed evidence directly.
+- Keep replay state resolution, approvals, supervision, and handoffs in
+  `kitaru-replay-experiment/SKILL.md`. Keep current Kitaru contracts and bounded
+  comparison method in its two references.
+- Require an explicit tool policy for tool-using replays and verify adapter
+  support before approval or paid execution.
+- Report directional replay evidence without making a deployment decision.
 - Verify command and tool claims against the current Kitaru source or
   installed schema before editing them.
 - Preserve the distinction between human annotations and agent suggestions.
@@ -84,6 +102,7 @@ mkdir -p .claude/skills
 cp -R skills/kitaru-importer-builder .claude/skills/
 cp -R skills/kitaru-adapter-builder .claude/skills/
 cp -R skills/kitaru-investigation .claude/skills/
+cp -R skills/kitaru-replay-experiment .claude/skills/
 ```
 
 For marketplace testing:

@@ -1,36 +1,52 @@
-# Evaluator authoring
+# Custom evaluator authoring
 
-Use this reference only after one observable behavior and exact cohort version have been accepted, or when the user supplies equivalent reviewed evidence directly.
+Use this reference only when no installed evaluator expresses one accepted observable behavior, or when the user supplies equivalent reviewed evidence directly. Keep the first result small and useful. Add stronger validation only when the intended decision needs it.
 
-## Confirm the capability card
+## Preserve the accepted meaning
 
-Present this card before drafting code or a judge prompt:
+Start from the accepted behavior and exact cohort version. Separate the criterion into the parts that matter:
 
-```text
-Capability: <one behavior being measured>
-Example request or situation: <condition that requires it>
-Initial conditions: <information, permissions, dependencies, and state available>
-Required outcome: <independently observable success>
-Evidence: <what establishes the outcome without trusting the agent's own account>
-```
+- **Outcome:** the independently observable terminal state that establishes success.
+- **Protections:** side effects or states that must not occur.
+- **Interaction:** required clarification, approval, communication, or handoff.
+- **Trajectory diagnostics:** tool choice, arguments, retries, loops, latency, and cost.
 
-Reject or revise the capability when the agent could pass without exercising it, required information is absent, success is ambiguous, or the evidence measures only a dependency or infrastructure failure.
+Prefer outcome evidence over a preferred tool sequence. Require an exact order only when order is itself part of an approval, security, transactional, or other explicit contract. Otherwise allow materially equivalent successful paths.
 
-## Choose the evaluator mechanism
+Reject or revise the criterion when the agent could pass without exercising the capability, required information is absent, success is ambiguous, or the evidence measures only a dependency failure. If the underlying issue is an obvious prompt ambiguity, missing capability, ordinary bug, or dependency failure, recommend the direct fix and add an evaluator only when a regression check is useful.
 
-Prefer deterministic code for structural or rule-based criteria that can be checked objectively. It is cheaper, reproducible, and easier to explain.
+## Choose the simplest mechanism
 
-Use an LLM judge only when the accepted criterion genuinely requires interpretation. Do not choose a judge merely because writing code is inconvenient.
+Use deterministic executable code for objective structure, content, limits, models, tools, or workflow rules. Use an LLM judge only when the accepted criterion genuinely requires interpretation. A small hybrid may use deterministic checks for hard protections and a judge for the interpretive outcome.
 
-A change from deterministic code to an LLM judge, or between materially different implementations, creates a new evaluator version with separate validation evidence.
+Do not explain this taxonomy unless it helps the user decide. State the selected mechanism, the evidence it reads, and what it can establish.
 
-## Draft one narrow binary rubric
+## Show one rubric checksum
 
-Measure one observable criterion. Define `Pass` and `Fail` explicitly and allow materially equivalent successful behavior.
+Draft one narrow criterion and show one prefilled card:
 
-Use two to four reviewed examples with at least one example of each verdict. Explain every example with session or node evidence. Do not claim hidden intent or require the agent to copy a preferred tool sequence or reference wording.
+| Field | Confirmed value |
+|---|---|
+| Accepted behavior | Exact accepted text and intended use |
+| Outcome | Independently observable success |
+| Protections | Must-not-happen states, or none |
+| Required interaction | Exact requirement, or none |
+| Pass | Exact boundary |
+| Fail | Exact boundary |
+| Equivalent behavior | Valid alternatives |
+| Evidence | Required session, node, or external outcome evidence |
+| Missing evidence | Unresolved or infrastructure behavior |
+| Mechanism | Deterministic, LLM judge, or small hybrid |
+| Examples | Representative reviewed session and node references |
+| Cohort | Exact cohort-version ID |
 
-Return Kitaru's installed `EvaluationResult` model, or a nonempty list of uniquely named results. A binary evaluator needs a stable `name`, a boolean `score` or string `value`, and may also set `passed` and `explanation`. For example:
+Treat this card as a checksum, not a new form. If it preserves the behavior already accepted in investigation, continue without asking the user to accept the same meaning twice. Ask for a decision only when the draft adds or changes a boundary, permitted equivalence, or missing-evidence rule.
+
+Do not require a large labeled dataset before the first result. A deterministic executable rule with explicit meaning can proceed without reviewed Pass and Fail examples. For an interpretive evaluator, use enough reviewed evidence to make the boundary concrete. Pass, Fail, and boundary examples become important before consequential automation.
+
+## Implement the Kitaru contract
+
+Return Kitaru's installed `EvaluationResult` model or a nonempty list of uniquely named results. A binary evaluator needs a stable name and a boolean score or string value, and may also set `passed` and a trace-grounded explanation.
 
 ```python
 from kitaru.task.evaluator import EvaluationResult
@@ -43,64 +59,54 @@ return EvaluationResult(
 )
 ```
 
-If an LLM judge first emits an internal object such as `{reason, verdict}`, validate that object and translate it into `EvaluationResult`; do not return the judge object directly.
+If a judge emits an internal object such as `{reason, verdict}`, validate it and translate it into `EvaluationResult`. Do not return the judge object directly.
 
-Treat missing evidence, timeouts, credential failures, invalid judge output, and evaluator crashes as infrastructure errors rather than automatic negative scores for the agent.
+Missing evidence, invalid judge output, timeouts, credential errors, and evaluator crashes remain unresolved or infrastructure outcomes. They are not automatic agent failures.
 
-## Confirm the exact rubric
+## Run behavioral checks
 
-Show:
+For every custom evaluator:
 
-- evaluator kind and implementation entrypoint;
-- exact Pass definition;
-- exact Fail definition;
-- permitted equivalent behavior;
-- required evidence and missing-evidence behavior;
-- reviewed examples and their expected verdicts;
-- cohort-version ID and accepted-behavior text;
-- known limitations.
+1. Invoke it against representative `SessionView` fixtures and assert exact `EvaluationResult` values.
+2. Confirm that missing evidence does not silently become a Fail.
+3. Confirm that a valid alternate trajectory can pass when exact order is not contractual.
+4. Run `kitaru evaluator test` separately as a load-and-signature check. It uses a placeholder object and is not behavioral validation. It executes local code in a bounded child process, not a security sandbox, so review the code and use a credential-free isolated environment.
 
-Present the confirmation compactly when possible:
+For an LLM judge, add cheap probes where relevant: reverse pairwise order, remove irrelevant context, present a valid alternate path, pair the expected token or tool call with an incorrect outcome, and verify that missing evidence stays unresolved. These are implementation checks, not a separate product stage.
 
-| Field | Confirmed value |
-|---|---|
-| Evaluator kind | Deterministic or LLM judge |
-| Pass | Exact definition |
-| Fail | Exact definition |
-| Equivalent behavior | Allowed alternatives |
-| Evidence | Required trace or outcome evidence |
-| Missing evidence | Infrastructure or unresolved behavior |
-| Examples | Exact reviewed session references |
-| Cohort | Exact cohort-version ID |
+## Register and report facts
 
-Ask the user to accept, edit, or reject this exact revision. Do not treat earlier agreement with a similar draft as acceptance, and never silently alter a confirmed rubric to improve later results.
+After the checks pass and the user approves the remote write:
 
-## Implement and register
+1. Register a new immutable evaluator version. Use the CLI for local script upload; use MCP only when the implementation already exists as a server blob or exact package pin.
+2. Re-read the evaluator and registered version.
+3. Return exact evaluator, evaluator-version, and cohort-version IDs plus exact parameters and configuration hashes when available.
+4. Report the evidence as facts:
 
-1. Scaffold a local evaluator file when code is required.
-2. Implement the narrow criterion without unrelated framework or scoring machinery.
-3. Write project-native unit or fixture tests that invoke it with representative `SessionView` values from the selected reviewed examples and assert exact `EvaluationResult` values.
-4. Run `kitaru evaluator test` only as a separate load-and-signature check. It executes local code in a bounded child process but is not a sandbox, and it does not invoke the evaluator against reviewed sessions. Review the code and use a credential-free isolated environment before running it.
-5. Register a new immutable evaluator version. Use the CLI for local script upload; use MCP only when the implementation already exists as a server blob or exact package pin.
-6. Re-read the registered evaluator and version.
-7. Return the exact evaluator ID, evaluator-version ID, cohort-version ID, and accepted rubric revision in a checkpoint card.
+```text
+Implementation checks: passed
+Kitaru load/signature check: passed
+Reviewed fixtures: 3, including Pass and Fail
+Human agreement: not measured
+Held-out evaluation: not run
+Judge model and settings: exact identity, or not applicable
+Freshness limitations: none observed, or exact change
+Supports: exploratory or known-case regression use
+Does not support: automated release gating
+```
 
-Do not deploy the evaluator or change the agent automatically.
+Do not invent product states such as `behavior-tested`, `test-validated`, or `revalidation-due`. Validation evidence and freshness are separate factual dimensions, and Kitaru does not persist those labels.
 
-## Keep validation separately gated
+## Add rigor only for consequential use
 
-A small blinded check may debug rubric alignment, but it does not establish production performance. Run it only when labels are withheld through a server-enforced boundary or a separate evaluation actor. Do not rely on labels stored beside traces on a filesystem the coding agent can read.
+When a subjective evaluator will support consequential automation or a user-defined release gate:
 
-Production-quality LLM-judge validation requires:
+- collect independent labels only when authority is genuinely shared;
+- keep related trace families together across examples, development labels, and held-out labels;
+- freeze the prompt, parser, observation window, and judge model before the held-out run;
+- report pass recall, failure recall, raw counts, false passes, false fails, disagreements, and infrastructure errors;
+- state whether label isolation was actually enforced.
 
-1. disjoint training, development, and test session identities;
-2. few-shot demonstrations drawn only from training data;
-3. prompt iteration only against development results;
-4. a frozen evaluator version before a one-time test run;
-5. true-positive rate and true-negative rate reported separately;
-6. the confusion matrix, raw disagreements, and infrastructure errors;
-7. no development or test traces entering the prompt or discovery context.
+Do not use Cohen's kappa as a readiness threshold. Do not require multiple annotators when one trusted domain expert defines correctness. Do not apply population corrections or confidence intervals to a deliberately curated regression cohort. If label isolation is unavailable, state that limitation instead of awarding a validation label.
 
-Treat 30 to 50 Pass and 30 to 50 Fail examples in both development and test as a reliability target from the course method, not an MVP gate or universal law. Question rubric ambiguity and example quality before blaming human labels.
-
-If label isolation is unavailable, stop at the immutable evaluator-version checkpoint and state that validation remains unproven.
+Finish at the exact evaluator-version checkpoint. Do not deploy the evaluator or change the agent automatically. If the user wants to test one candidate, hand the exact cohort, evaluator version, parameters, evidence facts, and limitations to `kitaru-replay-experiment`.

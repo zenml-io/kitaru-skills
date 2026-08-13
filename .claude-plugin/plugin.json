@@ -1,7 +1,7 @@
 {
   "name": "kitaru",
-  "description": "Build Kitaru adapters and importers for unsupported agent systems, then investigate sessions with human-reviewed evidence and versioned cohorts",
-  "version": "0.9.1",
+  "description": "Build Kitaru integrations, investigate sessions, select evaluators, and run bounded replay experiments",
+  "version": "0.10.0",
   "author": {
     "name": "ZenML",
     "url": "https://kitaru.ai"
@@ -28,6 +28,7 @@
     "cohort-analysis",
     "human-in-the-loop",
     "evaluators",
+    "replay-experiments",
     "mcp"
   ]
 }

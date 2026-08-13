@@ -16,7 +16,7 @@ Treat this skill as the front door to Kitaru. Meet the user at their current lev
 - Separate observed behavior from desired behavior. A trace records what happened, not what should have happened or whether the external outcome was correct.
 - Distinguish agent behavior, external dependency behavior, product purpose, and independent outcome evidence.
 - Use open observations before proposing a taxonomy. Do not prime the first review batch with agent-generated failure categories.
-- Explain any operation that creates remote state or consumes worker or model compute before running it. Require explicit acceptance of an exact behavior, cohort membership, and evaluator rubric.
+- Explain any operation that creates remote state or consumes worker or model compute before running it. Require explicit acceptance of an exact behavior and cohort membership. Treat an evaluator card as a checksum of that accepted meaning; ask again only when it changes a boundary, equivalence, or missing-evidence rule.
 - Prefer native Kitaru MCP operations. Use the structured CLI when a local file upload or built-in wait behavior is required. Do not bypass missing contracts with direct REST calls or ad hoc local state.
 - Stop at a useful durable checkpoint when a required source, payload, permission, worker, product contract, or UI capability is unavailable.
 
@@ -53,7 +53,8 @@ Do not preview the entire workflow when only the next step matters. Explain the 
 
 - Read [references/investigation-method.md](references/investigation-method.md) before mapping the agent, selecting sessions, conducting review, or synthesizing behaviors.
 - Read [references/kitaru-operations.md](references/kitaru-operations.md) before calling Kitaru CLI or MCP operations. Verify the installed command and tool schemas when they differ from the reference.
-- Read [references/evaluator-authoring.md](references/evaluator-authoring.md) only after the user accepts one behavior or when the user invokes evaluator authoring directly with an already reviewed behavior.
+- Read [references/deterministic-evaluators.md](references/deterministic-evaluators.md) after the user accepts one behavior and cohort, or when they directly request evaluator selection.
+- Read [references/evaluator-authoring.md](references/evaluator-authoring.md) only when no installed evaluator expresses the accepted criterion, or when the user directly requests custom evaluator authoring with equivalent reviewed evidence.
 
 ## Resolve the durable starting state
 
@@ -81,10 +82,10 @@ accepted behavior, no cohort version
   -> confirm exact membership and create a cohort version
 
 cohort version ready, no evaluator version
-  -> author and confirm one evaluator
+  -> select an installed evaluator or author one narrow custom evaluator
 
 evaluator version ready
-  -> stop successfully or discuss separately gated validation
+  -> stop successfully or hand exact evidence to kitaru-replay-experiment
 ```
 
 ### Continue from frontend onboarding
@@ -281,7 +282,26 @@ After exact behavior acceptance:
 
 Do not encode prevalence claims from an adaptive discovery sample.
 
-If the user wants an evaluator, continue with [references/evaluator-authoring.md](references/evaluator-authoring.md). Otherwise stop at the cohort-version checkpoint.
+If the user wants repeatable measurement, continue with [references/deterministic-evaluators.md](references/deterministic-evaluators.md). Run relevant descriptive evaluators first, then prefer an installed configured evaluator that directly expresses the accepted criterion. Pin its exact evaluator version and parameters. Only continue to [references/evaluator-authoring.md](references/evaluator-authoring.md) when the installed catalog cannot express the criterion.
+
+If the cause is an obvious prompt ambiguity, missing capability, ordinary software bug, or dependency failure, recommend the direct fix. Add an evaluator only when preserving the case as a regression check is useful.
+
+Finish evaluator work with factual evidence, not a maturity label:
+
+| Field | Value |
+|---|---|
+| Evaluator | Exact evaluator and evaluator-version IDs |
+| Parameters | Exact parameters or configuration hash |
+| Implementation checks | Passed, failed, or not run |
+| Kitaru load/signature check | Passed, failed, or not run |
+| Reviewed fixtures | Count and verdict coverage |
+| Human agreement | Measured facts or not measured |
+| Held-out evaluation | Measured facts or not run |
+| Freshness limitations | Exact known change or none observed |
+| Supports | Exploration, known-case regression, or an exact user-defined gate |
+| Does not support | Stronger claims the evidence cannot establish |
+
+Investigation may stop successfully at this checkpoint. If the user wants to test one change, continue with `kitaru-replay-experiment` and carry the accepted behavior, exact cohort-version ID, evaluator-version IDs and parameters, factual evidence and limitations, candidate agent-version ID when known, proposed override, explicit tool policy, intended use, and any user-defined gate. Do not route back through investigation merely to choose a candidate.
 
 ## Preserve failure honesty
 
