@@ -1,6 +1,6 @@
 ---
 name: kitaru-investigation
-description: Guide users from agent code or recorded Kitaru sessions through an evidence-grounded investigation and into a versioned cohort and optional evaluator. Use as the primary Kitaru product entry when a user wants to get started with Kitaru, connect or inspect an existing agent, investigate a known bad or surprising session, discover failure modes across sessions, review or annotate traces, resume an investigation, define an observable behavior, create a cohort from reviewed evidence, or author an evaluator for an accepted behavior. Meet both developers and domain experts at their current context, and use human judgment for labels and acceptance.
+description: Guide users from agent code or recorded Kitaru sessions through an evidence-grounded investigation and into a versioned cohort and optional evaluator. Use when a user wants to get started with Kitaru, connect or inspect an existing agent, investigate a known bad or surprising session, discover failure modes across sessions, review or annotate traces, resume an investigation, define an observable behavior, create a cohort from reviewed evidence, or author an evaluator for an accepted behavior.
 ---
 
 # Kitaru investigation

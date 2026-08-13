@@ -1,6 +1,6 @@
 ---
 name: kitaru-adapter-builder
-description: Build a project-local Kitaru adapter for an unsupported Python or TypeScript agent framework. Use when a user wants to record or replay framework-native agent runs in Kitaru, needs a custom adapter, has no supported Kitaru integration for their framework, or needs to assess whether public framework hooks and the installed Kitaru SDK can support an adapter. Check existing adapters, importers, and OTLP export first; preserve the framework's public API; test recording, replay, partial traces, streaming, concurrency, privacy, and failures; and offer an optional upstream contribution only after the local adapter works.
+description: Build a project-local Kitaru adapter for an unsupported Python or TypeScript agent framework. Use when a user wants to record or replay framework-native agent runs in Kitaru, needs a custom adapter, has no supported Kitaru integration for their framework, or needs to assess whether public framework hooks and the installed Kitaru SDK can support an adapter.
 ---
 
 # Kitaru adapter builder

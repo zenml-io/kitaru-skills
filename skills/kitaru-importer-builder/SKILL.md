@@ -1,6 +1,6 @@
 ---
 name: kitaru-importer-builder
-description: Build and validate a custom Kitaru trace importer when a provider, observability platform, export format, or agent framework has no suitable built-in importer. Use when a user wants to map provider traces into Kitaru sessions and nodes, join per-turn traces into longer sessions, preserve incomplete or failed trace evidence, choose script or package installation, test importer fidelity, register an importer version, import a bounded sample, or diagnose a partial import. A private or project-local importer is a complete outcome; packaging or an OSS contribution is optional.
+description: Build and validate a custom Kitaru trace importer when a provider, observability platform, export format, or agent framework has no suitable built-in importer. Use when a user wants to map provider traces into Kitaru sessions and nodes, join per-turn traces into longer sessions, preserve incomplete or failed trace evidence, choose script or package installation, test importer fidelity, register an importer version, import a bounded sample, or diagnose a partial import.
 ---
 
 # Kitaru importer builder
