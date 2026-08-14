@@ -24,10 +24,10 @@ Python, Kitaru, the framework, the model-provider package, and the test runner.
 Resolve imports and signatures from the installed package rather than assuming
 the latest source tree. First identify which public recording boundary the
 installed package exposes. Do not infer the API from the version string alone:
-the current Kitaru source identifies as 0.21.0 but does not export the historical
-`flow`, `checkpoint`, or `log` decorators. A separately built holdout artifact
-with the same version string may expose different symbols, so record its exact
-source or revision before relying on it.
+the checked Kitaru 0.22 release-candidate source does not export the historical
+`flow`, `checkpoint`, or `log` decorators. A separately built artifact with the
+same version string may expose different symbols, so record its exact source or
+revision before relying on it.
 
 Only when using the session-node path, verify whether the installed package
 exposes:
@@ -56,22 +56,22 @@ package confirms it. Never copy tokens into code, fixtures, logs, or reports.
 
 ## Use the current reference carefully
 
-The checked `v2-spec-consolidated` source at commit
-`16de433f164a1f9fce0bee87196c36d2dd661b6e` contains independently versioned
-adapter distributions:
+The checked `develop` source at commit
+`3675d90e02a690f2bd9a3ff43eba576f0a813515` contains independently versioned
+adapter distributions. These exact release candidates are published to PyPI:
 
 | Framework | Distribution | Checked source | Advertised capability |
 |---|---|---|---|
-| PydanticAI | `kitaru-pydantic-ai` 0.1.0 | `plugins/packages/pydantic-ai/` | Recording and replay |
-| LangGraph, LangChain, and Deep Agents | `kitaru-langgraph` 0.1.0 | `plugins/packages/langgraph/` | Recording and replay |
-| OpenAI Agents SDK | `kitaru-openai-agents` 0.1.0 | `plugins/packages/openai-agents/` | Recording |
+| PydanticAI | `kitaru-pydantic-ai` 0.1.0rc0 | `plugins/packages/pydantic-ai/` | Recording and replay |
+| LangGraph, LangChain, and Deep Agents | `kitaru-langgraph` 0.1.0rc0 | `plugins/packages/langgraph/` | Recording and replay |
+| OpenAI Agents SDK | `kitaru-openai-agents` 0.1.0rc0 | `plugins/packages/openai-agents/` | Recording and restricted replay |
 
 Their tests live under `plugins/tests/adapters/pydantic_ai/`,
 `plugins/tests/adapters/langgraph/`, and
 `plugins/tests/adapters/openai_agents/`. Adapter distributions are installed by
 agent projects rather than bundled into the core Kitaru wheel. This inventory
-describes the checked source tree, not what is installed in the user's project
-or proof that a registry currently serves the package.
+describes the checked source tree and registry state, not what is installed in
+the user's project.
 
 Check the project's installed distributions and current Kitaru documentation
 before designing a custom adapter. When one of these packages supports the
@@ -125,8 +125,9 @@ Offer one of these outcomes:
 3. stop with the exact async or sync contract that is missing.
 
 Do not infer that an exported sync client or decorator is suitable merely from
-its name. Inspect its installed signature and behavior, then limit the adapter
-and report to the operations that public contract actually supports.
+its name or from an older `0.21.0` installation. Inspect its installed signature
+and behavior, then limit the adapter and report to the operations that public
+contract actually supports.
 
 ## Map one invocation to Kitaru
 

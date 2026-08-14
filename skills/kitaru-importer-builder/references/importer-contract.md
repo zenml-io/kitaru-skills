@@ -14,7 +14,7 @@ Use this reference to inspect the installed importer surface, implement the pars
 
 ## Authority and capability fingerprint
 
-Treat the installed Kitaru version and offline schema as authoritative. This reference design was checked against Kitaru commit `16de433f164a1f9fce0bee87196c36d2dd661b6e` on `v2-spec-consolidated`; re-check the current installed schema before relying on it.
+Treat the installed Kitaru version and offline schema as authoritative. This reference design was checked against Kitaru commit `3675d90e02a690f2bd9a3ff43eba576f0a813515` on `develop`; re-check the current installed schema before relying on it.
 
 Inspect read-only before emitting exact commands:
 

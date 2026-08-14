@@ -7,7 +7,7 @@ the installed package proves that they are available.
 ## Contents
 
 - [Establish the installed package surface](#establish-the-installed-package-surface)
-- [Use the feature-branch reference carefully](#use-the-feature-branch-reference-carefully)
+- [Use the current source reference carefully](#use-the-current-source-reference-carefully)
 - [Choose the supported implementation path](#choose-the-supported-implementation-path)
 - [Preserve the framework type surface](#preserve-the-framework-type-surface)
 - [Use the adapter primitives when available](#use-the-adapter-primitives-when-available)
@@ -37,7 +37,7 @@ Verify the installed signatures and request types. Do not write direct REST
 calls when a method is absent.
 
 Then test whether the project can resolve `@zenml-io/kitaru/adapter` and inspect
-its actual exports. The pinned feature-branch snapshot exports `RunRecorder`,
+its actual exports. The checked source snapshot exports `RunRecorder`,
 per-run state, normalized step helpers, replay parsing and resolution, and
 tool-policy helpers. Use only the exports present in the installed or explicitly
 approved local package.
@@ -47,17 +47,21 @@ propose an exact published dependency only when installed metadata or an
 approved registry check proves that it exists, then ask before changing the
 project. Otherwise report publication as unverified and stop.
 
-## Use the feature-branch reference carefully
+## Use the current source reference carefully
 
-The available TypeScript reference is a pre-merge snapshot from:
+The checked TypeScript reference is merged into Kitaru's `develop` branch:
 
 ```text
-branch: origin/feat/ts-support
-commit: 3e7c6d9820778596ca76b1766e6de220c3766a50
-core SDK: packages/core/ (@zenml-io/kitaru@0.1.0-rc.1)
-Mastra adapter: packages/mastra/ (@zenml-io/kitaru-mastra@0.1.0-rc.1)
-Vercel AI adapter: packages/vercel-ai/ (@zenml-io/kitaru-vercel-ai@0.1.0-rc.1)
+branch: origin/develop
+commit: 3675d90e02a690f2bd9a3ff43eba576f0a813515
+core SDK: packages/core/ (@zenml-io/kitaru@0.1.0-rc.2)
+Mastra adapter: packages/mastra/ (@zenml-io/kitaru-mastra@0.1.0-rc.2)
+Vercel AI adapter: packages/vercel-ai/ (@zenml-io/kitaru-vercel-ai@0.1.0-rc.2)
 ```
+
+Those exact release-candidate versions are published to npm. Still inspect the
+project's installed package and lockfile before relying on them because the
+project may pin another version.
 
 All three packages are ESM-only and require Node `>=22.22.0 <23`. The core
 package exports its public client and types plus `./client`, `./environment`,
@@ -80,17 +84,14 @@ adapters require a replay model replacement to appear in the configured
 `allowedReplayModels` list. An unchanged requested model is not checked against
 that list.
 
-The pinned core client is generated from that commit's OpenAPI schema and its
+The checked core client is generated from that commit's OpenAPI schema and its
 recorder no longer sends the removed session `expected` field. This establishes
-compatibility with that pinned repository revision only. The branch contains a
-tag-triggered release workflow and describes the packages as pre-1.0 release
-candidates, but the pinned commit is untagged and publication of these exact
-artifacts is not established. Confirm the installed package exports, published
-version, and compatible server schema before using it.
+compatibility with that checked repository revision only. Confirm the installed
+package exports, version, and compatible server schema before using it.
 
-If the branch or pinned commit cannot be resolved, treat these lessons as
+If the branch or checked commit cannot be resolved, treat these lessons as
 unverified. Rely on the installed package's public types and symbols, and report
-that the branch reference was unavailable.
+that the source reference was unavailable.
 
 Do not copy package source into the user's project. Do not add an unpublished
 workspace dependency without approval. When the user wants to test the branch,
@@ -141,7 +142,7 @@ framework default.
 
 ## Use the adapter primitives when available
 
-At the pinned feature-branch revision, `RunRecorder` demonstrates this lifecycle:
+At the checked `develop` revision, `RunRecorder` demonstrates this lifecycle:
 
 1. `create(...)` creates an in-progress session and isolated `RunState`.
 2. `initialize()` upserts the in-progress root at index `0`.
@@ -154,7 +155,7 @@ At the pinned feature-branch revision, `RunRecorder` demonstrates this lifecycle
    failed.
 
 Verify the installed implementation and the framework callback lifecycle before
-reusing it. The pinned `RunState` does not itself seal `enqueueStep()` when
+reusing it. The checked `RunState` does not itself seal `enqueueStep()` when
 failure finalization begins. The adapter must therefore prove that the framework
 cannot deliver another recording callback after `fail()` starts, or add a local
 closed-state guard. Failure finalization must prevent new writes from entering
@@ -163,7 +164,7 @@ rejection as secondary evidence without letting it replace the primary
 application error. Only then write the failed root and failed session.
 
 Use the installed implementation when it satisfies these invariants rather than
-duplicating it. Verify whether it closes or owns any client resource; the draft
+duplicating it. Verify whether it closes or owns any client resource; the current
 TypeScript client uses `fetch` and does not mirror Python client ownership.
 
 When implementing against the public client without these primitives, reproduce
@@ -191,7 +192,7 @@ For model steps, normalize:
 For tools, wrap only public local tool execution paths. Preserve tool schemas,
 validation, context, abort signals, return types, and public failures.
 
-Use the draft adapters as contrasting lessons:
+Use the current adapters as contrasting lessons:
 
 ### Mastra lessons
 
@@ -220,7 +221,7 @@ unless their public hooks expose a pre-execution decision and terminal result.
 ## Control replay and side effects
 
 Resolve replay identity and overrides through the installed SDK. Do not assume
-the Python environment contract. At the draft revision, the TypeScript SDK
+the Python environment contract. At the checked revision, the TypeScript SDK
 parses `KITARU_REPLAY_ID`, optional task input, and replay overrides through its
 own helpers; verify current precedence and supported fields.
 
