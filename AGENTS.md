@@ -1,75 +1,109 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
-This repository contains **Kitaru Agent Skills** plus Claude Code plugin metadata; it is not a Python package. Keep contributor work focused on the skill documents, portable host guidance, and Claude Code distribution metadata:
+## Project structure
 
-- `skills/kitaru-quickstart/SKILL.md` defines the interactive onboarding skill.
-- `skills/kitaru-scoping/SKILL.md` defines the workflow-scoping skill.
-- `skills/kitaru-authoring/SKILL.md` defines the implementation-authoring skill.
-- `skills/kitaru-replay-lab/SKILL.md` defines the replay operations lab skill.
-- `skills/kitaru-pydantic-ai-migration/SKILL.md` defines the PydanticAI migration skill.
-- `skills/kitaru-openai-agents-migration/SKILL.md` defines the OpenAI Agents SDK migration skill.
-- `skills/kitaru-langgraph-migration/SKILL.md` defines the LangGraph migration skill.
-- `skills/kitaru-claude-agent-sdk-migration/SKILL.md` defines the Claude Agent SDK migration skill.
-- `skills/kitaru-gemini-interactions-migration/SKILL.md` defines the Gemini Interactions migration skill.
-- `.claude-plugin/plugin.json` contains Claude Code plugin metadata such as name, version, and repository URL.
-- `.claude-plugin/marketplace.json` defines the Claude Code marketplace entry used for local/plugin testing.
-- `README.md` is the public-facing usage, installation, and host guidance.
-- `CLAUDE.md` is Claude Code-specific contributor guidance. Shared repo guidance belongs here in `AGENTS.md`.
+This repository distributes public Kitaru agent skills plus Claude Code plugin
+metadata. It is not a Python package.
 
-When adding a new skill, follow the existing pattern: `skills/<skill-name>/SKILL.md`.
+- `skills/kitaru-investigation/SKILL.md` is the public routing playbook.
+- `skills/kitaru-investigation/references/` contains method, transport, and
+  evaluator details loaded only when needed.
+- `skills/kitaru-replay-experiment/SKILL.md` guides one safe, bounded candidate
+  comparison against an accepted cohort and exact evaluator set.
+- `skills/kitaru-replay-experiment/references/` separates current Kitaru replay
+  contracts from the comparison and interpretation method.
+- `skills/kitaru-replay-experiment/agents/openai.yaml` contains host-facing
+  display metadata for the replay skill.
+- `skills/kitaru-importer-builder/SKILL.md` guides custom importer development.
+- `skills/kitaru-importer-builder/references/` contains parser, normalization,
+  validation, and recovery details loaded only when needed.
+- `skills/kitaru-adapter-builder/SKILL.md` guides project-local adapter
+  development for unsupported Python and TypeScript frameworks.
+- `skills/kitaru-adapter-builder/references/` separates the shared method,
+  Python and TypeScript SDK contracts, and validation and reporting rules.
+- `.claude-plugin/plugin.json` defines the Claude Code plugin.
+- `.claude-plugin/marketplace.json` defines its marketplace entry.
+- `README.md` is the public installation and usage guide.
+- `CLAUDE.md` contains Claude Code-specific contributor guidance.
 
-## Build, Test, and Development Commands
-There is no build step in this repo. Most contributor work is editing Markdown and JSON, then doing a quick manual validation.
+Do not add process notes, plans, changelogs, or a second README inside the
+skill directory. Keep reusable procedural material in `SKILL.md` and detailed
+supporting material in `references/`.
 
-- `rg --files` lists the complete tracked file set.
-- `sed -n '1,160p' skills/kitaru-authoring/SKILL.md` previews a skill without opening an editor.
-- `git diff --stat` gives a compact review of changed files.
-- `jq . .claude-plugin/plugin.json` validates plugin JSON formatting if `jq` is installed.
+## Validation commands
 
-For manual Claude Code smoke testing, follow the install commands in [`README.md`](README.md) and verify the Claude Code distribution route exposes `/kitaru-quickstart`, `/kitaru-scoping`, `/kitaru-authoring`, `/kitaru-replay-lab`, `/kitaru-pydantic-ai-migration`, `/kitaru-openai-agents-migration`, `/kitaru-langgraph-migration`, `/kitaru-claude-agent-sdk-migration`, and `/kitaru-gemini-interactions-migration`.
+There is no build step or dedicated test suite. Validate Markdown, skill
+frontmatter, and plugin JSON after edits.
 
-## Coding Style & Naming Conventions
-Use Markdown for prose and JSON for Claude Code plugin metadata. Match the existing style:
+```bash
+rg --files
+jq . .claude-plugin/plugin.json
+jq . .claude-plugin/marketplace.json
+git diff --check
+```
 
-- Use concise headings and short paragraphs.
-- Wrap lines at a readable width similar to the current files.
-- Keep examples concrete and technically accurate.
-- Use kebab-case for skill directory names and skill names, for example `kitaru-scoping`.
-- Mention slash commands as Claude Code invocation examples, not as the portable identity of a skill.
-- Preserve valid JSON with two-space indentation in `.claude-plugin/*.json`.
+Use the `skill-creator` `quick_validate.py` script when it is available in the
+host environment.
 
-## Testing Guidelines
-There is currently no dedicated automated test suite. Treat testing as documentation validation:
+## Style
 
-- Check that examples match the current Kitaru API surface.
-- Confirm new trigger phrases, skill names, and Claude Code slash commands are consistent across `SKILL.md`, `README.md`, `CLAUDE.md`, and plugin metadata.
-- Confirm README host guidance does not claim automatic Codex or Cursor installation.
-- Confirm README links to the Claude Code, Codex, and Cursor MCP host guides where relevant.
-- Confirm `.claude-plugin/` remains valid Claude Code metadata rather than being treated as the whole repo identity.
-- Re-read edited Markdown in rendered form when possible to catch broken lists, code fences, or tables.
-- Validate `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` with `jq .` or equivalent.
-- Run a memory-regression search for removed native memory terms before finishing.
+- Use concise headings, short paragraphs, and readable line lengths.
+- Use lowercase kebab-case for skill folders and frontmatter names.
+- Use imperative instructions in skill bodies.
+- Put all trigger conditions in the frontmatter description.
+- Keep `SKILL.md` focused on routing, safety, state transitions, and resource
+  discovery. Move detailed schemas, examples, and methods into `references/`.
+- Keep references one level below `SKILL.md` and link each one directly from
+  the playbook.
+- Use Claude Code slash commands only as host-specific invocation examples.
+- Preserve valid JSON with two-space indentation.
 
-## Release Sync Checklist
+## Accuracy requirements
 
-When updating the skills package for a new Kitaru release, verify current source of truth
-before editing skill prose:
+- Verify Kitaru CLI and MCP claims against the current Kitaru repository or
+  installed schema before changing command guidance.
+- Distinguish shipped Kitaru operations, planned frontend behavior, and
+  unresolved product contracts.
+- Preserve the human-review boundary. Agent suggestions are not human labels.
+- Treat raw trace exports as sensitive, keep them out of version control, and
+  use redacted fixtures for importer development.
+- Treat installed Kitaru schemas as authoritative when importer commands or
+  parser contracts differ from branch examples.
+- Treat the user's installed framework and Kitaru SDK as authoritative when
+  adapter contracts differ from draft reference branches.
+- Keep adapter implementations user-project-first. Require separate approval
+  before installing dependencies, creating remote sessions, allowing live tool
+  passthrough, or preparing an upstream contribution.
+- Distinguish application streaming, observation of the stream lifecycle, and
+  replay of original chunks or timing.
+- Prefer installed descriptive and configured evaluators before custom
+  authoring, and report evaluator evidence as facts rather than maturity labels.
+- Describe experiment replay as a fresh task from stored top-level inputs. Do
+  not imply arbitrary checkpoint, process-memory, or external-world restoration.
+- Require an explicit tool policy for tool-using replays because an omitted
+  policy can execute live tools. Verify adapter and construction-path support
+  before presenting an actionable run card.
+- Keep failures and missing evaluations outside quality denominators. Do not
+  turn directional experiment evidence into a winner, deployment, or CI verdict.
+- Do not recommend direct REST calls or local files to bypass missing Kitaru
+  persistence contracts.
+- Do not reintroduce removed Kitaru-owned durable memory APIs.
 
-- Adapter exports under `kitaru/src/kitaru/adapters/*/__init__.py`
-- Current adapter guides for PydanticAI, OpenAI Agents, LangGraph, Claude Agent SDK, and Gemini Interactions
-- MCP server docs for current tool names and categories
-- `CHANGELOG.md` and `pyproject.toml` for release facts and removed APIs
-- Skill inventory, portable skill names, and Claude Code slash command names across README, AGENTS, CLAUDE, metadata, and frontmatter
-- All three Claude Code plugin metadata version fields: `.claude-plugin/plugin.json` `version`, `.claude-plugin/marketplace.json` `metadata.version`, and `.claude-plugin/marketplace.json` `plugins[0].version`
-- Markdown validity: headings, tables, code fences, and beginner quickstart pacing
+## Distribution consistency
 
-Native durable memory APIs were removed in Kitaru 0.11.0. Do not reintroduce
-old native-memory wording or recommend a Kitaru-owned durable key-value state
-API. Cross-execution application state belongs in an external/application-owned
-store, with explicit values or stable references passed into flows.
+When changing the public skill name, scope, or installation route, update all
+of these in the same change:
 
-## Commit & Pull Request Guidelines
-Recent history uses short, imperative commit messages such as `Update quickstart flow templates` and `Align skills with current Kitaru SDK surface`. Follow that pattern.
+- skill frontmatter;
+- `README.md`;
+- `AGENTS.md` and `CLAUDE.md`;
+- `.claude-plugin/plugin.json`;
+- `.claude-plugin/marketplace.json`.
 
-Pull requests should explain what changed, why it changed, and which files were updated. If you alter behavior or installation steps, update `README.md` in the same PR.
+Bump all three plugin version fields together when preparing a distribution
+update.
+
+## Commits and pull requests
+
+Use short imperative commit subjects. Pull requests should explain what
+changed, why it changed, and which files need careful review.
