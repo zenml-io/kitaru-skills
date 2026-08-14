@@ -32,7 +32,7 @@ kitaru experiment run watch RUN_UUID
 kitaru experiment run cancel RUN_UUID
 ```
 
-Use JSON objects for `--override`, `--tool-policy`, and `--evaluator-params`. Verify `kitaru commands describe` or installed help before relying on example syntax. Creating an experiment and starting a run are non-idempotent remote writes. Watching is read-only. Cancellation requests settlement but does not wait. Deleting a run immediately removes its replay jobs and tasks and is not a cancellation mechanism.
+Use JSON objects for `--override`, `--tool-policy`, and `--evaluator-params`. Verify `kitaru schema` or installed help before relying on example syntax. Creating an experiment and starting a run are non-idempotent remote writes. Watching is read-only. Cancellation requests settlement but does not wait. Deleting a run immediately removes its replay jobs and tasks and is not a cancellation mechanism.
 
 An experiment requires at least one exact evaluator selection. An omitted evaluator version resolves to latest in the API model, but this skill always pins a version. Configuration can be updated only before the experiment has runs; use a new experiment for a changed condition afterward.
 

@@ -44,16 +44,31 @@ operations in the meantime.
 
 ## Requirements
 
-Kitaru's light frontend onboarding directs users into the investigation skill.
-It then drives the journey according to one simple choice: start from a session
-the user wants to understand, or explore a bounded session population for
-recurring problems and unexpectedly good behavior. If an unsupported provider
-prevents sessions from entering Kitaru, the importer-builder skill creates and
-validates the missing integration, then hands usable sessions back to the
-investigation flow. If the application needs in-process recording or replay and
-no supported framework integration exists, the adapter-builder skill verifies
-the installed SDK and public framework hooks before building a project-local
-adapter.
+These skills track the Kitaru 0.22 CLI, MCP, SDK, and adapter contracts developed
+on [`kitaru/develop`](https://github.com/zenml-io/kitaru/tree/develop). The
+currently verified Python range is `kitaru>=0.22.0rc4,<0.23`. Until a stable
+0.22 release is available, enable prereleases explicitly:
+
+```bash
+uv add --prerelease allow "kitaru[cli,mcp]>=0.22.0rc4,<0.23"
+```
+
+This range accepts later 0.22 release candidates and the stable 0.22 release,
+but not an unverified 0.23 release. An ordinary stable-only installation may
+still resolve to Kitaru 0.21. Each skill verifies the installed version and
+public schema before it acts, and stops when the required contract is
+unavailable.
+
+When the Kitaru product provides a skill handoff from frontend onboarding, the
+investigation skill continues from that context. It drives the journey according
+to one simple choice: start from a session the user wants to understand, or
+explore a bounded session population for recurring problems and unexpectedly
+good behavior. If an unsupported provider prevents sessions from entering
+Kitaru, the importer-builder skill creates and validates the missing integration,
+then hands usable sessions back to the investigation flow. If the application
+needs in-process recording or replay and no supported framework integration
+exists, the adapter-builder skill verifies the installed SDK and public framework
+hooks before building a project-local adapter.
 
 After investigation accepts a behavior and cohort, it checks the installed
 evaluator catalog before proposing custom evaluator code. If the user wants to
