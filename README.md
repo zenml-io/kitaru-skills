@@ -107,51 +107,11 @@ If your host does not support the installer, copy the relevant skill directory
 into its skills location or load the skill's `SKILL.md` as explicit project
 context.
 
-## Repository structure
-
-```text
-skills/kitaru-importer-builder/
-  SKILL.md
-  references/
-    failure-and-validation.md
-    importer-contract.md
-    normalization-patterns.md
-
-skills/kitaru-adapter-builder/
-  SKILL.md
-  references/
-    adapter-method.md
-    python-adapters.md
-    typescript-adapters.md
-    validation-and-reporting.md
-
-skills/kitaru-investigation/
-  SKILL.md
-  references/
-    deterministic-evaluators.md
-    evaluator-authoring.md
-    investigation-method.md
-    kitaru-operations.md
-
-skills/kitaru-replay-experiment/
-  SKILL.md
-  agents/
-    openai.yaml
-  references/
-    experiment-contract.md
-    experiment-method.md
-```
-
-Each `SKILL.md` is a routing playbook. Reference files are loaded only for the
-relevant stage so ordinary invocations do not carry the full method and command
-catalog.
-
 ## Links
 
 - [Kitaru](https://kitaru.ai)
 - [Kitaru documentation](https://docs.zenml.io/kitaru)
 - [Kitaru SDK repository](https://github.com/zenml-io/kitaru)
-- [Kitaru MCP server guide](https://docs.zenml.io/kitaru/agent-native/mcp-server)
 
 ## License
 
