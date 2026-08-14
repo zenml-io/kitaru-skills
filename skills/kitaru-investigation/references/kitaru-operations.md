@@ -21,14 +21,17 @@ For agent-facing CLI calls, request structured output and disable incidental int
 --output json --machine --non-interactive --no-browser
 ```
 
-The deliberate frontend handoff is the one browser exception. Do not open a browser for ordinary CLI calls.
+The deliberate frontend handoff may present or open one resolved URL. Do not open a browser for ordinary CLI calls.
 
 Before relying on exact syntax:
 
-1. inspect the installed `kitaru schema` output or command help;
-2. inspect the discovered MCP input schema;
-3. prefer exact IDs and versions over names;
-4. preserve JSON results and carry returned IDs into the next call.
+1. use the Kitaru CLI or MCP connection already configured in the user's environment;
+2. inspect the installed `kitaru schema` output or command help;
+3. inspect the discovered MCP input schema;
+4. prefer exact IDs and versions over names;
+5. preserve JSON results and carry returned IDs into the next call.
+
+If `kitaru` is not available in the current shell, inspect the project's current setup instructions or ask how the user's Kitaru environment is activated. Do not infer a `uv`, `pip`, virtual-environment, or package-install command from the repository layout.
 
 Do not use direct REST calls to fill a missing CLI or MCP contract.
 
@@ -66,6 +69,7 @@ Do not use direct REST calls to fill a missing CLI or MCP contract.
 ### Pre-investigation setup
 
 - Use `kitaru status` first when server selection, credentials, compatibility, or live-worker readiness is uncertain. Use `kitaru doctor` when one of those checks fails or the cause is unclear.
+- Prefer an exact agent version when recording or importing a session. If a session has no `agent_version_id`, report that provenance gap and reconcile it from other evidence only when the program revision is still unambiguous.
 - Inspect the repository before running an agent to record a session. Explain the inputs, credentials, tool effects, and external mutations that may occur, and obtain any approval required by those effects.
 - Use the CLI for a local import payload because MCP never reads local files. Use MCP import only when the payload already exists as a Kitaru blob.
 - Import creates a job and does not make sessions available synchronously unless the CLI waits successfully. Inspect the job and resulting sessions before starting an investigation.
@@ -104,9 +108,21 @@ Do not use direct REST calls to fill a missing CLI or MCP contract.
 
 ## Frontend bridge and fallback
 
-When creation or product configuration exposes an investigation review link, open that link once and pause for the user. The URL must contain only an opaque investigation ID.
+Resolve the frontend URL in this order:
 
-When no link or agreed URL constructor exists:
+1. Use an investigation review link returned by Kitaru when one exists.
+2. Otherwise, read `dashboard_url` from `kitaru status` or equivalent product configuration and construct one of the documented routes below from the exact agent and investigation IDs.
+
+| Dashboard kind | Recognized dashboard URL | Investigation review URL |
+|---|---|---|
+| Managed Cloud | `ORIGIN/workspaces/WORKSPACE_ID` | `ORIGIN/kitaru-workspaces/WORKSPACE_ID/agents/AGENT_ID/investigations/INVESTIGATION_ID/review` |
+| Direct Kitaru UI | A product-configured base URL confirmed to serve the Kitaru UI directly | `DASHBOARD_URL/agents/AGENT_ID/investigations/INVESTIGATION_ID/review` |
+
+Parse the URL and replace only the managed Cloud path shape; do not perform a global text replacement. Use the direct route only when product configuration or server information confirms that the dashboard URL serves Kitaru UI at its base, such as a self-hosted server reporting a non-null `ui_version`. Do not treat every dashboard URL that fails the managed Cloud match as a direct Kitaru UI. Strip a trailing slash before appending the direct route. The route carries agent and investigation identifiers only. Do not add sessions, questions, annotations, judgments, or trace contents as path or query data.
+
+Present the resolved URL as a clickable link. If the environment provides an ordinary open-URL action and the user wants it opened, use that action and then pause. Otherwise, leave the link for the user to open in their preferred browser. Do not use Computer Use, browser automation, tab control, or a browser-specific integration to navigate or annotate on the user's behalf.
+
+When no returned or documented URL reaches the investigation:
 
 1. retain the same investigation and question keys;
 2. read each session through activity operations;
@@ -121,6 +137,7 @@ This is an interaction fallback, not a different persistence model.
 
 ## Known product boundaries
 
+- Current CLI and native MCP investigation creation return the investigation resource without a direct review URL. They expose the agent and investigation IDs needed to construct the documented frontend route from the `dashboard_url` returned by `kitaru status`.
 - No public write path exists for the structured agent-context brief or accepted-behavior record.
 - No operation appends sessions to an active investigation.
 - No persisted skipped-session state exists.

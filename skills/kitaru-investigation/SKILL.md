@@ -38,6 +38,7 @@ Infer the starting point before asking a question:
 | What the user has | Start here |
 |---|---|
 | Agent code but no Kitaru sessions | Help the user record the agent or import existing traces through the smallest verified Kitaru path, then continue without restarting intake. |
+| One session and a wish to learn or test the review flow | Run a one-session annotation smoke test. Keep it separate from behavior discovery and make no recurrence, prevalence, cohort, or evaluator claim. |
 | Kitaru sessions but no suspected problem | Use cold-start discovery. |
 | One concerning or surprising session | Use trace-first investigation. |
 | An existing investigation ID | Resume it without repeating intake. |
@@ -60,11 +61,12 @@ Do not preview the entire workflow when only the next step matters. Explain the 
 
 Begin with read-only inspection.
 
-1. Resolve the registered agent and its exact version when possible.
-2. Confirm that relevant sessions exist and identify their agent versions.
-3. Look for an investigation identifier in the request, recent structured output, or Kitaru state. Do not infer identity from a non-unique name when an exact ID is available.
-4. Re-read any matching investigation, its ordered sessions, and its annotations before deciding what comes next.
-5. If registration or import is incomplete, orient the user and help them complete the smallest verified setup step needed to produce relevant sessions. Ask whether they need to record the current agent or import existing traces only when the answer is not apparent. Then continue without restarting intake.
+1. Verify access through the Kitaru CLI or MCP connection already configured in the user's environment. If it is unavailable, follow the project's current setup instructions; never infer an installation command from the repository layout.
+2. Resolve the registered agent and its exact version when possible.
+3. Confirm that relevant sessions exist and identify their agent versions.
+4. Look for an investigation identifier in the request, recent structured output, or Kitaru state. Do not infer identity from a non-unique name when an exact ID is available.
+5. Re-read any matching investigation, its ordered sessions, and its annotations before deciding what comes next.
+6. If registration or import is incomplete, orient the user and help them complete the smallest verified setup step needed to produce relevant sessions. Ask whether they need to record the current agent or import existing traces only when the answer is not apparent. Then continue without restarting intake.
 
 Route from state rather than asking the user to choose an internal stage:
 
@@ -149,8 +151,10 @@ Use this path when the user supplies or identifies a seed session.
 
 1. Resolve the exact seed session and read its complete nodes and payloads.
 2. Ask for the suspected behavior in ordinary language if it is not already clear.
-3. Select a small worklist containing the seed, plausible related sessions, and at least one deliberately dissimilar counterexample.
+3. When comparable sessions exist, select a small worklist containing the seed, plausible related sessions, and at least one deliberately dissimilar counterexample.
 4. Treat the suspicion as a search direction, not a label.
+
+When only one relevant session exists, offer a one-session review rather than manufacturing comparison evidence. Create the investigation only when the user wants a durable annotation or review-flow smoke test. Label the checkpoint as single-session evidence and stop before behavior synthesis, cohort creation, or evaluator selection unless later reviewed sessions support those steps.
 
 ### Cold-start
 
@@ -189,20 +193,24 @@ After creation, return a checkpoint card:
 |---|---|
 | Agent | Exact ID and version when known |
 | Investigation | Exact ID |
-| Mode | Trace-first or cold-start |
+| Mode | One-session review, trace-first, or cold-start |
 | Sessions | Count |
 | Questions | Stable keys |
 | Next action | Frontend review or in-chat fallback |
 
 ## Hand off to review
 
-Prefer one continuous Kitaru frontend review block when the product exposes an investigation review link or an agreed URL constructor. Use only the opaque investigation identifier in the URL. Do not encode session lists, questions, or judgments in query parameters.
+Prefer one continuous Kitaru frontend review block. Resolve the review URL in this order:
 
-Present the handoff explicitly:
+1. Use a direct investigation review link returned by Kitaru when one exists.
+2. Otherwise, construct the documented review URL from the configured `dashboard_url`, exact agent ID, and exact investigation ID. For managed Cloud dashboards at `ORIGIN/workspaces/WORKSPACE_ID`, use `ORIGIN/kitaru-workspaces/WORKSPACE_ID/agents/AGENT_ID/investigations/INVESTIGATION_ID/review`. For a dashboard that serves the Kitaru UI directly, use `DASHBOARD_URL/agents/AGENT_ID/investigations/INVESTIGATION_ID/review`.
+3. If the dashboard URL is absent, does not match either documented form, or the constructed route is unavailable, use the in-chat fallback.
+
+Present the resolved URL as a clickable link. If the environment has an ordinary open-URL action and the user wants the page opened, use that action; otherwise leave the link for the user to open in their preferred browser. Do not use Computer Use, browser automation, tab control, or a browser-specific integration for this handoff. Do not encode session lists, questions, annotations, or judgments in the URL.
+
+Begin the handoff with a real Markdown link whose target is the resolved URL, not a label inside a code block. Then say:
 
 ```text
-[Go to the Kitaru frontend now]
-
 Review investigation <id>. Add a written observation for each reviewed session,
 attach observations to exact nodes when relevant, and set a verdict when you have
 one. Leave it unset when you do not want to make a whole-session judgment;
@@ -214,7 +222,7 @@ Pause for the human review. After the user returns, re-read the investigation, e
 
 ### In-chat fallback
 
-When the frontend is not yet available, conduct the same review against the same durable investigation through MCP or structured CLI:
+When no returned or documented review URL reaches the investigation, conduct the same review against the same durable investigation through MCP or structured CLI:
 
 1. Read one complete session and its nodes, including required payloads.
 2. Present the final output, a compact neutral execution outline, the relevant tool or model evidence, and the selection reason.
@@ -313,7 +321,7 @@ Investigation may stop successfully at this checkpoint. If the user wants to tes
 
 ## Preserve failure honesty
 
-- If the frontend is missing, use the in-chat fallback; do not invent a dashboard route.
+- If the investigation cannot be reached through a returned or documented review URL, use the in-chat fallback; do not invent another dashboard route.
 - If agent source cannot be resolved safely, stop before presenting a code-grounded context brief.
 - If full trace payloads are unavailable, identify the missing evidence and do not silently summarize truncated input.
 - If the worker is unavailable, create no fiction about completed analyses or evaluations.
