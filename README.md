@@ -45,11 +45,19 @@ operations in the meantime.
 ## Requirements
 
 These skills track the Kitaru 0.22 CLI, MCP, SDK, and adapter contracts developed
-on [`kitaru/develop`](https://github.com/zenml-io/kitaru/tree/develop). Until a
-stable 0.22 release is available, install a 0.22 release candidate explicitly;
-an ordinary stable-only installation may still resolve to Kitaru 0.21. Each
-skill verifies the installed version and public schema before it acts, and stops
-when the required contract is unavailable.
+on [`kitaru/develop`](https://github.com/zenml-io/kitaru/tree/develop). The
+currently verified Python range is `kitaru>=0.22.0rc4,<0.23`. Until a stable
+0.22 release is available, enable prereleases explicitly:
+
+```bash
+uv add --prerelease allow "kitaru[cli,mcp]>=0.22.0rc4,<0.23"
+```
+
+This range accepts later 0.22 release candidates and the stable 0.22 release,
+but not an unverified 0.23 release. An ordinary stable-only installation may
+still resolve to Kitaru 0.21. Each skill verifies the installed version and
+public schema before it acts, and stops when the required contract is
+unavailable.
 
 When the Kitaru product provides a skill handoff from frontend onboarding, the
 investigation skill continues from that context. It drives the journey according

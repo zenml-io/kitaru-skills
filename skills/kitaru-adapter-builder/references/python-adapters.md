@@ -24,10 +24,10 @@ Python, Kitaru, the framework, the model-provider package, and the test runner.
 Resolve imports and signatures from the installed package rather than assuming
 the latest source tree. First identify which public recording boundary the
 installed package exposes. Do not infer the API from the version string alone:
-the checked Kitaru 0.22 release-candidate source does not export the historical
-`flow`, `checkpoint`, or `log` decorators. A separately built artifact with the
-same version string may expose different symbols, so record its exact source or
-revision before relying on it.
+the checked Kitaru source identifies as `0.22.0rc4` and does not export the
+historical `flow`, `checkpoint`, or `log` decorators. A separately built artifact
+with the same version string may expose different symbols, so record its exact
+source or revision before relying on it.
 
 Only when using the session-node path, verify whether the installed package
 exposes:
