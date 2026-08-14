@@ -8,7 +8,7 @@ Use this reference to map the agent, select sessions, conduct human review, and 
 - [Resolve source mismatches](#resolve-source-mismatches)
 - [Select a trace-first worklist](#select-a-trace-first-worklist)
 - [Select a cold-start worklist](#select-a-cold-start-worklist)
-- [Generate evidence-linked views](#generate-evidence-linked-views)
+- [Generate evidence-linked summaries and highlights](#generate-evidence-linked-summaries-and-highlights)
 - [Guide human review](#guide-human-review)
 - [Keep suggestions provisional](#keep-suggestions-provisional)
 - [Draft behavior candidates](#draft-behavior-candidates)
@@ -90,22 +90,22 @@ For every selected session retain:
 
 Present the review queue as:
 
-| Position | Session | Version | Selection reason | Status |
-|---:|---|---|---|---|
-| 1 | Exact ID | Exact version | Seed, coverage, random, signal, match, or counterexample | Pending, completed, or skipped |
+| Position | Session | Version | Selection reason | Answer coverage | Verdict |
+|---:|---|---|---|---|---|
+| 1 | Exact ID | Exact version | Seed, coverage, random, signal, match, or counterexample | 0 of 1 | Not recorded |
 
 Adaptive sampling discovers candidate modes. It does not estimate prevalence. A serious cold-start taxonomy may need roughly 100 diverse traces and at least 20 observed failures before new-mode convergence becomes credible, but treat those numbers as course heuristics rather than product gates.
 
-## Generate evidence-linked views
+## Generate evidence-linked summaries and highlights
 
-Keep the view neutral during the unprimed batch. A useful view contains:
+Keep summaries and persisted highlights neutral during the unprimed batch. A useful conversational summary contains:
 
 1. the final output or terminal state;
 2. a short factual execution outline;
 3. important tool calls, model calls, retries, errors, or grouped parallel work;
-4. selectors pointing to every canonical node or payload summarized.
+4. exact session and node references for every canonical payload summarized.
 
-Do not hide roles, tool names, errors, or omitted payloads. Do not use a free-floating summary as evidence. A view is presentation content; selectors anchor judgment to canonical trace data.
+Persist a highlight only under the specific session question it supports. Its selector may use an exact node ID, an RFC 6901 JSON Pointer into the node or session response, and an optional text span. Do not hide roles, tool names, errors, or omitted payloads. Do not use a free-floating conversational summary as durable evidence.
 
 ## Guide human review
 
@@ -115,7 +115,8 @@ Use this sequence without requiring the reviewer to read every trace backward:
 2. Check whether the visible evidence and execution support that output.
 3. Expand relevant tool results, model calls, retries, and grouped parallel work.
 4. Identify the earliest observable step that made the result wrong, risky, unsupported, or unexpectedly good.
-5. Attach an open observation to the whole session or the exact node.
+5. Persist the human's open observation as an answer to the linked session's question, targeting the whole session or exact node when appropriate.
+6. Set a whole-session verdict only when the human confirms it. A null verdict says nothing about whether question review occurred, so report answer coverage separately.
 
 During broad discovery, prefer the first upstream failure over every downstream symptom. After the user accepts one high-priority behavior, re-code every occurrence needed for a reliable cohort while preserving the original open observation.
 
@@ -132,7 +133,7 @@ Uncertainty: <main ambiguity>
 Human disposition: accept | reject | uncertain
 ```
 
-Do not bulk-accept evaluator-critical evidence. The human disposition changes what may support a cohort; it does not rewrite the original observation or make the agent the annotation author.
+Do not bulk-accept evaluator-critical evidence. A human-confirmed session verdict may change what supports a cohort, but a chat-only disposition on an agent suggestion is not durable Kitaru provenance. Neither rewrites the original observation or makes the agent its author.
 
 ## Draft behavior candidates
 

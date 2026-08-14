@@ -1,7 +1,7 @@
 {
   "name": "kitaru",
   "description": "Build Kitaru integrations, investigate sessions, select evaluators, and run bounded replay experiments",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "author": {
     "name": "ZenML",
     "url": "https://kitaru.ai"

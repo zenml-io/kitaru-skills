@@ -61,8 +61,9 @@ frontmatter descriptions.
 - Keep exact CLI/MCP routing and current product gaps in
   `references/kitaru-operations.md`.
 - Check installed evaluators after the user accepts a behavior and cohort. Load
-  custom evaluator guidance only when no installed evaluator fits or the user
-  supplies equivalent reviewed evidence directly.
+  custom evaluator guidance only after checking that catalog. Continue when no
+  installed evaluator fits, or when the user explicitly declines a relevant
+  match and requests custom authoring with equivalent reviewed evidence.
 - Keep replay state resolution, approvals, supervision, and handoffs in
   `kitaru-replay-experiment/SKILL.md`. Keep current Kitaru contracts and bounded
   comparison method in its two references.

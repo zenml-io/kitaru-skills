@@ -1,6 +1,6 @@
 # Custom evaluator authoring
 
-Use this reference only when no installed evaluator expresses one accepted observable behavior, or when the user supplies equivalent reviewed evidence directly. Keep the first result small and useful. Add stronger validation only when the intended decision needs it.
+Use this reference only after inspecting the installed evaluator catalog. Continue when no installed evaluator expresses one accepted observable behavior. If the user directly requests custom authoring despite a relevant installed match, show that match first and continue only after they explicitly choose the custom route. Require equivalent reviewed evidence either way. Keep the first result small and useful. Add stronger validation only when the intended decision needs it.
 
 ## Preserve the accepted meaning
 

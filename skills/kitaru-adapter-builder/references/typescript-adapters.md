@@ -7,7 +7,7 @@ the installed package proves that they are available.
 ## Contents
 
 - [Establish the installed package surface](#establish-the-installed-package-surface)
-- [Use the historical draft references carefully](#use-the-historical-draft-references-carefully)
+- [Use the feature-branch reference carefully](#use-the-feature-branch-reference-carefully)
 - [Choose the supported implementation path](#choose-the-supported-implementation-path)
 - [Preserve the framework type surface](#preserve-the-framework-type-surface)
 - [Use the adapter primitives when available](#use-the-adapter-primitives-when-available)
@@ -37,7 +37,7 @@ Verify the installed signatures and request types. Do not write direct REST
 calls when a method is absent.
 
 Then test whether the project can resolve `@zenml-io/kitaru/adapter` and inspect
-its actual exports. The pinned historical draft exports include `RunRecorder`,
+its actual exports. The pinned feature-branch snapshot exports `RunRecorder`,
 per-run state, normalized step helpers, replay parsing and resolution, and
 tool-policy helpers. Use only the exports present in the installed or explicitly
 approved local package.
@@ -47,45 +47,53 @@ propose an exact published dependency only when installed metadata or an
 approved registry check proves that it exists, then ask before changing the
 project. Otherwise report publication as unverified and stop.
 
-## Use the historical draft references carefully
+## Use the feature-branch reference carefully
 
-The available TypeScript reference is a historical snapshot from Kitaru draft
-PR #679 on a different branch:
+The available TypeScript reference is a pre-merge snapshot from:
 
 ```text
-branch: feat/ts-support
-commit: 8022098b61546326e1e00609cca221bfaba92624
-core: packages/core/
-Mastra adapter: packages/mastra/
-Vercel AI adapter: packages/vercel-ai/
+branch: origin/feat/ts-support
+commit: 3e7c6d9820778596ca76b1766e6de220c3766a50
+core SDK: packages/core/ (@zenml-io/kitaru@0.1.0-rc.1)
+Mastra adapter: packages/mastra/ (@zenml-io/kitaru-mastra@0.1.0-rc.1)
+Vercel AI adapter: packages/vercel-ai/ (@zenml-io/kitaru-vercel-ai@0.1.0-rc.1)
 ```
 
-These package directories are not tracked at the checked
-`v2-spec-consolidated` revision. At the historical pinned revision:
+All three packages are ESM-only and require Node `>=22.22.0 <23`. The core
+package exports its public client and types plus `./client`, `./environment`,
+`./errors`, and `./adapter`. The adapter subpath exposes recording, replay,
+normalized-step, and local tool-policy primitives for adapter authors. It is not
+a framework-independent agent or streaming abstraction.
 
-- `@zenml-io/kitaru` is `0.1.0-experimental.0` and declares ESM plus a narrow
-  Node 22 engine range;
-- the core package exports a public client and an `./adapter` subpath;
-- `@zenml-io/kitaru-mastra` targets Mastra 1.51.x and wraps non-streaming
-  `Agent.generate()`;
-- `@zenml-io/kitaru-vercel-ai` targets AI SDK 7.x and wraps non-streaming
-  `generateText`;
-- the packages are draft, experimental references, not unconditional evidence
-  that npm users can install them.
+The Mastra package targets `@mastra/core >=1.51.0 <1.52.0` and wraps
+non-streaming `Agent.generate()` through `KitaruAgent`. The Vercel package
+targets `ai >=7.0.0 <8.0.0` and wraps non-streaming `generateText` through
+`createKitaruGenerateText`. Both support local tools with passthrough, static,
+and history replay policies. Neither supports streaming, provider-executed or
+dynamic tools, LLM tool policy, or TypeScript scorers. Inspect their pinned
+READMEs for additional framework-specific exclusions before offering support.
 
-The pinned recorder also sends the removed session `expected` field, so it is
-not schema-compatible evidence for the current Python server contract. Do not
-build or link this snapshot against a current server until its generated types,
-session request fields, and integration tests have been reconciled with that
-server. Refresh both branches and record the exact compatible revisions before
-using it as implementation evidence.
+Replay can execute live passthrough tools and is not a transaction. Require
+approval for those effects. Treat history matches as adapter-specific because
+framework validation, defaults, or serialization may change tool inputs. Both
+adapters require a replay model replacement to appear in the configured
+`allowedReplayModels` list. An unchanged requested model is not checked against
+that list.
 
-If the branch or pinned commit cannot be resolved, treat these draft lessons as
+The pinned core client is generated from that commit's OpenAPI schema and its
+recorder no longer sends the removed session `expected` field. This establishes
+compatibility with that pinned repository revision only. The branch contains a
+tag-triggered release workflow and describes the packages as pre-1.0 release
+candidates, but the pinned commit is untagged and publication of these exact
+artifacts is not established. Confirm the installed package exports, published
+version, and compatible server schema before using it.
+
+If the branch or pinned commit cannot be resolved, treat these lessons as
 unverified. Rely on the installed package's public types and symbols, and report
-that the draft reference was unavailable.
+that the branch reference was unavailable.
 
 Do not copy package source into the user's project. Do not add an unpublished
-workspace dependency without approval. When the user wants to test the draft,
+workspace dependency without approval. When the user wants to test the branch,
 offer an exact locally built tarball or workspace-link path and ask before using
 it.
 
@@ -133,7 +141,7 @@ framework default.
 
 ## Use the adapter primitives when available
 
-At the inspected draft revision, `RunRecorder` demonstrates this lifecycle:
+At the pinned feature-branch revision, `RunRecorder` demonstrates this lifecycle:
 
 1. `create(...)` creates an in-progress session and isolated `RunState`.
 2. `initialize()` upserts the in-progress root at index `0`.
@@ -141,16 +149,18 @@ At the inspected draft revision, `RunRecorder` demonstrates this lifecycle:
    upserts;
 4. `complete(result)` waits for queued steps, replaces the root as completed,
    and updates the session;
-5. `fail(error)` stores the first failure and best-effort writes failed policy
-   outcomes, root state, and session state, but does not await the queued step
-   chain at pinned commit `8022098b61546326e1e00609cca221bfaba92624`.
+5. `fail(error)` stores the first failure, best-effort waits for the current step
+   queue, writes failed policy outcomes, and closes the root and session as
+   failed.
 
-Do not use that `fail()` implementation unmodified for a failure path. Verify
-the installed implementation first. Failure finalization must stop accepting
-framework events, prevent new writes from entering the queue, and wait for all
-queued writes to settle. Retain a queued-write rejection as secondary evidence
-without letting it replace the primary application error. Only then write the
-failed root and failed session.
+Verify the installed implementation and the framework callback lifecycle before
+reusing it. The pinned `RunState` does not itself seal `enqueueStep()` when
+failure finalization begins. The adapter must therefore prove that the framework
+cannot deliver another recording callback after `fail()` starts, or add a local
+closed-state guard. Failure finalization must prevent new writes from entering
+the queue and wait for all accepted writes to settle. Retain a queued-write
+rejection as secondary evidence without letting it replace the primary
+application error. Only then write the failed root and failed session.
 
 Use the installed implementation when it satisfies these invariants rather than
 duplicating it. Verify whether it closes or owns any client resource; the draft

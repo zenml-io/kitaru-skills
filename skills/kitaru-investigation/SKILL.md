@@ -41,7 +41,7 @@ Infer the starting point before asking a question:
 | Kitaru sessions but no suspected problem | Use cold-start discovery. |
 | One concerning or surprising session | Use trace-first investigation. |
 | An existing investigation ID | Resume it without repeating intake. |
-| A reviewed behavior or cohort | Continue at cohort confirmation or evaluator authoring. |
+| A reviewed behavior or cohort | Continue at cohort confirmation or installed evaluator selection. |
 
 For someone new to Kitaru, give a one-sentence orientation before using product terms: Kitaru records agent runs as evidence-rich sessions so the user can inspect what happened, find recurring behavior, and turn accepted findings into repeatable evaluation.
 
@@ -54,7 +54,7 @@ Do not preview the entire workflow when only the next step matters. Explain the 
 - Read [references/investigation-method.md](references/investigation-method.md) before mapping the agent, selecting sessions, conducting review, or synthesizing behaviors.
 - Read [references/kitaru-operations.md](references/kitaru-operations.md) before calling Kitaru CLI or MCP operations. Verify the installed command and tool schemas when they differ from the reference.
 - Read [references/deterministic-evaluators.md](references/deterministic-evaluators.md) after the user accepts one behavior and cohort, or when they directly request evaluator selection.
-- Read [references/evaluator-authoring.md](references/evaluator-authoring.md) only when no installed evaluator expresses the accepted criterion, or when the user directly requests custom evaluator authoring with equivalent reviewed evidence.
+- Read [references/evaluator-authoring.md](references/evaluator-authoring.md) only after checking the installed catalog. Continue there when no installed evaluator expresses the accepted criterion, or when the user explicitly declines a relevant installed match and requests custom authoring with equivalent reviewed evidence.
 
 ## Resolve the durable starting state
 
@@ -73,7 +73,10 @@ sessions ready, no investigation
   -> map context, choose the entry path, and create a bounded investigation
 
 investigation pending or in progress
-  -> resume the same worklist and report completed, skipped, and remaining sessions
+  -> resume the same worklist and report question-answer and verdict coverage
+
+investigation completed
+  -> synthesize its persisted evidence or create a bounded follow-up investigation
 
 reviewed evidence, no accepted behavior
   -> synthesize provisional behaviors or collect a bounded follow-up batch
@@ -153,7 +156,7 @@ Use this path when the user supplies or identifies a seed session.
 
 Use this path when the user has a bounded population but no confident starting failure.
 
-1. Define the eligible session population and time or version boundary. Exclude the durable importer smoke-test tag carried from a builder checkpoint with `kitaru session list --tag TAG` when available, plus any known smoke-test session IDs and disposable-agent or isolated-source markers.
+1. Define the eligible session population and time or version boundary. When a builder checkpoint carries a durable importer smoke-test tag, list that tagged population and subtract its exact session IDs from the worklist. Also decide explicitly whether experiment-generated sessions are eligible. Exclude known smoke-test IDs, disposable-agent or isolated-source markers, and replay sessions that do not belong in the population.
 2. Run selected low-cost deterministic analyses explicitly. Import alone must not trigger analysis.
 3. Build a diverse initial worklist, normally 15 to 30 sessions, using roughly 60 to 70 percent coverage-oriented examples and 30 to 40 percent random examples.
 4. Record the population, seed, selection method revision, and reason each session was selected.
@@ -161,23 +164,24 @@ Use this path when the user has a bounded population but no confident starting f
 
 ## Create or resume the investigation
 
-Use a small fixed question contract. Default to:
+Every selected session must have a non-empty fixed list of keyed questions. Default each session to:
 
 - `observation`: a required free-text account of what the reviewer observes;
-- `verdict`: an optional whole-session value of `acceptable`, `problematic`, or `uncertain` when it helps sorting;
-- at most one direction-specific question when the investigation has an explicit focus.
+- at most one direction-specific question when the investigation has an explicit focus and that question applies to the session.
+
+Keep the linked session's optional verdict separate from its questions. Set `acceptable`, `problematic`, or `uncertain` only after the human confirms that whole-session judgment. A null verdict means only that no verdict has been recorded; use answer coverage to determine whether review occurred.
 
 Do not persist a large fixed taxonomy. Keep adaptive follow-up reasoning in the coding-agent conversation. When a systematically different question is needed, create a bounded follow-up investigation instead of changing the active investigation.
 
-Before creation, show the user the agent, bounded population, ordered worklist size, fixed questions, and the fact that this will create remote state. Then create one investigation with its complete fixed worklist.
+Before creation, show the user the agent, bounded population, ordered worklist size, per-session questions, and the fact that this will create remote state. Then create one investigation with its complete fixed worklist. Do not create an empty investigation because sessions cannot be appended later.
 
 Preview a non-trivial worklist as a compact table:
 
-| Position | Session | Why selected | Review status |
-|---:|---|---|---|
-| 1 | Exact ID | Seed, coverage, random, suspected match, or counterexample | Pending |
+| Position | Session | Why selected | Question keys | Verdict |
+|---:|---|---|---|---|
+| 1 | Exact ID | Seed, coverage, random, suspected match, or counterexample | `observation` | Not recorded |
 
-Generate neutral summarized views when useful. Every view item must point through selectors to canonical session-node evidence. Do not place unsupported conclusions or provisional failure labels in the first unprimed batch.
+Add neutral highlights to a session question when they help the reviewer find canonical evidence. Every highlight must use a selector into the session or an exact session node. Do not place unsupported conclusions or provisional failure labels in the first unprimed batch. Keep conversational summaries in chat; the investigation API does not persist a separate curated-view object.
 
 After creation, return a checkpoint card:
 
@@ -200,11 +204,13 @@ Present the handoff explicitly:
 [Go to the Kitaru frontend now]
 
 Review investigation <id>. Add a written observation for each reviewed session,
-attach observations to exact nodes when relevant, and complete or skip each item.
+attach observations to exact nodes when relevant, and set a verdict when you have
+one. Leave it unset when you do not want to make a whole-session judgment;
+question answers show separately whether review occurred.
 Return here when you are ready for me to re-read the persisted review state.
 ```
 
-Pause for the human review. After the user returns, re-read the investigation, linked-session statuses, and annotations. Do not treat "done" as proof that the worklist is complete. Report any remaining or skipped items and let the user continue or deliberately finish with the current evidence.
+Pause for the human review. After the user returns, re-read the investigation, each linked session's fixed questions and verdict, and all investigation-answer annotations. Do not treat "done" or `completed_sessions` as proof that every required question was answered. Report answer coverage and verdict coverage separately, including duplicate answers to the same question, and let the user continue or deliberately finish with the current evidence.
 
 ### In-chat fallback
 
@@ -213,12 +219,14 @@ When the frontend is not yet available, conduct the same review against the same
 1. Read one complete session and its nodes, including required payloads.
 2. Present the final output, a compact neutral execution outline, the relevant tool or model evidence, and the selection reason.
 3. Ask the user for an open observation before offering any hypothesis.
-4. Persist the user's words as the investigation answer, adding a canonical selector when the observation concerns an exact node or payload.
-5. Record the optional verdict only when the user supplies or confirms it.
-6. Mark the linked session completed only after required answers are persisted; mark it skipped only when the user deliberately skips it.
+4. Re-read existing answers for the investigation session and question key. Create a new answer annotation only for a new human observation, add a canonical selector when it concerns an exact node or payload, and retain the returned annotation ID.
+5. Correct a known answer by updating that exact annotation ID. Repeating answer creation appends another annotation; it does not replace the earlier answer.
+6. Record the optional verdict only when the user supplies or confirms it. Use `uncertain` only for an actual uncertain judgment, not as a substitute for an absent judgment.
 7. Continue through a bounded block without asking the user to copy IDs or annotation text between systems.
 
 Never write a model-generated observation on the user's behalf.
+
+When the bounded review is genuinely finished, show unanswered questions and sessions without verdicts. Mark the investigation `completed` only after the human deliberately accepts that evidence boundary. Completion is an explicit investigation update; the server does not infer it from answers or verdict coverage.
 
 ## Alternate breadth and depth
 
@@ -236,7 +244,7 @@ The current API cannot append sessions to an investigation or persist a typed su
 
 ## Offer insight as evidence grows
 
-After each completed review batch, give the user a short synthesis before asking what to do next:
+After each reviewed batch, give the user a short synthesis before asking what to do next:
 
 | Insight | Evidence | Why it matters | What could change it | Best next evidence |
 |---|---|---|---|---|
@@ -248,7 +256,7 @@ Prefer a small number of consequential insights over a long inventory. Connect e
 
 ## Synthesize reviewed behavior
 
-Use only persisted human observations and explicit dispositions. Preserve the original open-code text even when a later structured label exists.
+Use only persisted human observations and human-confirmed session verdicts. Preserve the original open-code text even when a later structured label exists. A chat-only disposition on an agent suggestion is not durable product provenance; either ground the accepted behavior in persisted human answers and verdicts or state the limitation.
 
 Propose one to three candidates. For each candidate include:
 
@@ -310,5 +318,5 @@ Investigation may stop successfully at this checkpoint. If the user wants to tes
 - If full trace payloads are unavailable, identify the missing evidence and do not silently summarize truncated input.
 - If the worker is unavailable, create no fiction about completed analyses or evaluations.
 - If a mutating response is dropped, read current state before retrying because general request idempotency is not guaranteed.
-- If the user wants to abandon an investigation, leave it incomplete or skip unwanted sessions. Do not use destructive deletion as cancellation; deletion also removes linked sessions and investigation answers.
+- If the user wants to abandon an investigation, leave it incomplete and leave unwanted sessions without a verdict. Do not use `uncertain` as an invented skip state, and do not use destructive deletion as cancellation; deletion also removes linked sessions and investigation answers.
 - If label isolation is not server-enforced, do not claim blinded evaluator validation.

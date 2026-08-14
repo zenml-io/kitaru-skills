@@ -4,7 +4,7 @@ Use the installed Kitaru evaluator catalog as the authority. Re-read it before s
 
 ## Start with descriptive evidence
 
-Run only the descriptive evaluators relevant to the accepted behavior on a small selected set. A fresh current server includes these version-1 bundles:
+First list the installed evaluators and exact versions through the current registry operation. Do not try a name from this reference until the server returns it. Then run only the descriptive evaluators relevant to the accepted behavior on a small selected set. Current default installations may expose version-1 bundles such as:
 
 | Evaluator | Useful evidence |
 |---|---|
@@ -18,7 +18,7 @@ These results describe recorded behavior. A retry, slow span, tool error, or mis
 
 ## Prefer an installed configured rule
 
-Check whether an installed configured evaluator directly expresses the accepted criterion:
+Check whether an evaluator returned by the installed catalog directly expresses the accepted criterion. Current default installations may expose configured rules such as:
 
 | Evaluator | Use when the accepted criterion concerns |
 |---|---|
