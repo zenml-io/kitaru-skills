@@ -73,14 +73,19 @@ frontmatter descriptions.
 - Verify command and tool claims against the current Kitaru source or
   installed schema before editing them.
 - Preserve the distinction between human annotations and agent suggestions.
-- Treat the frontend review as a handoff when available and retain the
-  MCP/structured-CLI fallback until it is available.
-- Treat the skill as Kitaru's front door. Orient new users briefly, preserve
-  technical depth for experienced users, and reveal only the next useful
-  decision instead of dumping the complete workflow.
+- Treat the frontend review as the intended human interaction. If no returned
+  or documented URL reaches it, preserve the investigation and report the
+  broken product handoff; do not recreate review in chat automatically.
+- Treat the skill as Kitaru's front door. Orient new users once with Observe,
+  Judge, Define, Replay, and Compare, then reveal only the current step and next
+  useful decision.
 - Treat frontend onboarding as the doorway into the skill, not a separate
-  workflow owner. Drive either the seed-session or bounded-discovery flow and
-  do not bounce the user back into a circular handoff.
+  workflow owner. Require its exact repository and working-directory context.
+  For generic first runs, ask whether the user wants a one-run tour,
+  specific-behavior debugging, or bounded discovery.
+- Treat MCP as preferred and CLI-only operation as supported. Distinguish
+  missing package support, host configuration, capability mode, and a pending
+  coding-agent restart before choosing the transport.
 - Route unsupported-provider setup to `kitaru-importer-builder`, then return to
   `kitaru-investigation` only after usable sessions exist.
 - Keep importer orchestration and approval gates in its `SKILL.md`; keep parser

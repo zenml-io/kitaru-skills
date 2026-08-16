@@ -32,7 +32,7 @@ Prefix each material claim with one provenance marker:
 - `[user]` for a fact supplied or corrected by the user;
 - `[unknown]` for a fact that remains unresolved.
 
-Start with one source line, then use a table:
+Start with one source line, then four short bullets. Lead each bullet with what is established; add provenance and the most important unknown only when useful:
 
 ```text
 Registered agent/version: ...
@@ -40,14 +40,14 @@ Workspace, revision, and public entrypoint: ...
 Version mismatches or reconstruction gaps: ...
 ```
 
-| Lens | Established claims | Provenance and source | Unknowns or corrections needed |
-|---|---|---|---|
-| Agent behavior | ... | `[repository]` or `[trace]` | ... |
-| External environment | ... | `[repository]`, `[trace]`, or `[user]` | ... |
-| Purpose | ... | `[user]` or `[unknown]` | ... |
-| Evidence | ... | Named tests, sessions, issues, or outcome evidence | ... |
+```text
+- Agent behavior: ...
+- External environment: ...
+- Purpose and success: ...
+- Available evidence: ...
+```
 
-Show the brief before asking questions. Ask only for missing purpose, policy, impact, channel, handoff, or external-state facts. Do not ask the user to restate prompts, tools, retries, or session mechanics that the repository or traces establish.
+Use a table only when several conflicting sources must be compared. Show the brief before asking questions. When purpose or success remains unclear, ask the user to describe what the agent does and what a good outcome looks like in their own words. Ask other questions only for missing policy, impact, channel, handoff, or external-state facts. Do not ask the user to restate prompts, tools, retries, or session mechanics that the repository or traces establish.
 
 ## Resolve source mismatches
 
@@ -75,10 +75,12 @@ Define the population before sampling. Record agent version bounds, time bounds,
 
 Inspect several complete records before deciding which deterministic features can support diversity. Useful candidate-selection signals include cost, latency, node count, repeated calls, loops, tool-call patterns, error presence, and output shape. These are selection aids, not judgments.
 
-For a 15 to 30 session pilot, use roughly:
+Start with four to six sessions for one human review block. Combine:
 
 - 60 to 70 percent coverage-oriented representatives across known structural variation;
 - 30 to 40 percent seeded random sessions.
+
+After the first synthesis, explain what broader evidence would add and ask before expanding toward a 15 to 30 session pilot. Do not turn the initial onboarding review into a large worklist merely because more sessions exist.
 
 For every selected session retain:
 
@@ -88,11 +90,7 @@ For every selected session retain:
 - selection round;
 - selection reason such as seed, coverage representative, random, deterministic signal, suspected match, or counterexample.
 
-Present the review queue as:
-
-| Position | Session | Version | Selection reason | Answer coverage | Verdict |
-|---:|---|---|---|---|---|
-| 1 | Exact ID | Exact version | Seed, coverage, random, signal, match, or counterexample | 0 of 1 | Not recorded |
+Present the review queue as a short purpose, count, and explanation of the selection mix. Keep exact session IDs, versions, reasons, answer coverage, and verdicts in the resumable technical checkpoint. Show a table only when the user needs to compare or confirm individual members.
 
 Adaptive sampling discovers candidate modes. It does not estimate prevalence. A serious cold-start taxonomy may need roughly 100 diverse traces and at least 20 observed failures before new-mode convergence becomes credible, but treat those numbers as course heuristics rather than product gates.
 
@@ -109,12 +107,12 @@ Persist a highlight only under the specific session question it supports. Its se
 
 ## Guide human review
 
-Use this sequence without requiring the reviewer to read every trace backward:
+Use an outcome-first review sequence. The reviewer does not traverse every node in reverse:
 
-1. Start with the final output and the expected user outcome.
-2. Check whether the visible evidence and execution support that output.
+1. Start with what the user or customer received and the expected outcome.
+2. Inspect only the execution evidence needed to determine whether it supports that result.
 3. Expand relevant tool results, model calls, retries, and grouped parallel work.
-4. Identify the earliest observable step that made the result wrong, risky, unsupported, or unexpectedly good.
+4. Identify the earliest relevant step that made the result wrong, risky, unsupported, or unexpectedly good.
 5. Persist the human's open observation as an answer to the linked session's question, targeting the whole session or exact node when appropriate.
 6. Set a whole-session verdict only when the human confirms it. A null verdict says nothing about whether question review occurred, so report answer coverage separately.
 
@@ -122,7 +120,7 @@ During broad discovery, prefer the first upstream failure over every downstream 
 
 ## Keep suggestions provisional
 
-After the unprimed batch, format each agent suggestion as:
+After the unprimed batch, state each agent suggestion in one short evidence-led paragraph. Retain these fields in the technical checkpoint:
 
 ```text
 Suggestion: <provisional behavior>
