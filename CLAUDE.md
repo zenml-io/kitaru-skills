@@ -39,6 +39,7 @@ skills/
       evaluator-authoring.md
       investigation-method.md
       kitaru-operations.md
+      starter-template.md
   kitaru-replay-experiment/
     SKILL.md
     agents/
@@ -60,6 +61,9 @@ frontmatter descriptions.
   `references/investigation-method.md`.
 - Keep exact CLI/MCP routing and current product gaps in
   `references/kitaru-operations.md`.
+- Keep public-template recognition, untrusted-content boundaries, and
+  idempotent demo setup in `references/starter-template.md`. Let the template's
+  current root README own exact commands only after trusted comparison.
 - Check installed evaluators after the user accepts a behavior and cohort. Load
   custom evaluator guidance only after checking that catalog. Continue when no
   installed evaluator fits, or when the user explicitly declines a relevant
@@ -80,9 +84,10 @@ frontmatter descriptions.
   Judge, Define, Replay, and Compare, then reveal only the current step and next
   useful decision.
 - Treat frontend onboarding as the doorway into the skill, not a separate
-  workflow owner. Require its exact repository and working-directory context.
-  For generic first runs, ask whether the user wants a one-run tour,
-  specific-behavior debugging, or bounded discovery.
+  workflow owner. For the public starter, resolve a reachable checkout and
+  recognize stable root contents rather than requiring a directory name or
+  origin URL. For generic first runs, ask whether the user wants a one-run
+  tour, specific-behavior debugging, or bounded discovery.
 - Treat MCP as preferred and CLI-only operation as supported. Distinguish
   missing package support, host configuration, capability mode, and a pending
   coding-agent restart before choosing the transport.

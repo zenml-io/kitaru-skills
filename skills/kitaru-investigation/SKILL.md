@@ -74,8 +74,8 @@ without asking when the request already names a session, investigation, or
 accepted behavior.
 
 An incomplete starter handoff takes precedence over this question. Give the
-short five-step orientation, ask only for the missing repository URL or opened
-checkout path, and defer choosing a review path until the source is reachable.
+short five-step orientation, ask only for a reachable checkout, and defer
+choosing a review path until the source is available.
 
 ## Load references only when needed
 
@@ -85,6 +85,10 @@ checkout path, and defer choosing a review path until the source is reachable.
 - Read [references/kitaru-operations.md](references/kitaru-operations.md) before
   checking setup or calling Kitaru CLI or MCP operations. Verify the installed
   schemas when they differ from the reference.
+- Read [references/starter-template.md](references/starter-template.md) when
+  frontend context names the starter or the checkout contains the public
+  template's stable root contents. Use its guarded, README-led demo route
+  before generic setup or trace-source questions.
 - Read
   [references/deterministic-evaluators.md](references/deterministic-evaluators.md)
   after the user accepts one behavior and cohort, or when they directly request
@@ -99,11 +103,12 @@ checkout path, and defer choosing a review path until the source is reachable.
 
 Begin with read-only inspection.
 
-1. For a frontend starter or `template` handoff, resolve the exact source
-   repository URL and working directory. When it names
-   `zenml-io/kitaru-template`, verify the checkout root and its current README;
-   do not guess unfinished internal paths or search unrelated sibling
-   repositories. If the URL or path is missing, report the incomplete handoff
+1. Resolve a reachable project root. For a frontend starter or `template`
+   handoff, inspect the opened checkout before relying on its directory name or
+   origin URL. Route to the starter-template reference when the root contains
+   `pyproject.toml`, `returns_agent/`, and
+   `traces/langfuse-traces.jsonl`; renamed clones and forks can still be the
+   public template. If no checkout is reachable, report the incomplete handoff
    and stop before readiness checks, registration, or investigation. For
    already imported sessions or an explicit trace-only investigation, continue
    without source code and mark repository context as unresolved in every
@@ -158,12 +163,25 @@ evaluator version ready
 ### Continue from frontend onboarding
 
 Treat frontend onboarding as the doorway, not a separate workflow owner. Use
-the exact repository, agent, and trace context it provides. Do not send the user
-back into a circular handoff.
+the repository, agent, and trace context it provides only after verifying them
+against the reachable checkout and durable Kitaru state. When the frontend
+names the starter or supplies no exact agent identity, stable starter contents
+replace generic framework or trace-provider placeholders. When it names a
+different concrete agent, framework, or trace source, report the conflict and
+resolve which program is in scope before routing. Do not send the user back
+into a circular handoff.
 
 If the frontend promises a starter but supplies no reachable repository and
-working directory, report that the starter handoff is incomplete and stop
-before registration or investigation.
+working directory, first inspect the current working directory for the stable
+starter contents. If no candidate checkout is reachable, report that the
+starter handoff is incomplete and stop before registration or investigation.
+
+When the stable starter contents are present, follow the starter-template
+reference. Do not ask the user to choose a framework or trace provider, obtain
+live Langfuse credentials, export a time window, regenerate traces, or run the
+included agent through a paid model. Leave that demo route when its canonical
+agent or checked-in trace input was customized, and continue through this
+skill's generic investigation path instead.
 
 Route a missing integration only when it blocks usable sessions:
 

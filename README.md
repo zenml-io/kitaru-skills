@@ -61,12 +61,19 @@ public schema before it acts, and stops when the required contract is
 unavailable.
 
 When the Kitaru product provides a skill handoff from frontend onboarding, the
-investigation skill continues from its exact repository, working-directory,
-agent, and trace context. The guided starter lives in
+investigation skill verifies its reachable checkout, agent, trace, and durable
+Kitaru context before continuing. The guided starter lives in
 [`zenml-io/kitaru-template`](https://github.com/zenml-io/kitaru-template); the
-skill verifies the checkout root and current README instead of guessing paths.
-It asks a first-time user whether to learn the review flow on one run, debug a
-specific behavior, or explore several runs for recurring problems. If an
+skill recognizes renamed clones and forks from the stable root contents, then
+compares their README, agent, entrypoint, and evidence with the current public
+template before using the root README as the authority for exact setup commands. It
+resumes an existing `returns-resolver` agent, import job, or
+`returns-baseline` sessions before creating replacements. The guided route uses
+the checked-in Langfuse JSONL and never asks for live Langfuse credentials,
+trace regeneration, or a paid model call. If the included agent or trace input
+was customized, the skill switches to the generic investigation route. It asks
+a first-time user whether to learn the review flow on one run, debug a specific
+behavior, or explore several runs for recurring problems. If an
 unsupported provider prevents sessions from entering Kitaru, the
 `kitaru-importer-builder` skill creates and validates the missing integration,
 then hands usable sessions back. If no supported framework integration can
