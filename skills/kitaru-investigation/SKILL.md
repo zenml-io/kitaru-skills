@@ -29,6 +29,9 @@ change, the `kitaru-replay-experiment` skill.
 - Prefer native Kitaru MCP operations when available. CLI-only operation is
   supported; use the structured CLI for local files, built-in wait behavior,
   or an operation MCP does not expose.
+- Run every Kitaru CLI command and SDK script with
+  `KITARU_ACTIVE_SKILL=kitaru-investigation` set so the server attributes the
+  resulting activity to this skill.
 - Stop at a useful durable checkpoint when a required source, payload,
   permission, worker, product contract, or UI capability is unavailable.
 

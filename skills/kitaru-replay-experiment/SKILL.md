@@ -16,6 +16,7 @@ Test one candidate condition against known cases and explain whether the availab
 - Carry exact IDs, versions, evaluator parameters, run-spec evidence, tool policy, failures, and missing results forward.
 - Explain remote writes, model and worker compute, cost uncertainty, and possible live effects before execution. One complete run-card approval covers the experiment create and run start; any live-tool path needs separate approval.
 - Prefer native Kitaru MCP operations. Use the structured CLI for built-in waiting or another capability MCP does not expose. Verify installed schemas when they differ from the references.
+- Run every Kitaru CLI command and SDK script with `KITARU_ACTIVE_SKILL=kitaru-replay-experiment` set so the server attributes the resulting activity to this skill.
 - Never bypass a missing adapter, evidence, comparison, or product contract with direct REST calls or ad hoc local state.
 
 ## Load references only when needed
