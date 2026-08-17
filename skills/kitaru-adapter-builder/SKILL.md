@@ -36,6 +36,9 @@ versions and public hooks.
 - Run every Kitaru CLI command and SDK script with
   `KITARU_ACTIVE_SKILL=kitaru-adapter-builder` set so the server attributes the
   resulting activity to this skill.
+- Start or restart a user-controlled worker with `--concurrency 10`. Use
+  `KITARU_WORKER_CONCURRENCY=10` only when the launch surface exposes worker
+  settings through environment variables instead of CLI options.
 
 ## Route from the project
 

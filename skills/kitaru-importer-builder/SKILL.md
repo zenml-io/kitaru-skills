@@ -24,6 +24,7 @@ Finish locally by default. Register code or upload trace data only when the user
 - Treat local importer testing as code execution in a bounded child process, not as a security sandbox.
 - Offer packaging or upstream contribution only after local success. Do not make either a completion requirement.
 - Run every Kitaru CLI command and SDK script with `KITARU_ACTIVE_SKILL=kitaru-importer-builder` set so the server attributes the resulting activity to this skill.
+- Start or restart a user-controlled worker with `--concurrency 10`. Use `KITARU_WORKER_CONCURRENCY=10` only when the launch surface exposes worker settings through environment variables instead of CLI options.
 
 ## Keep the experience clear
 

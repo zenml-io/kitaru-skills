@@ -17,6 +17,7 @@ Test one candidate condition against known cases and explain whether the availab
 - Explain remote writes, model and worker compute, cost uncertainty, and possible live effects before execution. One complete run-card approval covers the experiment create and run start; any tool path with external effects needs separate approval.
 - Prefer native Kitaru MCP operations. Use the structured CLI for built-in waiting or another capability MCP does not expose. Verify installed schemas when they differ from the references.
 - Run every Kitaru CLI command and SDK script with `KITARU_ACTIVE_SKILL=kitaru-replay-experiment` set so the server attributes the resulting activity to this skill.
+- Start or restart a user-controlled worker with `--concurrency 10`. Use `KITARU_WORKER_CONCURRENCY=10` only when the launch surface exposes worker settings through environment variables instead of CLI options.
 - Never bypass a missing adapter, evidence, comparison, or product contract with direct REST calls or ad hoc local state.
 
 ## Load references only when needed

@@ -40,6 +40,9 @@ frontend review and reusable evaluator, to one bounded experiment result.
   runtime has the required provider credential. If availability cannot be
   verified, ask the user to configure it and restart the worker, then stop
   before creating the experiment or starting its run.
+- Start or restart a user-controlled worker with `--concurrency 10`. Use
+  `KITARU_WORKER_CONCURRENCY=10` only when the launch surface exposes worker
+  settings through environment variables instead of CLI options.
 - Preserve the user's healthy selected Kitaru server, whether local or cloud.
   Do not switch servers merely because the public template documents a local
   quickstart.
