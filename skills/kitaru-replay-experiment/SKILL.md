@@ -14,7 +14,7 @@ Test one candidate condition against known cases and explain whether the availab
 - Resolve adapter support and its construction path before showing an actionable run card. A shared replay schema does not prove that an adapter supports a requested override or tool source.
 - Require an explicit tool policy for every tool-using run. Omission resolves to live passthrough on the current server and is unsafe as an implicit default.
 - Carry exact IDs, versions, evaluator parameters, run-spec evidence, tool policy, failures, and missing results forward.
-- Explain remote writes, model and worker compute, cost uncertainty, and possible live effects before execution. One complete run-card approval covers the experiment create and run start; any live-tool path needs separate approval.
+- Explain remote writes, model and worker compute, cost uncertainty, and possible live effects before execution. One complete run-card approval covers the experiment create and run start; any tool path with external effects needs separate approval.
 - Prefer native Kitaru MCP operations. Use the structured CLI for built-in waiting or another capability MCP does not expose. Verify installed schemas when they differ from the references.
 - Run every Kitaru CLI command and SDK script with `KITARU_ACTIVE_SKILL=kitaru-replay-experiment` set so the server attributes the resulting activity to this skill.
 - Never bypass a missing adapter, evidence, comparison, or product contract with direct REST calls or ad hoc local state.
@@ -46,9 +46,13 @@ If an experiment or run already exists, re-read it and resume supervision or int
 
 Reject unsupported adapter conditions before approval or paid execution. Return the exact blocker and smallest supported alternative. Do not let a user approve past an unresolved adapter or construction path.
 
+Resolve the model provider and credentials required by the candidate process. Verify credential availability to the worker without reading, displaying, or fingerprinting secret values when the environment exposes a safe readiness signal. A credential visible to the coding agent or stored in a project file does not prove that an already-running worker inherited it. If worker readiness is unavailable or cannot be verified, ask the user to configure the credential and restart or provision the worker, then stop before experiment creation or run start.
+
 For tool-using agents:
 
-- Prefer baseline-scoped recorded history when it can answer the hypothesis and the adapter supports it.
+- Choose the tool source that answers the hypothesis. Do not default to recorded history merely because a baseline is available.
+- Prefer explicit passthrough for verified deterministic, isolated local fixtures when the candidate may change tool choice or arguments. State that this still executes tool code, name its effects, and distinguish it from an external live system.
+- Use baseline-scoped recorded history when holding recorded tool results fixed is part of the intended comparison and the adapter supports it. Explain that lookup matches a prior call; it does not restore baseline state or permit new arguments.
 - Use `fail` or `error_result` on a history or static miss unless live execution is deliberate.
 - Treat `on_miss=passthrough` as live passthrough and gate it separately.
 - Warn that cohort-wide or agent-wide history can borrow stale or cross-case state. Matching uses tool name and canonical JSON arguments, then selects the latest match in scope.
@@ -56,6 +60,8 @@ For tool-using agents:
 - Keep tool execution failures separate from agent-quality failures.
 
 Check whether repeated calls with identical arguments can legitimately return different values. Baseline scope is the narrowest history source, not proof that a stored result remains faithful.
+
+When passthrough and history are both valid but would change what the experiment means, explain the concrete difference and ask the user which condition they want unless a verified project-specific contract already selects one.
 
 ## Show one run card
 
@@ -74,12 +80,12 @@ Prefill this compact execution checksum. Do not turn it into an experiment-desig
 | Evaluators | Exact versions and parameters, one primary outcome, and at most two necessary protections |
 | Tool source | Full policy, history scope, `on_miss`, synthetic source, and possible live effects |
 | Adapter support | Verified adapter, construction path, and supported requested operations |
-| Expected work | Session count, likely model and tool work, and cost uncertainty |
+| Expected work | Session count, provider and worker readiness, likely model and tool work, and cost uncertainty |
 | Claim limit | What this comparison can and cannot establish |
 
 Fingerprint the complete public run-spec and capabilities models using canonical serialization. Do not resolve or expose secrets. Immediately before experiment creation and again before starting execution, re-read both models and compare their fingerprints. If either changed, invalidate approval and show the changed condition. An exact agent-version ID identifies a mutable configuration, not an immutable reproducible artifact, and these checks cannot freeze or prove the configuration a worker later resolves. For a user-defined gate or live-effect run, require immutable runtime identity or narrow the use to exploration. Without that identity, report observed violations but return `cannot evaluate` for the gate. For an exploratory run, preserve the approved fingerprints, re-read them after settlement, and return `inconclusive` if observable drift occurred.
 
-Ask for one approval after the complete card is visible. If the policy includes passthrough, ask separately for approval of the named live tools and effects.
+Ask for one approval after the complete card is visible. If passthrough can affect an external system, ask separately for approval of the named live tools and effects. Verified isolated local mock execution can be covered by the complete run-card approval.
 
 ## Create and supervise one run
 

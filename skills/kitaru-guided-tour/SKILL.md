@@ -36,6 +36,10 @@ frontend review and reusable evaluator, to one bounded experiment result.
   call. Continue into one bounded replay as the final chapter, but show the
   complete run card and ask before creating the experiment or starting paid or
   live execution.
+- Before a model-backed replay, verify without exposing secrets that the worker
+  runtime has the required provider credential. If availability cannot be
+  verified, ask the user to configure it and restart the worker, then stop
+  before creating the experiment or starting its run.
 - Preserve the user's healthy selected Kitaru server, whether local or cloud.
   Do not switch servers merely because the public template documents a local
   quickstart.
@@ -194,12 +198,15 @@ After the user returns from the reusable-check checkpoint:
    start an automatic prompt search or introduce an unrelated model change.
 3. Continue with `kitaru-replay-experiment`, carrying the exact accepted
    behavior, cohort version, evaluator version and parameters, candidate agent
-   version, proposed override, and an explicit non-live tool policy when the
-   adapter supports one.
+   version, proposed override, and an explicit tool policy. For the verified
+   public template, use passthrough for all six tools: each task calls
+   deterministic local functions against a fresh in-memory mock store and
+   cannot affect an external system. Do not silently replace those calls with
+   recorded-history matching.
 4. Let that skill verify adapter support and show its complete run card. Explain
-   model work, cost uncertainty, missing restored state, and possible tool
-   effects. Obtain its required approval before experiment creation or run
-   start.
+   provider and worker readiness, model work, cost uncertainty, missing restored
+   state, and possible tool effects. Obtain its required approval before
+   experiment creation or run start.
 5. After the run settles, lead with the experiment frontend checkpoint from
    `kitaru-operations.md`. Explain which recorded cases were replayed, what
    changed, how the candidate compared, and what the result cannot establish.
