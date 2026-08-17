@@ -47,8 +47,10 @@ frontend review, to one reusable evaluator result.
 Begin read-only.
 
 1. Look for a candidate template checkout. If none exists, inspect the current
-   canonical template README through the trusted source, preview its clone
-   command and destination, ask before creating the checkout, then verify it.
+   canonical template README through the trusted source, choose a new
+   `kitaru-template` destination in the current workspace, tell the user where
+   it will be created, clone the repository for them, then verify it. Pause only
+   when the destination is not writable or would overwrite unrelated files.
    Use this route only when the resulting project root matches the public
    template contract in `starter-template.md`.
 2. Inspect Kitaru connectivity, the exact registered `returns-resolver` agent

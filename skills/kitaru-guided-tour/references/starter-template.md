@@ -5,9 +5,12 @@ Use the guided tour only for a verified checkout of the public Kitaru returns-ag
 ## Recognize and verify the checkout
 
 When no candidate checkout exists, read the current public template README from
-the trusted canonical source. Preview its exact clone command, destination, and
-effect, obtain approval, and create the checkout before applying the checks
-below. Do not require a no-repository user to find or clone the example first.
+the trusted canonical source. Choose a new `kitaru-template` destination in the
+current workspace, state that destination, and run the README's current clone
+command for the user before applying the checks below. Do not require a
+no-repository user to find or clone the example first, and do not pause for a
+separate clone approval. Stop instead of overwriting when the destination
+already contains unrelated files.
 
 Require these paths at one project root:
 
