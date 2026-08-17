@@ -7,15 +7,16 @@ Use this reference before reading or mutating Kitaru investigation state. Treat 
 - [Transport policy](#transport-policy)
 - [Operation map](#operation-map)
 - [Resource contracts](#resource-contracts)
-- [Frontend bridge and fallback](#frontend-bridge-and-fallback)
+- [Setup and transport readiness](#setup-and-transport-readiness)
+- [Frontend bridge and failure](#frontend-bridge-and-failure)
 - [Known product boundaries](#known-product-boundaries)
 - [Mutation and retry rules](#mutation-and-retry-rules)
 
 ## Transport policy
 
-Prefer native MCP when an exact bounded operation exists. Use the CLI when the operation requires a local evaluator script, benefits from built-in wait or watch behavior, or the relevant MCP tool is unavailable.
+Prefer native MCP when an exact bounded operation exists. CLI-only operation is supported. Use the CLI when the operation requires a local file or evaluator script, benefits from built-in wait or watch behavior, or the relevant MCP tool is unavailable.
 
-For agent-facing CLI calls, request structured output and disable incidental interaction with the installed equivalents of:
+For agent-facing CLI calls, use these flags when the installed command schema exposes them:
 
 ```text
 --output json --machine --non-interactive --no-browser
@@ -25,15 +26,23 @@ The deliberate frontend handoff may present or open one resolved URL. Do not ope
 
 Before relying on exact syntax:
 
-1. use the Kitaru CLI or MCP connection already configured in the user's environment;
-2. inspect the installed `kitaru schema` output or command help;
-3. inspect the discovered MCP input schema;
-4. prefer exact IDs and versions over names;
-5. preserve JSON results and carry returned IDs into the next call.
-
-If `kitaru` is not available in the current shell, inspect the project's current setup instructions or ask how the user's Kitaru environment is activated. Do not infer a `uv`, `pip`, virtual-environment, or package-install command from the repository layout.
+1. inspect the installed `kitaru schema` output or command help;
+2. inspect discovered MCP tools and their input schemas when MCP is available;
+3. prefer exact IDs and versions over names;
+4. preserve JSON results and carry returned IDs into the next call.
 
 Do not use direct REST calls to fill a missing CLI or MCP contract.
+
+## Setup and transport readiness
+
+Treat setup as part of reaching the first usable session, not as an unexplained prerequisite:
+
+1. Treat MCP as preferred, not required. Inventory discovered native MCP tools first. If no native tools are discovered, distinguish among a missing `kitaru[mcp]` installation, absent host configuration, a server left in read-only mode, and host configuration added after the coding-agent process started.
+2. MCP write operations require `standard` or `destructive` mode. Modes are cumulative: a `destructive`-mode server also exposes every `standard` write tool, so use its ordinary write tools normally. Reserve destructive actions for explicitly requested deletes or cancellations.
+3. Check whether `kitaru` is available in the active project environment only when the next operation requires the CLI: a local file import, built-in wait behavior, an operation MCP does not expose, or resolving an unknown `dashboard_url` for the review handoff. If it is missing at that point, inspect the project's current setup instructions and the official Kitaru installation guide. Do not infer a package manager, virtual environment, or install command from repository layout alone. Explain and obtain approval before changing the project environment.
+4. Run `kitaru status` under the same condition to resolve the selected server, credentials, compatibility, dashboard URL, and worker readiness. Use `kitaru doctor` when a check fails or its cause is unclear.
+5. A host normally discovers new MCP configuration only after restart. Before restart, preserve the current repository, agent/version, trace source, completed setup, and next action in a compact checkpoint. Tell the user how to resume with the host's documented mechanism rather than assuming one command works everywhere.
+6. When CLI covers the next operation, state that fallback in one sentence and continue. Do not make transport selection another user decision unless the missing MCP capability changes the result or blocks the next operation.
 
 ## Operation map
 
@@ -106,7 +115,7 @@ Do not use direct REST calls to fill a missing CLI or MCP contract.
 - Annotation update replaces only the value of one exact annotation ID. It cannot change the selector, question key, or investigation link. Deletion is a separate exact-ID destructive operation.
 - Manual annotations are independent of an investigation. Investigation answers are deleted with their investigation.
 
-## Frontend bridge and fallback
+## Frontend bridge and failure
 
 Resolve the frontend URL in this order:
 
@@ -120,24 +129,21 @@ Resolve the frontend URL in this order:
 
 Parse the URL and replace only the managed Cloud path shape; do not perform a global text replacement. Use the direct route only when product configuration or server information confirms that the dashboard URL serves Kitaru UI at its base, such as a self-hosted server reporting a non-null `ui_version`. Do not treat every dashboard URL that fails the managed Cloud match as a direct Kitaru UI. Strip a trailing slash before appending the direct route. The route carries agent and investigation identifiers only. Do not add sessions, questions, annotations, judgments, or trace contents as path or query data.
 
-Present the resolved URL as a clickable link. If the environment provides an ordinary open-URL action and the user wants it opened, use that action and then pause. Otherwise, leave the link for the user to open in their preferred browser. Do not use Computer Use, browser automation, tab control, or a browser-specific integration to navigate or annotate on the user's behalf.
+Present the resolved URL as the first-line clickable action, say whether it opened automatically, explain investigation answer versus whole-session verdict versus independent manual annotation in one sentence, and pause. If the environment provides an ordinary open-URL action and the user asks to open the page, use it. Do not use Computer Use, browser automation, tab control, or a browser-specific integration to navigate or annotate on the user's behalf.
 
-When no returned or documented URL reaches the investigation:
+When no returned or documented URL reaches the investigation, preserve the investigation and stop. Report:
 
-1. retain the same investigation and question keys;
-2. read each session through activity operations;
-3. collect the human answer in chat;
-4. re-read matching answers, then persist a genuinely new answer through `answer_question` or `annotation create`;
-5. update the exact annotation ID when correcting an existing answer;
-6. set a human-confirmed verdict when available;
-7. re-read answer and verdict coverage after every dropped or ambiguous response;
-8. explicitly complete the investigation only after the human accepts the remaining gaps.
+- the exact investigation and agent IDs;
+- the attempted URL, unrecognized dashboard shape, or missing `dashboard_url`;
+- that frontend review is the intended interaction and the skill will not recreate it in chat;
+- one concise retry or product-bug action.
 
-This is an interaction fallback, not a different persistence model.
+Low-level CLI and MCP annotation operations remain available when a user explicitly requests agent-facing annotation work. They are not an automatic fallback for a broken frontend handoff.
 
 ## Known product boundaries
 
 - Current CLI and native MCP investigation creation return the investigation resource without a direct review URL. They expose the agent and investigation IDs needed to construct the documented frontend route from the `dashboard_url` returned by `kitaru status`.
+- A missing or invalid documented frontend route blocks the intended human review experience. There is no supported automatic in-chat substitute in this skill.
 - No public write path exists for the structured agent-context brief or accepted-behavior record.
 - No operation appends sessions to an active investigation.
 - No persisted skipped-session state exists.
@@ -151,7 +157,7 @@ Do not improvise around these boundaries. Preserve what can be preserved in Kita
 ## Mutation and retry rules
 
 - Explain the exact remote object or compute job before creating it.
-- Require exact confirmation for cohort membership. Treat an evaluator card that preserves an already accepted behavior as a checksum; require a new decision only when it changes a boundary, permitted equivalence, or missing-evidence rule.
+- Show and confirm exact cohort membership once, inline, before creation. Treat an evaluator card that preserves an already accepted behavior as a checksum; require a new decision only when it changes a boundary, permitted equivalence, or missing-evidence rule.
 - After a dropped response, read current state before retrying. General request idempotency is not guaranteed, and retrying answer creation can append a duplicate annotation.
 - Create a second answer for the same investigation-session and question key only when another annotation is intentional. Correct a known answer through exact-ID update.
 - Never use destructive deletion as investigation cancellation.

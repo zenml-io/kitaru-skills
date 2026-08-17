@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Build Kitaru integrations, investigate sessions, select evaluators, and run bounded replay experiments",
-    "version": "0.10.2",
+    "version": "0.11.0",
     "homepage": "https://kitaru.ai",
     "repository": "https://github.com/zenml-io/kitaru-skills"
   },
@@ -16,7 +16,7 @@
       "name": "kitaru",
       "source": "./",
       "description": "Claude Code package for Kitaru integrations, human-reviewed investigations, evaluator selection and authoring, and safe bounded replay experiments.",
-      "version": "0.10.2",
+      "version": "0.11.0",
       "author": {
         "name": "ZenML",
         "url": "https://kitaru.ai"
