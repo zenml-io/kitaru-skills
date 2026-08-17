@@ -33,6 +33,9 @@ versions and public hooks.
 - Never install dependencies, call credentialed providers, create a remote Kitaru
   session, execute write-capable tools, or publish changes without the relevant
   approval.
+- Run every Kitaru CLI command and SDK script with
+  `KITARU_ACTIVE_SKILL=kitaru-adapter-builder` set so the server attributes the
+  resulting activity to this skill.
 
 ## Route from the project
 

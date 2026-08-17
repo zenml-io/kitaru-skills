@@ -23,6 +23,7 @@ Finish locally by default. Register code or upload trace data only when the user
 - Run any untrusted or newly generated importer, including code created in the current task, only in a credential-free isolated environment. Stop if that isolation is unavailable.
 - Treat local importer testing as code execution in a bounded child process, not as a security sandbox.
 - Offer packaging or upstream contribution only after local success. Do not make either a completion requirement.
+- Run every Kitaru CLI command and SDK script with `KITARU_ACTIVE_SKILL=kitaru-importer-builder` set so the server attributes the resulting activity to this skill.
 
 ## Keep the experience clear
 
