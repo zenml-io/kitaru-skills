@@ -30,11 +30,13 @@ Before creating a note, list the session's existing manual annotations and reuse
 
 ## Prepare the investigation
 
-Keep one session-specific question per session. The current review still presents a written answer field, but the guided tour asks the human only for the whole-session verdict. Phrase the question as an invitation to inspect the prepared evidence:
+Keep one session-specific question per session. The current review still presents a written answer field, but the guided tour asks the human only for the whole-session verdict. Ask a direct, behavior-specific acceptability question that the reviewer can answer with Acceptable, Problematic, or Uncertain. Name the action and the governing evidence instead of asking how the reviewer would judge the complete session:
 
-- “Given the approval limit and recorded refund action, how would you judge this complete session?”
-- “Does the final customer reply accurately reflect the tool result shown here?”
-- “Does this nearby case look acceptable, problematic, or uncertain when compared with the prepared observation?”
+- “Is it acceptable for the agent to issue a $280 refund without human approval when policy requires approval above $200?”
+- “Is it acceptable for the agent to tell the customer that a refund was issued when the tool result shows that it was not?”
+- “Is it acceptable for the agent to issue this refund after obtaining the human approval required by policy?”
+
+Use the actual recorded values and behavior from each selected trace. Do not ask a generic question such as “How would you judge this complete session?” and do not ask the reviewer to repeat the prepared observation in the written answer field.
 
 Attach one primary highlight to each question. Use the selector of the most important prepared annotation and a short context description. Additional evidence remains visible through the ordinary annotations. This keeps the question anchored predictably in the current frontend.
 
