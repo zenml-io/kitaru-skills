@@ -39,7 +39,7 @@ Treat setup as part of reaching the first usable session, not as an unexplained 
 
 1. Treat MCP as preferred, not required. Inventory discovered native MCP tools first. If no native tools are discovered, distinguish among a missing `kitaru[mcp]` installation, absent host configuration, a server left in read-only mode, and host configuration added after the coding-agent process started.
 2. MCP write operations require `standard` or `destructive` mode. Modes are cumulative: a `destructive`-mode server also exposes every `standard` write tool, so use its ordinary write tools normally. Reserve destructive actions for explicitly requested deletes or cancellations.
-3. Check whether `kitaru` is available in the active project environment only when the next operation requires the CLI: a local file import, built-in wait behavior, an operation MCP does not expose, or resolving an unknown `dashboard_url` for the review handoff. If it is missing at that point, inspect the project's current setup instructions and the official Kitaru installation guide. Do not infer a package manager, virtual environment, or install command from repository layout alone. Explain and obtain approval before changing the project environment.
+3. Check whether `kitaru` is available in the active project environment only when the next operation and its handoff cannot be completed through the discovered MCP tools. For an immediate frontend handoff, prefer structured CLI creation when the CLI is already available because its result can return the product-owned review link. If the CLI is absent but `standard`-mode MCP can create the investigation, create it once through MCP and use the verified `dashboard_url` compatibility route; do not install the CLI or recreate the investigation solely to obtain a link. If neither transport can complete the operation and handoff, inspect the project's current setup instructions and the official Kitaru installation guide. Do not infer a package manager, virtual environment, or install command from repository layout alone. Explain and obtain approval before changing the project environment.
 4. Run `kitaru status` under the same condition to resolve the selected server, credentials, compatibility, dashboard URL, and worker readiness. Use `kitaru doctor` when a check fails or its cause is unclear.
 5. A host normally discovers new MCP configuration only after restart. Before restart, preserve the current repository, agent/version, trace source, completed setup, and next action in a compact checkpoint. Tell the user how to resume with the host's documented mechanism rather than assuming one command works everywhere.
 6. When CLI covers the next operation, state that fallback in one sentence and continue. Do not make transport selection another user decision unless the missing MCP capability changes the result or blocks the next operation.
@@ -54,7 +54,7 @@ Treat setup as part of reaching the first usable session, not as an unexplained 
 | Record a new agent run | Use the repository's verified Kitaru-integrated agent entrypoint | No generic MCP operation; running the agent may execute tools or mutate external state |
 | List eligible sessions | `kitaru session list --agent AGENT` with bounded filters and pagination; use `--tag TAG` to find a marked smoke population, then subtract its exact IDs | `kitaru_activity_read`, `list`, kind `session` |
 | Read a complete session | `kitaru session get SESSION`; `kitaru session nodes SESSION --include-payloads` with pagination | `kitaru_activity_read`, `get` session then `list_children` session nodes with payloads |
-| Create investigation and fixed worklist | `kitaru investigation create NAME --agent AGENT --session UUID --session-question 'UUID:KEY=QUESTION'`, repeating session and question options; optionally add `--session-highlights 'UUID:KEY=JSON_ARRAY'` | `kitaru_review_manage`, `create_investigation` with ordered session inputs, each carrying its questions and optional highlights |
+| Create investigation and fixed worklist | `kitaru investigation create NAME --agent AGENT --session UUID --session-question 'UUID:KEY=QUESTION'`, repeating session and question options; optionally add `--session-highlights 'UUID:KEY=JSON_ARRAY'`; structured output includes `links.review` when the server exposes a supported dashboard | `kitaru_review_manage`, `create_investigation` with ordered session inputs, each carrying its questions and optional highlights; use only when an immediate frontend handoff is not required or the CLI is unavailable, because MCP does not yet return the review link |
 | Read or resume investigation | `kitaru investigation get ID`; `kitaru investigation session list ID` | `kitaru_review_read`, `get` investigation then `list_sessions` |
 | Set linked-session verdict | `kitaru investigation session verdict INVESTIGATION SESSION acceptable|problematic|uncertain`; the CLI cannot clear a verdict | `kitaru_review_manage`, `set_session_verdict`; use null only to clear an existing verdict deliberately |
 | Complete investigation | `kitaru investigation update INVESTIGATION --status completed` | `kitaru_review_manage`, `update_investigation` with `status=completed` |
@@ -119,15 +119,14 @@ Treat setup as part of reaching the first usable session, not as an unexplained 
 
 Resolve the frontend URL in this order:
 
-1. Use an investigation review link returned by Kitaru when one exists.
-2. Otherwise, read `dashboard_url` from `kitaru status` or equivalent product configuration and construct one of the documented routes below from the exact agent and investigation IDs.
+1. Read `links.review` from the structured `kitaru investigation create` result. Use it unchanged when it exists.
+2. If creation already happened through MCP, an older CLI, or another client that did not return a link, reuse the `dashboard_url` already verified during readiness. If it is not available, read it once from `kitaru status` or equivalent product configuration. Then append the compatibility route below using the exact agent and investigation IDs.
 
-| Dashboard kind | Recognized dashboard URL | Investigation review URL |
-|---|---|---|
-| Managed Cloud | `ORIGIN/workspaces/WORKSPACE_ID` | `ORIGIN/kitaru-workspaces/WORKSPACE_ID/agents/AGENT_ID/investigations/INVESTIGATION_ID/review` |
-| Direct Kitaru UI | A product-configured base URL confirmed to serve the Kitaru UI directly | `DASHBOARD_URL/agents/AGENT_ID/investigations/INVESTIGATION_ID/review` |
+```text
+DASHBOARD_URL/agents/AGENT_ID/investigations/INVESTIGATION_ID/review
+```
 
-Parse the URL and replace only the managed Cloud path shape; do not perform a global text replacement. Use the direct route only when product configuration or server information confirms that the dashboard URL serves Kitaru UI at its base, such as a self-hosted server reporting a non-null `ui_version`. Do not treat every dashboard URL that fails the managed Cloud match as a direct Kitaru UI. Strip a trailing slash before appending the direct route. The route carries agent and investigation identifiers only. Do not add sessions, questions, annotations, judgments, or trace contents as path or query data.
+Current managed and self-hosted servers report the Kitaru UI base directly as `dashboard_url`; do not translate `/workspaces/` into `/kitaru-workspaces/` or otherwise rewrite its path. Strip one trailing slash before appending the route. The route carries agent and investigation identifiers only. Do not add sessions, questions, annotations, judgments, or trace contents as path or query data. Treat this construction as a compatibility path, not a substitute for a returned `links.review` contract.
 
 Present the resolved URL as the first-line clickable action, say whether it opened automatically, explain investigation answer versus whole-session verdict versus independent manual annotation in one sentence, and pause. If the environment provides an ordinary open-URL action and the user asks to open the page, use it. Do not use Computer Use, browser automation, tab control, or a browser-specific integration to navigate or annotate on the user's behalf.
 
@@ -142,7 +141,8 @@ Low-level CLI and MCP annotation operations remain available when a user explici
 
 ## Known product boundaries
 
-- Current CLI and native MCP investigation creation return the investigation resource without a direct review URL. They expose the agent and investigation IDs needed to construct the documented frontend route from the `dashboard_url` returned by `kitaru status`.
+- Current structured CLI investigation creation returns a direct review URL in `links.review` when server information exposes a supported dashboard. Investigation creation succeeds even if the follow-up server-information request fails; in that case the CLI returns the investigation, no review link, and a warning.
+- Native MCP investigation creation still returns the investigation resource without a direct review URL. Prefer CLI creation for an immediate frontend handoff; otherwise use the documented compatibility route from the exact `dashboard_url`, agent ID, and investigation ID.
 - A missing or invalid documented frontend route blocks the intended human review experience. There is no supported automatic in-chat substitute in this skill.
 - No public write path exists for the structured agent-context brief or accepted-behavior record.
 - No operation appends sessions to an active investigation.
