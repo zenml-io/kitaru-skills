@@ -116,16 +116,22 @@ Begin with read-only inspection.
 2. Inventory the discovered Kitaru MCP tool names and capability mode, and
    independently inventory whether the project Kitaru CLI is available. For
    MCP, distinguish absent tools or host configuration, read-only mode,
-   `standard` mode, and a host that has not restarted since configuration. Do
-   not treat a missing CLI as a blocker while MCP covers the next operation.
-3. Choose transport for the next operation. Prefer a discovered `standard`-mode
-   MCP tool when it covers the next write. Use the structured CLI for a local
-   file import, built-in wait behavior, or an operation MCP does not expose.
-   Only when that next operation requires the CLI, check the selected server
-   with `kitaru status`, inspect the installed command schema before giving
-   exact syntax, and enter installation guidance if the CLI is missing. Explain
-   and obtain approval before changing the project environment. If MCP setup
-   requires a host restart, return a resume checkpoint first.
+   `standard` mode, `destructive` mode, and a host that has not restarted
+   since configuration. Modes are cumulative: a `destructive`-mode server also
+   exposes every `standard` write tool. Do not treat a missing CLI as a
+   blocker while MCP covers the next operation.
+3. Choose transport for the next operation. Prefer a discovered MCP tool in at
+   least `standard` mode when it covers the next write; a `destructive`-mode
+   server may perform ordinary writes, while destructive actions still require
+   an explicit user request. Use the structured CLI for a local file import,
+   built-in wait behavior, or an operation MCP does not expose. Only when that
+   next operation requires the CLI, check the selected server with
+   `kitaru status`, inspect the installed command schema before giving exact
+   syntax, and enter installation guidance if the CLI is missing. Resolving
+   the review-handoff URL counts as such an operation when `dashboard_url` is
+   not yet known, even if MCP performed every write. Explain and obtain
+   approval before changing the project environment. If MCP setup requires a
+   host restart, return a resume checkpoint first.
 4. Resolve the registered agent and exact agent version when possible.
 5. Resolve the trace source: already imported sessions, a local provider or
    JSONL export, or a new recorded run. Ask which source to use only when it is
