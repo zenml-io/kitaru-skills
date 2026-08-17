@@ -121,11 +121,14 @@ Begin with read-only inspection.
    exposes every `standard` write tool. Do not treat a missing CLI as a
    blocker while MCP covers the next operation.
 3. Choose transport for the next operation. Prefer a discovered MCP tool in at
-   least `standard` mode when it covers the next write; a `destructive`-mode
-   server may perform ordinary writes, while destructive actions still require
-   an explicit user request. Use the structured CLI for a local file import,
-   built-in wait behavior, or an operation MCP does not expose. Only when that
-   next operation requires the CLI, check the selected server with
+   least `standard` mode when it covers the complete next operation; a
+   `destructive`-mode server may perform ordinary writes, while destructive
+   actions still require an explicit user request. Use the structured CLI for
+   a local file import, built-in wait behavior, an operation MCP does not
+   expose, or investigation creation immediately followed by frontend review:
+   current structured CLI output returns the product-owned review link while
+   native MCP creation does not. Only when that next operation requires the
+   CLI, check the selected server with
    `kitaru status`, inspect the installed command schema before giving exact
    syntax, and enter installation guidance if the CLI is missing. Resolving
    the review-handoff URL counts as such an operation when `dashboard_url` is
@@ -280,19 +283,24 @@ Before creation, state in short prose:
 Then ask once and create the complete fixed worklist. Do not create an empty
 investigation because sessions cannot be appended later.
 
-After creation, return only the exact investigation ID, agent/version, session
-count, review mode in user language, and next action. Keep question keys,
-selectors, and the complete ordered ID list available for technical resumption,
-not in the conversational lead.
+After creation, preserve the complete structured result, including
+`links.review` when the CLI returns it. Never retry creation because
+`links.review` is absent. If the result includes a review-link warning, retain
+it while resolving the compatibility route and report it only when URL
+resolution remains blocked. Return only the exact investigation ID,
+agent/version, session count, review mode in user language, and next action.
+Keep question keys, selectors, and the complete ordered ID list available for
+technical resumption, not in the conversational lead.
 
 ## Hand off to frontend review
 
 Prefer one continuous Kitaru frontend review block. Resolve the review URL in
 this order:
 
-1. Use a direct investigation review link returned by Kitaru when one exists.
-2. Otherwise construct only a documented route from `dashboard_url`, the exact
-   agent ID, and exact investigation ID as described in
+1. Use `links.review` from the structured `kitaru investigation create` result
+   when it exists. Do not reconstruct or rewrite that product-owned URL.
+2. Otherwise use only the compatibility route documented from `dashboard_url`,
+   the exact agent ID, and exact investigation ID in
    [references/kitaru-operations.md](references/kitaru-operations.md).
 
 If no returned or documented URL reaches the investigation, stop and report a

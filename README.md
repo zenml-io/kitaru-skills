@@ -23,9 +23,10 @@ investigation without replacing human judgment.
 | [`kitaru-adapter-builder`](skills/kitaru-adapter-builder/SKILL.md) | Build a project-local Python or TypeScript adapter for an unsupported agent framework, with explicit recording and replay boundaries, partial-trace handling, side-effect controls, and separately approved upstream contribution. |
 
 The workflow keeps human observations separate from agent suggestions. It uses
-the Kitaru frontend for human review. If no returned or documented review URL
-works, it preserves the investigation and reports the broken product handoff
-rather than recreating the review UI in chat.
+the Kitaru frontend for human review and consumes the product-owned review link
+returned by structured investigation creation. If no returned or documented
+compatibility URL works, it preserves the investigation and reports the broken
+product handoff rather than recreating the review UI in chat.
 
 ## Example prompts
 
