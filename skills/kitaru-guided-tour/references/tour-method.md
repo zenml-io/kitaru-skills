@@ -18,6 +18,8 @@ Do not use ticket identifiers, fixture implementation, test-only expected outcom
 
 For each session, write one or two concise ordinary annotations. Anchor each note to the smallest useful node, JSON field, or text span. Use the complete session only when no narrower selector carries the meaning.
 
+Write for a newcomer who has not read the template code and does not know its internal field names. Translate each field into its practical meaning. For example, say “the order was marked for human review” instead of “the account-review flag was set.” If an internal term is necessary, define it in the same sentence.
+
 Start every durable note with `Agent observation:`. State what the evidence shows and why it matters without pretending the user has already agreed. Prefer:
 
 > Agent observation: The policy result requires approval above $200, while the highlighted tool result records an accepted $280 refund.
@@ -30,13 +32,14 @@ Before creating a note, list the session's existing manual annotations and reuse
 
 ## Prepare the investigation
 
-Keep one session-specific question per session. The current review still presents a written answer field, but the guided tour asks the human only for the whole-session verdict. Ask a direct, behavior-specific acceptability question that the reviewer can answer with Acceptable, Problematic, or Uncertain. Name the action and the governing evidence instead of asking how the reviewer would judge the complete session:
+Keep one session-specific question per session. The current review still presents a written answer field, but the guided tour asks the human only for the whole-session verdict. Ask a direct, behavior-specific acceptability question that the reviewer can answer with Acceptable, Problematic, or Uncertain. Assume the reviewer knows nothing about the example. State the action, translate the governing evidence into plain language, and make the likely concern explicit when the trace clearly supports it instead of asking how the reviewer would judge the complete session:
 
 - “Is it acceptable for the agent to issue a $280 refund without human approval when policy requires approval above $200?”
 - “Is it acceptable for the agent to tell the customer that a refund was issued when the tool result shows that it was not?”
+- “The order was marked for human review, but the agent issued a refund after its policy check failed. Is that acceptable?”
 - “Is it acceptable for the agent to issue this refund after obtaining the human approval required by policy?”
 
-Use the actual recorded values and behavior from each selected trace. Do not ask a generic question such as “How would you judge this complete session?” and do not ask the reviewer to repeat the prepared observation in the written answer field.
+Use the actual recorded values and behavior from each selected trace. Do not use unexplained field names such as “account-review flag,” ask a generic question such as “How would you judge this complete session?”, or ask the reviewer to repeat the prepared observation in the written answer field. Direct framing is intentional in this onboarding tour, but every claim must remain grounded in the highlighted trace evidence.
 
 Attach one primary highlight to each question. Use the selector of the most important prepared annotation and a short context description. Additional evidence remains visible through the ordinary annotations. This keeps the question anchored predictably in the current frontend.
 

@@ -11,6 +11,10 @@ frontend review, to one reusable evaluator result.
 
 ## Experience contract
 
+- Assume the user has not read the template agent and does not yet know how
+  Kitaru works. Explain each example from the evidence visible in the review,
+  translate internal names into plain language, and never require missing code
+  or product context to understand a question.
 - Lead with what the user is about to discover, not installation or evaluation
   terminology.
 - Teach only the concept needed for the current action. Explain deeper Kitaru
@@ -93,8 +97,9 @@ Then continue. Do not explain cohorts or evaluator versions yet.
 
 Follow `tour-method.md` to inspect every candidate trace and assemble the
 three-session tour. Before writing, show a compact preview containing each
-session's teaching point and the evidence that will be highlighted. Avoid an
-exhaustive investigation plan.
+session's teaching point and the evidence that will be highlighted. Write the
+preview for someone seeing both the agent and Kitaru for the first time. Avoid
+an exhaustive investigation plan.
 
 Ask once to:
 
