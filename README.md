@@ -1,11 +1,10 @@
 # Kitaru Agent Skills
 
-This repository contains agent skills for connecting agent frameworks and trace
-exports to [Kitaru](https://kitaru.ai), then turning recorded sessions into
-human-reviewed evidence. They support custom adapter and importer development,
-one-run review tours, specific-behavior debugging, recurring-problem discovery,
-durable annotations, versioned cohorts, evaluator selection, and bounded replay
-experiments.
+This repository contains agent skills for experiencing, connecting, and using
+[Kitaru](https://kitaru.ai). They support a value-first tour of the public
+returns-agent example, custom adapter and importer development, evidence-led
+investigations, durable annotations, versioned cohorts, evaluator selection,
+and bounded replay experiments.
 
 Kitaru records agent runs as evidence-rich sessions. Model and tool activity is
 recorded when the integration exposes it, and the skills make observability gaps
@@ -17,6 +16,7 @@ investigation without replacing human judgment.
 
 | Skill | Purpose |
 |---|---|
+| [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | Give a first-time user a prepared three-session frontend review of the public returns-agent template, collect human verdicts, and turn one accepted finding into a deterministic evaluator result. |
 | [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Act as Kitaru's front door: verify setup, record or import sessions, guide human review, define one accepted behavior and cohort, select an evaluator, and offer a bounded replay experiment. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
 | [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
@@ -30,6 +30,8 @@ product handoff rather than recreating the review UI in chat.
 
 ## Example prompts
 
+- "I do not have an agent yet. Show me why Kitaru is useful."
+- "Give me a guided tour of Kitaru with the public returns-agent example."
 - "Investigate why this Kitaru session gave a bad support answer."
 - "I am new to Kitaru. Help me review one run before we investigate more."
 - "Help me discover recurring failure modes in last week's agent sessions."
@@ -61,20 +63,19 @@ still resolve to Kitaru 0.21. Each skill verifies the installed version and
 public schema before it acts, and stops when the required contract is
 unavailable.
 
-When the Kitaru product provides a skill handoff from frontend onboarding, the
-investigation skill verifies its reachable checkout, agent, trace, and durable
-Kitaru context before continuing. The guided starter lives in
+When a first-time user wants to experience Kitaru before bringing an agent or
+learning the full method, `kitaru-guided-tour` uses the public template to
+prepare three evidence-anchored agent observations, open a frontend review for
+human verdicts, and turn one accepted finding into a deterministic evaluator
+result. The guided starter lives in
 [`zenml-io/kitaru-template`](https://github.com/zenml-io/kitaru-template); the
-skill recognizes renamed clones and forks from the stable root contents, then
-compares their README, agent, entrypoint, and evidence with the current public
-template before using the root README as the authority for exact setup commands. It
-resumes an existing `returns-resolver` agent, import job, or
-`returns-baseline` sessions before creating replacements. The guided route uses
-the checked-in Langfuse JSONL and never asks for live Langfuse credentials,
-trace regeneration, or a paid model call. If the included agent or trace input
-was customized, the skill switches to the generic investigation route. It asks
-a first-time user whether to learn the review flow on one run, debug a specific
-behavior, or explore several runs for recurring problems. If an
+tour recognizes renamed clones and forks from stable root contents, compares
+them with the current public template, resumes existing setup, and uses the
+checked-in Langfuse JSONL without live credentials, trace regeneration, or a
+paid model call. The coding agent prepares observations; the human supplies
+the whole-session verdicts. Customized templates and real user evidence route
+to `kitaru-investigation`, which supports one-run review, specific-behavior
+debugging, and bounded recurring-problem discovery. If an
 unsupported provider prevents sessions from entering Kitaru, the
 `kitaru-importer-builder` skill creates and validates the missing integration,
 then hands usable sessions back. If no supported framework integration can
@@ -107,10 +108,10 @@ recommended route for Codex, Cursor, Claude Code, and other compatible hosts:
 npx skills add zenml-io/kitaru-skills
 ```
 
-When the installer asks, select the host you actually use and include
-`kitaru-investigation`. Your agent can then select it from context, or you can
-ask for it by name: "Use `kitaru-investigation` to investigate why this Kitaru
-session gave a bad support answer." Exact invocation syntax varies by host.
+When the installer asks, select the host you actually use. Include
+`kitaru-guided-tour` for the public demo and `kitaru-investigation` for your own
+agents and traces. Your agent can select a skill from context, or you can ask
+for it by name. Exact invocation syntax varies by host.
 
 Configure Kitaru MCP separately according to your host and the official Kitaru
 MCP server guide. Restart the coding-agent process after adding MCP
@@ -128,7 +129,7 @@ as a plugin:
 ```
 
 You can then invoke
-`/kitaru-investigation`, `/kitaru-replay-experiment`,
+`/kitaru-guided-tour`, `/kitaru-investigation`, `/kitaru-replay-experiment`,
 `/kitaru-importer-builder`, or `/kitaru-adapter-builder` explicitly.
 
 ### Manual installation

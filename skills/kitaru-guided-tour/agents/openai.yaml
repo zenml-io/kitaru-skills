@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kitaru Guided Tour"
+  short_description: "Experience Kitaru through a guided review"
+  default_prompt: "Use $kitaru-guided-tour to show me why Kitaru is useful with the public returns-agent example."

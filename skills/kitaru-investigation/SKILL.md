@@ -1,13 +1,14 @@
 ---
 name: kitaru-investigation
-description: Guide users from agent code or recorded traces through Kitaru setup, session import or recording, human review, an accepted behavior, a versioned cohort, and evaluator selection, then hand one bounded change to the replay-experiment skill. Use when a user wants to get started with Kitaru, continue from frontend onboarding or the Kitaru starter repository, connect or inspect an existing agent, import traces, investigate a known bad or surprising session, discover recurring failure modes, learn the review flow, resume an investigation, create a cohort from reviewed evidence, or author an evaluator for an accepted behavior.
+description: Guide users from their own agent code or recorded traces through Kitaru setup, session import or recording, human review, an accepted behavior, a versioned cohort, and evaluator selection, then hand one bounded change to the replay-experiment skill. Use when a user wants to connect or inspect an existing agent, import real traces, investigate a known bad or surprising session, discover recurring failure modes, learn the evidence-led review flow, resume an investigation, create a cohort from reviewed evidence, or author an evaluator for an accepted behavior. When a first-time user has no agent or evidence and wants a fast demonstration with the public returns-agent template, use the `kitaru-guided-tour` skill instead.
 ---
 
 # Kitaru investigation
 
-Treat this skill as Kitaru's front door. Guide one continuous journey from the
-evidence the user has to a reviewed behavior and, when they want to test a
-change, the `kitaru-replay-experiment` skill.
+Treat this skill as Kitaru's evidence-led front door for real agents and traces.
+Guide one continuous journey from the evidence the user has to a reviewed
+behavior and, when they want to test a change, the
+`kitaru-replay-experiment` skill.
 
 ## Core contract
 
@@ -66,7 +67,9 @@ Installation, agent registration, recording, and trace import are setup for
 **Observe**, not extra stages the user must memorize. Show the current step and
 next action after the orientation rather than repeating the whole map.
 
-For a generic first-run or frontend-onboarding request, ask one user-facing
+When a first-time user has no agent or traces and wants to see why Kitaru is
+useful through the public template, continue with the `kitaru-guided-tour`
+skill. For a generic first run with the user's own evidence, ask one user-facing
 question before choosing the review size:
 
 > Do you want to learn the review flow on one run, debug a specific behavior,

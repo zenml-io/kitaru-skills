@@ -8,6 +8,11 @@ metadata. It is not a Python package.
 - `skills/kitaru-investigation/SKILL.md` is Kitaru's public front-door
   playbook, from setup and session evidence through reviewed behavior,
   evaluator selection, and replay handoff.
+- `skills/kitaru-guided-tour/SKILL.md` gives first-time users a value-first
+  public-template tour with prepared observations, frontend verdicts, and one
+  deterministic evaluator result.
+- `skills/kitaru-guided-tour/references/` contains the starter contract, tour
+  method, and the bounded operations needed for that experience.
 - `skills/kitaru-investigation/references/` contains method, transport, public
   starter, and evaluator details loaded only when needed.
 - `skills/kitaru-replay-experiment/SKILL.md` guides one safe, bounded candidate
@@ -67,6 +72,9 @@ host environment.
 - Distinguish shipped Kitaru operations, planned frontend behavior, and
   unresolved product contracts.
 - Preserve the human-review boundary. Agent suggestions are not human labels.
+- Keep the guided tour light: identify prepared observations once, let the
+  human supply verdicts in the frontend, and teach Kitaru concepts through the
+  resulting evaluator AHA rather than a methodology lecture.
 - Align first-time orientation with Kitaru's Observe, Judge, Define, Replay,
   and Compare method. Treat registration, recording, and import as setup for
   Observe rather than extra method stages.
