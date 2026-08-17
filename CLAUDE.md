@@ -5,6 +5,9 @@ Shared contributor guidance lives in [`AGENTS.md`](AGENTS.md). Follow it first.
 ## What this repository distributes
 
 The repository contains public Kitaru skills plus Claude Code plugin packaging.
+`kitaru-guided-tour` gives first-time users a value-first prepared review of
+the public returns-agent template and turns one accepted finding into a
+deterministic evaluator result.
 `kitaru-investigation` conducts evidence-grounded review of Kitaru agent
 sessions and can turn an accepted behavior into a versioned cohort and optional
 installed or custom evaluator. `kitaru-replay-experiment` safely compares one
@@ -19,6 +22,14 @@ when an agent framework has no suitable supported integration.
   plugin.json
   marketplace.json
 skills/
+  kitaru-guided-tour/
+    SKILL.md
+    agents/
+      openai.yaml
+    references/
+      kitaru-operations.md
+      starter-template.md
+      tour-method.md
   kitaru-importer-builder/
     SKILL.md
     references/
@@ -49,7 +60,7 @@ skills/
       experiment-method.md
 ```
 
-Claude Code exposes the skills as `/kitaru-investigation`,
+Claude Code exposes the skills as `/kitaru-guided-tour`, `/kitaru-investigation`,
 `/kitaru-replay-experiment`, `/kitaru-importer-builder`, and
 `/kitaru-adapter-builder`, and may also select them automatically from their
 frontmatter descriptions.
@@ -77,6 +88,9 @@ frontmatter descriptions.
 - Verify command and tool claims against the current Kitaru source or
   installed schema before editing them.
 - Preserve the distinction between human annotations and agent suggestions.
+- Keep `kitaru-guided-tour` value-first. Prepare concise observations, use the
+  frontend for human verdicts, and deliver the evaluator result before teaching
+  the deeper object model.
 - Treat the frontend review as the intended human interaction. If no returned
   or documented URL reaches it, preserve the investigation and report the
   broken product handoff; do not recreate review in chat automatically.
@@ -110,6 +124,7 @@ frontmatter descriptions.
 
 ```bash
 mkdir -p .claude/skills
+cp -R skills/kitaru-guided-tour .claude/skills/
 cp -R skills/kitaru-importer-builder .claude/skills/
 cp -R skills/kitaru-adapter-builder .claude/skills/
 cp -R skills/kitaru-investigation .claude/skills/
