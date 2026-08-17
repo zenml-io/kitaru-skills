@@ -57,6 +57,16 @@ Before evaluator selection or creation, explain that an evaluator is a repeatabl
 
 After the run, lead with the result in plain language. Only then connect the result back to the terms: the reviewed examples became the cohort, the reusable rule became the evaluator version, and Kitaru preserved both beside the evidence and human judgments.
 
+Send the user to the cohort and evaluator pages next. Explain what each page preserves and ask them to come back after they have looked. Do not continue into experiment setup until they return.
+
+### Test one bounded improvement
+
+After the user returns, explain the difference between measuring recorded behavior and testing a change. The experiment will start fresh agent tasks from the reviewed cases' stored top-level inputs, apply one small candidate override, and compare the resulting sessions with the recorded evidence using the exact evaluator the user just inspected. It does not restore conversation checkpoints, process memory, files, or the original external world.
+
+Before experiment creation, explain the proposed change, explicit tool policy, expected model work, cost uncertainty, and what the comparison can establish. Let the replay-experiment skill show the complete run card and obtain approval. Do not make paid execution feel like an automatic consequence of completing the review.
+
+After settlement, lead with the experiment page. Explain how to select the run, where the baseline and candidate evidence appear, and what improved, regressed, stayed unchanged, failed, or remained missing. Ask the user to inspect it and return before the tour closes.
+
 ## Keep explanations honest
 
 - Explain what the current action actually proves. Registration identifies code; it does not validate behavior. Import preserves recorded evidence; it does not make the evidence representative.

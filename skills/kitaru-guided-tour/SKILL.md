@@ -1,13 +1,13 @@
 ---
 name: kitaru-guided-tour
-description: Give first-time users a short, value-first Kitaru tour with the public returns-agent template. Use when someone has no agent or traces of their own, arrives from Kitaru onboarding, asks for a demo, tutorial, quickstart, or guided example, wants the coding agent to prepare trace annotations before they judge sessions, or wants to experience Kitaru's value before learning the full investigation method. Prepare a three-session frontend review, let the human provide verdicts, then turn one accepted finding into a deterministic evaluator result. Route real agents, open-ended discovery, and production evidence to kitaru-investigation instead.
+description: Give first-time users a short, value-first Kitaru tour with the public returns-agent template. Use when someone has no agent or traces of their own, arrives from Kitaru onboarding, asks for a demo, tutorial, quickstart, or guided example, wants the coding agent to prepare trace annotations before they judge sessions, or wants to experience Kitaru's value before learning the full investigation method. Prepare a three-session frontend review, let the human provide verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. Route real agents, open-ended discovery, and production evidence to kitaru-investigation instead.
 ---
 
 # Kitaru guided tour
 
 Deliver an AHA before teaching the complete method. Use the public Kitaru
 returns-agent template to move from recorded traces, through a short prepared
-frontend review, to one reusable evaluator result.
+frontend review and reusable evaluator, to one bounded experiment result.
 
 ## Experience contract
 
@@ -26,21 +26,23 @@ frontend review, to one reusable evaluator result.
 - Prepare useful observations and exact evidence anchors for the reviewer. Tell
   them once that these are agent-prepared notes and their verdict is the human
   judgment.
-- Use the Kitaru frontend for review. Give the direct review link, open it when
-  the host provides an ordinary open-URL action and the user asks, then pause.
-  Lead with a direct frontend link whenever a later created object or result has
-  one; never make the user hunt for what the tour just produced.
+- Use the Kitaru frontend at three deliberate checkpoints: the guided review,
+  the reusable cohort and evaluator result, and the completed experiment run.
+  Give direct links, explain what the user is looking at, then pause until they
+  return. Do not interrupt the tour with frontend visits for routine objects.
 - Keep the first tour to three sessions: one consequential problem, one subtle
   evidence-reading lesson, and one acceptable counterexample.
 - Reach the evaluator AHA without regenerating traces or making a paid model
-  call. Ask separately before any later replay that requires a model provider.
+  call. Continue into one bounded replay as the final chapter, but show the
+  complete run card and ask before creating the experiment or starting paid or
+  live execution.
 - Preserve the user's healthy selected Kitaru server, whether local or cloud.
   Do not switch servers merely because the public template documents a local
   quickstart.
 - Resume durable agents, imports, sessions, exact-match annotations, cohorts,
-  and evaluator versions before creating replacements. Resume an investigation
-  and its verdicts only when this conversation holds its exact ID or the user
-  explicitly identifies it as their review.
+  evaluator versions, experiments, and runs before creating replacements.
+  Resume an investigation and its verdicts only when this conversation holds
+  its exact ID or the user explicitly identifies it as their review.
 - Prefer one combined approval for the clearly previewed tutorial writes. Do
   not turn the tour into a sequence of permission prompts.
 
@@ -48,7 +50,7 @@ frontend review, to one reusable evaluator result.
 
 - Read [references/tutorial-narration.md](references/tutorial-narration.md)
   before the first user-facing explanation and use its teaching rhythm
-  throughout setup, review, and the evaluator AHA.
+  throughout setup, review, the evaluator AHA, and the experiment result.
 - Read [references/starter-template.md](references/starter-template.md) before
   setup or when deciding whether the checkout is the canonical public template.
 - Read [references/tour-method.md](references/tour-method.md) before selecting
@@ -135,7 +137,7 @@ Lead with the direct review action. Use this conversational shape:
 
 Pause. Do not duplicate the review in chat while the frontend route works.
 
-## Deliver the AHA
+## Deliver the reusable-check AHA
 
 When the user returns:
 
@@ -154,9 +156,13 @@ When the user returns:
    immutable version, and run it across the complete prepared baseline
    population.
 6. Report the useful result first: how many sessions matched, which reviewed
-   examples explain the result, and one important limitation. Include direct
-   links to the cohort, evaluator, and evaluation results whenever Kitaru
-   returns them.
+   examples explain the result, and one important limitation. Resolve the
+   cohort and evaluator links through `kitaru-operations.md`.
+
+Then give the reusable-check frontend checkpoint defined in
+`kitaru-operations.md`. Explain that the cohort freezes the examples the user
+judged and the evaluator page records the exact reusable rule. Pause and wait
+for the user to return before preparing the experiment.
 
 If the verdicts do not support a problem, or the user rejects the proposed
 behavior, do not force an evaluator into the story. Show the useful negative
@@ -177,17 +183,36 @@ Use ordinary language before object names. For example:
 Only then explain that the frozen examples are a cohort and the reusable check
 is an evaluator version.
 
-## Continue from value
+## Finish with one experiment
 
-Offer two next steps:
+After the user returns from the reusable-check checkpoint:
 
-- **Use my own agent:** continue with `kitaru-investigation`, carrying the tour's
-  method explanation but none of its synthetic conclusions.
-- **Test an improvement:** continue with `kitaru-replay-experiment`, carrying
-  the exact accepted behavior, cohort version, evaluator version, candidate
-  idea, and an explicit tool policy. Explain model work and cost before replay.
+1. Explain that the recorded sessions showed what happened before; an
+   experiment starts fresh tasks from the same stored top-level inputs to test
+   one changed condition.
+2. Propose one small candidate change grounded in the accepted behavior. Do not
+   start an automatic prompt search or introduce an unrelated model change.
+3. Continue with `kitaru-replay-experiment`, carrying the exact accepted
+   behavior, cohort version, evaluator version and parameters, candidate agent
+   version, proposed override, and an explicit non-live tool policy when the
+   adapter supports one.
+4. Let that skill verify adapter support and show its complete run card. Explain
+   model work, cost uncertainty, missing restored state, and possible tool
+   effects. Obtain its required approval before experiment creation or run
+   start.
+5. After the run settles, lead with the experiment frontend checkpoint from
+   `kitaru-operations.md`. Explain which recorded cases were replayed, what
+   changed, how the candidate compared, and what the result cannot establish.
+   Pause until the user returns, then answer their questions and leave the exact
+   experiment and run IDs in the final checkpoint.
 
-Stopping after the evaluator result is a complete successful tour.
+The normal successful tour ends after the user has inspected this experiment
+result. If they decline the run or execution is blocked, preserve the complete
+run card and reusable-check links without claiming that the experiment chapter
+completed.
+
+Afterward, offer **Use my own agent** through `kitaru-investigation`, carrying
+the tour's method explanation but none of its synthetic conclusions.
 
 ## Preserve a pleasant failure path
 
@@ -208,3 +233,6 @@ Stopping after the evaluator result is a complete successful tour.
 - If the user disagrees with an agent observation, treat that correction as part
   of the lesson. Do not defend the prepared note or silently convert it into a
   human conclusion.
+- If adapter support, model credentials, a worker, or a safe tool policy blocks
+  the experiment, preserve the run card and explain the missing condition. Do
+  not fall back to live passthrough or call the tour complete.

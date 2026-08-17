@@ -41,6 +41,7 @@ Transport and server selection are separate. CLI and MCP may both address the sa
 | Create cohort/version | `kitaru cohort create`; `kitaru cohort version create` | `kitaru_cohorts_manage` |
 | Check and register evaluators | `kitaru evaluator list`; `scaffold`; `test`; `register` | Registry reads; writes require the appropriate evaluator tool and existing script blob |
 | Evaluate baseline sessions | `kitaru session evaluate ... --wait` | `kitaru_workflow_start`, evaluation |
+| Create and run experiment | `kitaru experiment create`; `kitaru experiment run start ... --wait` | `kitaru_experiments_manage`; `kitaru_workflow_start`, experiment run |
 
 Inspect exact argument names before constructing commands. Prefer exact IDs and versions over display names.
 
@@ -49,6 +50,14 @@ If both `kitaru status` and `kitaru doctor` fail before returning a structured s
 ## Keep prepared notes separate from verdicts
 
 Create tour observations as ordinary annotations using a session ID, optional selector, and string value. They remain visible on the session independently of the investigation.
+
+The CLI parses `--value` as JSON. For a string annotation, preserve the JSON double quotes inside the shell argument:
+
+```text
+kitaru annotation create --session SESSION --value '"Agent observation: The refund exceeded the approval limit."'
+```
+
+Do not pass `--value 'Agent observation: ...'`; shell quotes group that text but do not make it a JSON string. Use a JSON encoder rather than hand-escaping text that contains quotes, backslashes, or line breaks.
 
 Do not create an investigation-answer annotation for the reviewer. An investigation answer carries an investigation-session ID and question key, starts a pending investigation, and appears as the answer to that question. The guided tour leaves that optional field to the human and relies on the separately stored whole-session verdict.
 
@@ -85,4 +94,26 @@ Before cohort creation, show the exact proposed membership once and obtain confi
 
 Evaluation jobs require a live worker. Wait through the supported mechanism once, inspect the terminal job and every resulting evaluation, and keep missing or failed evaluations out of the quality numerator while retaining them in the population accounting.
 
-Whenever a create or evaluation response includes a product-owned frontend link, return that link beside the result. Do not invent a compatibility URL for cohorts, evaluators, or evaluations unless the installed product documentation defines one.
+## Pause at three frontend checkpoints
+
+Use the frontend three times during the normal tour. Pause after each checkpoint and wait for the user to return:
+
+1. **Guided review:** use the investigation review route above so the user can inspect evidence and record verdicts.
+2. **Reusable check:** after cohort creation and baseline evaluation, show the cohort and evaluator pages so the user can see the frozen examples, exact rule, and stored results.
+3. **Experiment result:** after the bounded experiment settles, show its selected run so the user can inspect the candidate sessions and comparison.
+
+Use a product-owned link unchanged when a structured response supplies one. Otherwise, the current managed and self-hosted frontends support these compatibility routes from the verified `dashboard_url`:
+
+```text
+DASHBOARD_URL/agents/AGENT_ID/cohorts/COHORT_ID/sessions
+DASHBOARD_URL/evaluators/EVALUATOR_ID
+DASHBOARD_URL/experiments/EXPERIMENT_ID?run=RUN_NUMBER
+```
+
+Strip one trailing slash from `dashboard_url`. Use the parent cohort ID, not the cohort-version ID, and the parent evaluator ID, not the evaluator-version ID. Omit the experiment query only when no run number is available. Do not construct a separate evaluation URL; the cohort and experiment pages present the relevant results in context.
+
+At each checkpoint, lead with one or two direct links, explain in two or three sentences what now exists and what to inspect, and say exactly how to continue, such as “Come back here after you have looked.” Do not add frontend pauses for registration, import, individual annotations, jobs, or other routine objects.
+
+## Run the final experiment safely
+
+Use `kitaru-replay-experiment` for the final candidate comparison. Carry the accepted behavior, exact cohort and evaluator versions, one small candidate change, and the requirement to return to the experiment frontend checkpoint after settlement. The replay skill owns adapter checks, the explicit tool policy, the complete run card, approval for remote writes and model work, execution, and interpretation. Do not create or start the experiment before that approval.
