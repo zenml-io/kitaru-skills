@@ -126,9 +126,11 @@ Classify every tool the adapter can observe:
 
 For history matching, verify logical tool identity, adapter and framework
 version, input schema, canonical validated arguments, occurrence or sequence
-identity, and result completeness. If the public lookup returns only
-`found/result`, it cannot prove cardinality. Preflight a complete baseline and
-reject duplicate keys, or disable history replay.
+identity, and result completeness. With baseline scope, the public lookup
+accepts a zero-based `occurrence` that provides occurrence identity when the
+adapter counts per cache key and advances only on a hit. Without `occurrence`,
+a `found/result` lookup cannot prove cardinality. Preflight a complete baseline
+and reject duplicate keys, or disable history replay.
 
 Report hits, misses, ambiguity, blocked calls, live passthrough, simulated
 results, and divergence separately. Hit rate is coverage, not fidelity.

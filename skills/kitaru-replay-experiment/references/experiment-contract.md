@@ -49,7 +49,7 @@ A tool policy has a required `default` configuration and optional per-tool overr
 
 History and static misses support `fail`, `error_result`, or `passthrough`. Omitted experiment tool policy currently resolves to passthrough. Require an explicit policy for a tool-using run.
 
-History lookup matches tool name plus canonical JSON arguments and returns the latest matching node in scope. It does not prove that a stateful or time-sensitive result is faithful. Broader scopes can borrow data from another case.
+History lookup matches tool name plus canonical JSON arguments. Baseline scope consumes repeated identical calls in recorded order via a zero-based `occurrence`, wider scopes return the latest matching node in scope and reject `occurrence`. It does not prove that a stateful or time-sensitive result is faithful. Broader scopes can borrow data from another case.
 
 ## Adapter capability boundary
 

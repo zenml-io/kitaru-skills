@@ -241,12 +241,17 @@ For tool policies:
 - report provider-native and hidden tools as unsupported unless a public
   pre-execution hook controls them.
 
-The current public history lookup request carries a tool name and cache key, and
-its response exposes only `found` and `result`. That does not reveal match
-cardinality. Claim history replay only when the installed API exposes enough
-information to reject ambiguity or the adapter can preflight the complete
-baseline and prove every required key unique and paired with a result. Otherwise
-disable history replay rather than accepting an arbitrary match.
+The current public history lookup request carries a tool name, a cache key, and
+an optional zero-based `occurrence`, and its response exposes only `found` and
+`result`. With baseline scope, count lookups per cache key, send the count as
+`occurrence`, and advance it only on a hit, so repeated identical calls consume
+recorded results in baseline order and a call past the last recorded match
+misses under the declared miss policy. Non-baseline scopes reject `occurrence`
+and answer with the newest match. When the installed release lacks `occurrence`
+or the scope is not baseline, claim history replay only when the adapter can
+preflight the complete baseline and prove every required key unique and paired
+with a result. Otherwise disable history replay rather than accepting an
+arbitrary match.
 
 Run the baseline-admissibility check from
 [validation and reporting](validation-and-reporting.md) before any effectful
