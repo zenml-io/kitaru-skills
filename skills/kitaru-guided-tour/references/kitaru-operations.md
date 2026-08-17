@@ -17,11 +17,20 @@ After the template checkout is verified, inspect the project prerequisites, the 
 - When the user asks to install MCP, or the CLI cannot complete the next operation, follow the official host-specific Kitaru MCP setup. Explain and ask before installing packages or changing host configuration. Preserve the current checkpoint because the coding-agent host may need a restart before it discovers the new server.
 - Do not install or reconfigure MCP solely to replace a working CLI during the short tour. Offer MCP setup after the AHA when it would improve the user's ongoing Kitaru workflow.
 
+## Preserve the selected server
+
+Transport and server selection are separate. CLI and MCP may both address the same selected local or cloud Kitaru server.
+
+1. Read the current server selection and connectivity before following any workspace command from the template README.
+2. When the selected server is healthy, keep using it for registration, import, review, cohorts, and evaluation. Do not ask the user to choose again and do not run `login --local`.
+3. If the selected server is reachable but lacks permission or a required capability, report that exact blocker. Do not silently switch servers.
+4. Only when no usable server is selected, offer the README's isolated local workspace as the tutorial fallback. Explain the state change and ask before starting or selecting it.
+
 ## Operation map
 
 | Need | Structured CLI | Native MCP |
 |---|---|---|
-| Check selected workspace and worker | `kitaru status`; diagnose with `kitaru doctor` | Use available bounded registry and activity reads |
+| Check selected server and worker | `kitaru status`; diagnose with `kitaru doctor` | Use available bounded registry and activity reads |
 | Resolve agent/version | `kitaru agent get`; `kitaru agent version get` | `kitaru_registry_read` |
 | Read sessions and complete nodes | `kitaru session list`; `kitaru session get`; `kitaru session nodes --include-payloads` | `kitaru_activity_read` session and children |
 | Run descriptive evaluators | `kitaru session evaluate ... --wait`; inspect with `kitaru evaluation list` | `kitaru_workflow_start` and bounded activity reads |
@@ -35,7 +44,7 @@ After the template checkout is verified, inspect the project prerequisites, the 
 
 Inspect exact argument names before constructing commands. Prefer exact IDs and versions over display names.
 
-If both `kitaru status` and `kitaru doctor` fail before returning a structured selected-workspace result, do not inspect credential files or guess at server state. Verify the installed CLI version, explain that Kitaru's current local state is unreadable, and return to the canonical template README's current local-workspace selection command as the recovery path. Treat that command as a state-changing setup action covered by the tour's combined approval. Re-run `status` afterward before registration or import.
+If both `kitaru status` and `kitaru doctor` fail before returning a structured selected-server result, do not inspect credential files or guess at server state. First use a discovered working MCP connection when it identifies a reachable server. Otherwise verify the installed CLI version and explain that no usable server selection can be read. Offer the canonical template README's local-workspace command as a fallback, not as an automatic recovery, and ask before running it. Re-run `status` afterward before registration or import.
 
 ## Keep prepared notes separate from verdicts
 
@@ -50,6 +59,8 @@ Before retrying annotation creation, list existing manual annotations for the se
 ## Create and open the review
 
 Every investigation session needs one non-empty question list. Supply one question with one primary highlight for each selected session. Use the question's highlight selector to place the prompt beside its key evidence.
+
+Before creating the investigation, inspect the installed name constraint. Under the current schema, use a machine name containing only letters, digits, hyphens, or underscores and starting and ending with a letter or digit, such as `guided-returns-tour`. Add a short letter-or-digit suffix if a distinct investigation is required. Put the readable tour title in the description instead of passing a spaced title as the name. This validation belongs before the write so the tour does not need a failed create attempt to discover the constraint.
 
 Resolve the review URL in this order:
 

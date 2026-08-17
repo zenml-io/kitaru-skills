@@ -11,6 +11,14 @@ frontend review, to one reusable evaluator result.
 
 ## Experience contract
 
+- Assume the user has not read the template agent and does not yet know how
+  Kitaru works. Explain each example from the evidence visible in the review,
+  translate internal names into plain language, and never require missing code
+  or product context to understand a question.
+- Act as a friendly guide, not an invisible automation runner. At each meaningful
+  transition, explain what the tour is doing, why that step matters, what Kitaru
+  concept it demonstrates, and what the user will be able to see or do next.
+  Keep routine commands in the background.
 - Lead with what the user is about to discover, not installation or evaluation
   terminology.
 - Teach only the concept needed for the current action. Explain deeper Kitaru
@@ -26,6 +34,9 @@ frontend review, to one reusable evaluator result.
   evidence-reading lesson, and one acceptable counterexample.
 - Reach the evaluator AHA without regenerating traces or making a paid model
   call. Ask separately before any later replay that requires a model provider.
+- Preserve the user's healthy selected Kitaru server, whether local or cloud.
+  Do not switch servers merely because the public template documents a local
+  quickstart.
 - Resume durable agents, imports, sessions, exact-match annotations, cohorts,
   and evaluator versions before creating replacements. Resume an investigation
   and its verdicts only when this conversation holds its exact ID or the user
@@ -35,6 +46,9 @@ frontend review, to one reusable evaluator result.
 
 ## Load the tour references
 
+- Read [references/tutorial-narration.md](references/tutorial-narration.md)
+  before the first user-facing explanation and use its teaching rhythm
+  throughout setup, review, and the evaluator AHA.
 - Read [references/starter-template.md](references/starter-template.md) before
   setup or when deciding whether the checkout is the canonical public template.
 - Read [references/tour-method.md](references/tour-method.md) before selecting
@@ -57,9 +71,11 @@ Begin read-only.
    ask before installing the frozen project environment or changing host MCP
    configuration. Treat MCP as preferred but optional when the CLI can complete
    the tour.
-3. Inspect Kitaru connectivity, the exact registered `returns-resolver` agent
-   version, relevant import jobs, and the complete imported population carrying
-   the `returns-baseline` tag.
+3. Inspect Kitaru connectivity and keep using the healthy selected server. Only
+   offer the template's isolated local server when no usable server is selected,
+   and ask before starting or selecting it. Then inspect the exact registered
+   `returns-resolver` agent version, relevant import jobs, and the complete
+   imported population carrying the `returns-baseline` tag.
 4. Resume matching durable state. Perform only missing setup steps from the
    verified template README, with one clear explanation and approval before
    environment changes, service starts, registration, or import.
@@ -87,9 +103,10 @@ Then continue. Do not explain cohorts or evaluator versions yet.
 ## Prepare one guided review
 
 Follow `tour-method.md` to inspect every candidate trace and assemble the
-three-session tour. Before writing, show a compact preview containing each
-session's teaching point and the evidence that will be highlighted. Avoid an
-exhaustive investigation plan.
+three-session tour. Before writing, show a compact preview of what happened in
+each session, why it matters, and the evidence that will be highlighted. Write
+the preview for someone seeing both the agent and Kitaru for the first time.
+Avoid an exhaustive investigation plan.
 
 Ask once to:
 

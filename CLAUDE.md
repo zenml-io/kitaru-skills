@@ -29,6 +29,7 @@ skills/
     references/
       kitaru-operations.md
       starter-template.md
+      tutorial-narration.md
       tour-method.md
   kitaru-importer-builder/
     SKILL.md
@@ -91,6 +92,10 @@ frontmatter descriptions.
 - Keep `kitaru-guided-tour` value-first. Prepare concise observations, use the
   frontend for human verdicts, and deliver the evaluator result before teaching
   the deeper object model.
+- Narrate the guided tour as a friendly introduction for someone who has read
+  neither the sample agent nor Kitaru documentation. Explain what each
+  meaningful stage does, why it matters, and what it enables next without
+  narrating routine commands.
 - Treat the frontend review as the intended human interaction. If no returned
   or documented URL reaches it, preserve the investigation and report the
   broken product handoff; do not recreate review in chat automatically.

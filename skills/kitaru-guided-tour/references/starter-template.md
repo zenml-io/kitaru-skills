@@ -26,7 +26,7 @@ Read the root `README.md`. Verify through a trusted read-only comparison with th
 - the `returns-baseline` import tag; and
 - synthetic customers, orders, and action tools that use only an in-memory store.
 
-After verification, treat the current root README as the authority for exact clone, frozen environment, local workspace, registration, worker, import, and verification commands. Do not copy those commands into this skill or pin a template commit.
+After verification, treat the current root README as the authority for exact clone, frozen environment, registration, worker, import, verification, and the optional local-workspace fallback. A healthy selected local or cloud server takes precedence over that fallback. Do not run the README's local login merely because this is the template route. Do not copy those commands into this skill or pin a template commit.
 
 If trusted comparison is unavailable or the agent, entrypoint, or trace input was materially customized, leave the guided route. Continue with `kitaru-investigation` using the actual code and evidence.
 
