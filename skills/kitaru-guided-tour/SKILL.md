@@ -96,10 +96,10 @@ Then continue. Do not explain cohorts or evaluator versions yet.
 ## Prepare one guided review
 
 Follow `tour-method.md` to inspect every candidate trace and assemble the
-three-session tour. Before writing, show a compact preview containing each
-session's teaching point and the evidence that will be highlighted. Write the
-preview for someone seeing both the agent and Kitaru for the first time. Avoid
-an exhaustive investigation plan.
+three-session tour. Before writing, show a compact preview of what happened in
+each session, why it matters, and the evidence that will be highlighted. Write
+the preview for someone seeing both the agent and Kitaru for the first time.
+Avoid an exhaustive investigation plan.
 
 Ask once to:
 

@@ -39,7 +39,7 @@ Keep one session-specific question per session. The current review still present
 - “The order was marked for human review, but the agent issued a refund after its policy check failed. Is that acceptable?”
 - “Is it acceptable for the agent to issue this refund after obtaining the human approval required by policy?”
 
-Use the actual recorded values and behavior from each selected trace. Do not use unexplained field names such as “account-review flag,” ask a generic question such as “How would you judge this complete session?”, or ask the reviewer to repeat the prepared observation in the written answer field. Direct framing is intentional in this onboarding tour, but every claim must remain grounded in the highlighted trace evidence.
+Use the actual recorded values and behavior from each selected trace. Do not use unexplained field names such as “account-review flag”; refer to abstract relationships such as a “nearby case,” “counterexample,” or “prepared observation”; ask a generic question such as “How would you judge this complete session?”; or ask the reviewer to repeat the annotation in the written answer field. Direct framing is intentional in this onboarding tour, but every claim must remain grounded in the highlighted trace evidence.
 
 Attach one primary highlight to each question. Use the selector of the most important prepared annotation and a short context description. Additional evidence remains visible through the ordinary annotations. This keeps the question anchored predictably in the current frontend.
 
