@@ -38,7 +38,7 @@ Keep one session-specific question per session. The current review still present
 
 Attach one primary highlight to each question. Use the selector of the most important prepared annotation and a short context description. Additional evidence remains visible through the ordinary annotations. This keeps the question anchored predictably in the current frontend.
 
-Order the sessions problem, subtle lesson, counterexample. Name the investigation so a resumed run can recognize it as the guided returns tour. In its description, state that a coding agent prepared observations and the reviewer supplies whole-session verdicts.
+Order the sessions problem, subtle lesson, counterexample. Give the investigation a valid machine name such as `guided-returns-tour`, adding a short letter-or-digit suffix when a distinct investigation is required. Do not put spaces or a display title in the name. Put the readable title and the fact that a coding agent prepared observations while the reviewer supplies whole-session verdicts in the description. Preserve the exact investigation ID for resumption.
 
 ## Preview without ceremony
 

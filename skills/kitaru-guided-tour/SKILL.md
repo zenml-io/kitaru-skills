@@ -26,6 +26,9 @@ frontend review, to one reusable evaluator result.
   evidence-reading lesson, and one acceptable counterexample.
 - Reach the evaluator AHA without regenerating traces or making a paid model
   call. Ask separately before any later replay that requires a model provider.
+- Preserve the user's healthy selected Kitaru server, whether local or cloud.
+  Do not switch servers merely because the public template documents a local
+  quickstart.
 - Resume durable agents, imports, sessions, exact-match annotations, cohorts,
   and evaluator versions before creating replacements. Resume an investigation
   and its verdicts only when this conversation holds its exact ID or the user
@@ -57,9 +60,11 @@ Begin read-only.
    ask before installing the frozen project environment or changing host MCP
    configuration. Treat MCP as preferred but optional when the CLI can complete
    the tour.
-3. Inspect Kitaru connectivity, the exact registered `returns-resolver` agent
-   version, relevant import jobs, and the complete imported population carrying
-   the `returns-baseline` tag.
+3. Inspect Kitaru connectivity and keep using the healthy selected server. Only
+   offer the template's isolated local server when no usable server is selected,
+   and ask before starting or selecting it. Then inspect the exact registered
+   `returns-resolver` agent version, relevant import jobs, and the complete
+   imported population carrying the `returns-baseline` tag.
 4. Resume matching durable state. Perform only missing setup steps from the
    verified template README, with one clear explanation and approval before
    environment changes, service starts, registration, or import.
