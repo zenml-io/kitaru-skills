@@ -12,7 +12,8 @@ metadata. It is not a Python package.
   public-template tour with prepared observations, frontend verdicts, and one
   deterministic evaluator result.
 - `skills/kitaru-guided-tour/references/` contains the starter contract, tour
-  method, and the bounded operations needed for that experience.
+  method, friendly tutorial narration, and the bounded operations needed for
+  that experience.
 - `skills/kitaru-investigation/references/` contains method, transport, public
   starter, and evaluator details loaded only when needed.
 - `skills/kitaru-replay-experiment/SKILL.md` guides one safe, bounded candidate

@@ -15,6 +15,10 @@ frontend review, to one reusable evaluator result.
   Kitaru works. Explain each example from the evidence visible in the review,
   translate internal names into plain language, and never require missing code
   or product context to understand a question.
+- Act as a friendly guide, not an invisible automation runner. At each meaningful
+  transition, explain what the tour is doing, why that step matters, what Kitaru
+  concept it demonstrates, and what the user will be able to see or do next.
+  Keep routine commands in the background.
 - Lead with what the user is about to discover, not installation or evaluation
   terminology.
 - Teach only the concept needed for the current action. Explain deeper Kitaru
@@ -42,6 +46,9 @@ frontend review, to one reusable evaluator result.
 
 ## Load the tour references
 
+- Read [references/tutorial-narration.md](references/tutorial-narration.md)
+  before the first user-facing explanation and use its teaching rhythm
+  throughout setup, review, and the evaluator AHA.
 - Read [references/starter-template.md](references/starter-template.md) before
   setup or when deciding whether the checkout is the canonical public template.
 - Read [references/tour-method.md](references/tour-method.md) before selecting
