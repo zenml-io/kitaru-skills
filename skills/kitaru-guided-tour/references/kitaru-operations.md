@@ -8,6 +8,15 @@ Prefer native Kitaru MCP for bounded reads and writes it exposes in `standard` o
 
 For agent-facing CLI calls, use `--output json --machine --non-interactive --no-browser` when the installed command exposes those flags. Preserve structured results and exact IDs. Do not use direct REST calls to bypass a missing CLI or MCP operation.
 
+## Prepare CLI and MCP
+
+After the template checkout is verified, inspect the project prerequisites, the active environment, and discovered native Kitaru MCP tools.
+
+- Follow the verified template README's frozen environment command when the project environment is missing. Explain that this installs the project-local Kitaru CLI and ask before changing the environment. Use the README's `uv run kitaru ...` form afterward.
+- Treat MCP as preferred, not required. If suitable MCP tools are already configured, use them for bounded operations. If they are absent, say once that the guided tour can continue through the project-local CLI and proceed.
+- When the user asks to install MCP, or the CLI cannot complete the next operation, follow the official host-specific Kitaru MCP setup. Explain and ask before installing packages or changing host configuration. Preserve the current checkpoint because the coding-agent host may need a restart before it discovers the new server.
+- Do not install or reconfigure MCP solely to replace a working CLI during the short tour. Offer MCP setup after the AHA when it would improve the user's ongoing Kitaru workflow.
+
 ## Operation map
 
 | Need | Structured CLI | Native MCP |

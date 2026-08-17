@@ -49,17 +49,21 @@ Begin read-only.
 1. Look for a candidate template checkout. If none exists, inspect the current
    canonical template README through the trusted source, choose a new
    `kitaru-template` destination in the current workspace, tell the user where
-   it will be created, clone the repository for them, then verify it. Pause only
-   when the destination is not writable or would overwrite unrelated files.
+   it will be created, and ask before cloning the repository. After approval,
+   clone and verify it. Never overwrite an existing destination.
    Use this route only when the resulting project root matches the public
    template contract in `starter-template.md`.
-2. Inspect Kitaru connectivity, the exact registered `returns-resolver` agent
+2. Establish CLI and MCP readiness through `kitaru-operations.md`. Explain and
+   ask before installing the frozen project environment or changing host MCP
+   configuration. Treat MCP as preferred but optional when the CLI can complete
+   the tour.
+3. Inspect Kitaru connectivity, the exact registered `returns-resolver` agent
    version, relevant import jobs, and the complete imported population carrying
    the `returns-baseline` tag.
-3. Resume matching durable state. Perform only missing setup steps from the
+4. Resume matching durable state. Perform only missing setup steps from the
    verified template README, with one clear explanation and approval before
    environment changes, service starts, registration, or import.
-4. Stop and route to `kitaru-investigation` when the template was materially
+5. Stop and route to `kitaru-investigation` when the template was materially
    customized, the user supplies their own agent or evidence, or the requested
    conclusion needs a defensible open-ended investigation.
 
