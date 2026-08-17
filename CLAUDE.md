@@ -7,7 +7,7 @@ Shared contributor guidance lives in [`AGENTS.md`](AGENTS.md). Follow it first.
 The repository contains public Kitaru skills plus Claude Code plugin packaging.
 `kitaru-guided-tour` gives first-time users a value-first prepared review of
 the public returns-agent template and turns one accepted finding into a
-deterministic evaluator result.
+deterministic evaluator followed by one approved bounded replay experiment.
 `kitaru-investigation` conducts evidence-grounded review of Kitaru agent
 sessions and can turn an accepted behavior into a versioned cohort and optional
 installed or custom evaluator. `kitaru-replay-experiment` safely compares one
@@ -90,8 +90,9 @@ frontmatter descriptions.
   installed schema before editing them.
 - Preserve the distinction between human annotations and agent suggestions.
 - Keep `kitaru-guided-tour` value-first. Prepare concise observations, use the
-  frontend for human verdicts, and deliver the evaluator result before teaching
-  the deeper object model.
+  frontend for human verdicts, and pause at the guided review, reusable-check
+  result, and experiment result. Require the replay skill's complete run card
+  and approval before creating or running the final experiment.
 - Narrate the guided tour as a friendly introduction for someone who has read
   neither the sample agent nor Kitaru documentation. Explain what each
   meaningful stage does, why it matters, and what it enables next without

@@ -66,7 +66,7 @@ After the user selects Done, re-read the investigation and distinguish:
 - whole-session verdicts; and
 - investigation status.
 
-The complete tour succeeds when the user has judged the three sessions. Written answers are optional. If one verdict is missing, explain which teaching stop remains and offer the same frontend link. If the user wants to stop, lead with what the persisted verdicts already establish and keep any unreviewed prepared observation clearly separate from human judgment.
+The guided review block succeeds when the user has judged the three sessions. Written answers are optional. If one verdict is missing, explain which teaching stop remains and offer the same frontend link. If the user wants to stop, lead with what the persisted verdicts already establish and keep any unreviewed prepared observation clearly separate from human judgment.
 
 Lead with the user's choices and the evidence beside them. A verdict does not automatically endorse every prepared annotation. Propose a repeatable behavior only after the user has judged every session that would enter its cohort, including at least one problematic target and one acceptable counterexample.
 
@@ -82,7 +82,7 @@ After the user accepts the behavior and every proposed cohort member has a human
 
 If no human-confirmed problematic example remains, or the user rejects the proposed behavior, stop before cohort and evaluator creation. Treat that correction as a useful result and offer one more bounded prepared review only if the user wants it.
 
-## Land the AHA
+## Land the reusable-check AHA
 
 Use this order:
 
@@ -92,9 +92,26 @@ Use this order:
 4. Name one limitation, such as the synthetic population or missing external outcome evidence.
 5. Explain “cohort” and “evaluator version” only after the result is clear.
 
-Lead with direct frontend links for every created object or result whose
-structured response supplies one. The user should not have to search the UI for
-the investigation, cohort, evaluator, or evaluation run that the tour just
-described.
+Lead with the frontend links resolved through `kitaru-operations.md`. The user
+should not have to search the UI for the investigation, cohort, evaluator, or
+experiment run that the tour just described.
 
-Do not continue automatically into paid replay. Offer it as the next chapter.
+Use the documented compatibility routes when structured cohort or evaluator
+responses do not include links. Ask the user to inspect the frozen examples and
+reusable rule, then pause until they return.
+
+## Finish with one bounded experiment
+
+Continue into the final experiment chapter after the reusable-check checkpoint.
+Choose one small candidate change that directly addresses the accepted behavior
+without including the expected answers. Hand the exact behavior, cohort version,
+evaluator version and parameters, candidate agent version, proposed override,
+and safe explicit tool policy to `kitaru-replay-experiment`.
+
+The replay skill must verify adapter support and show its complete run card
+before asking for approval. Do not create the experiment or start paid or live
+execution before that approval. After settlement, open or present the documented
+experiment run route, explain the comparison in ordinary language, and pause
+until the user returns. The complete tour succeeds after this experiment result
+has been inspected; a declined or blocked run remains an honest resumable
+checkpoint.

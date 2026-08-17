@@ -109,6 +109,7 @@ Treat setup as part of reaching the first usable session, not as an unexplained 
 
 - A manual annotation uses `session_id`, optional selector, and JSON value.
 - An investigation answer uses `investigation_session_id`, stable `question_key`, optional selector, and JSON value. The session ID is derived from the linked session.
+- The CLI parses `--value` as JSON. For a string annotation, preserve the JSON double quotes inside the shell argument: `--value '"Agent observation: The refund exceeded the approval limit."'`. Do not pass `--value 'Agent observation: ...'`; shell quotes group that text but do not make it a JSON string. Use a JSON encoder rather than hand-escaping text that contains quotes, backslashes, or line breaks.
 - Repeating an investigation answer for the same investigation-session and question key creates another annotation row. It does not replace or upsert the earlier answer.
 - A selector contains an optional node ID, an optional RFC 6901 JSON Pointer into that node or the session response, and an optional character span. A span requires a path, and a supplied node must belong to the session.
 - A null selector targets the whole session.

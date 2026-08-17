@@ -16,7 +16,7 @@ investigation without replacing human judgment.
 
 | Skill | Purpose |
 |---|---|
-| [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | Give a first-time user a prepared three-session frontend review of the public returns-agent template, collect human verdicts, and turn one accepted finding into a deterministic evaluator result. |
+| [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | Give a first-time user a prepared three-session frontend review of the public returns-agent template, collect human verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. |
 | [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Act as Kitaru's front door: verify setup, record or import sessions, guide human review, define one accepted behavior and cohort, select an evaluator, and offer a bounded replay experiment. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
 | [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
@@ -66,13 +66,17 @@ unavailable.
 When a first-time user wants to experience Kitaru before bringing an agent or
 learning the full method, `kitaru-guided-tour` uses the public template to
 prepare three evidence-anchored agent observations, open a frontend review for
-human verdicts, and turn one accepted finding into a deterministic evaluator
-result. The guided starter lives in
+human verdicts, turn one accepted finding into a deterministic evaluator, and
+finish with one approved bounded replay experiment. The tour pauses at the
+frontend review, reusable-check result, and experiment result so the user can
+inspect each durable stage. The guided starter lives in
 [`zenml-io/kitaru-template`](https://github.com/zenml-io/kitaru-template); the
 tour recognizes renamed clones and forks from stable root contents, compares
 them with the current public template, resumes existing setup, and uses the
 checked-in Langfuse JSONL without live credentials, trace regeneration, or a
-paid model call. The coding agent prepares observations; the human supplies
+paid model call for the recorded-evidence and evaluator stages. The final
+experiment requires a complete run card and separate approval before model or
+live tool execution. The coding agent prepares observations; the human supplies
 the whole-session verdicts. Customized templates and real user evidence route
 to `kitaru-investigation`, which supports one-run review, specific-behavior
 debugging, and bounded recurring-problem discovery. If an

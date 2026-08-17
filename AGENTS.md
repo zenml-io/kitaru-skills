@@ -10,7 +10,7 @@ metadata. It is not a Python package.
   evaluator selection, and replay handoff.
 - `skills/kitaru-guided-tour/SKILL.md` gives first-time users a value-first
   public-template tour with prepared observations, frontend verdicts, and one
-  deterministic evaluator result.
+  deterministic evaluator followed by an approved bounded replay experiment.
 - `skills/kitaru-guided-tour/references/` contains the starter contract, tour
   method, friendly tutorial narration, and the bounded operations needed for
   that experience.
@@ -74,8 +74,9 @@ host environment.
   unresolved product contracts.
 - Preserve the human-review boundary. Agent suggestions are not human labels.
 - Keep the guided tour light: identify prepared observations once, let the
-  human supply verdicts in the frontend, and teach Kitaru concepts through the
-  resulting evaluator AHA rather than a methodology lecture.
+  human supply verdicts in the frontend, and pause only at the guided review,
+  reusable-check result, and experiment result. Teach Kitaru concepts through
+  those concrete checkpoints rather than a methodology lecture.
 - Align first-time orientation with Kitaru's Observe, Judge, Define, Replay,
   and Compare method. Treat registration, recording, and import as setup for
   Observe rather than extra method stages.
