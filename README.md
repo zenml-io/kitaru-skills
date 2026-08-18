@@ -12,6 +12,16 @@ explicit. They help a coding agent record an unsupported framework, import an
 unsupported trace format, and organize the resulting sessions into a bounded
 investigation without replacing human judgment.
 
+Want to see the skills in action before installing them? [Watch the 26-minute
+Kitaru guided tour](https://youtu.be/aYLfzXEr2Rk). Alex starts with the Kitaru
+Quickstart, then uses `kitaru-guided-tour` on the public returns-agent template
+to review recorded sessions, define an evaluator and cohort, replay one
+improvement, and compare the result.
+
+<p align="center">
+  <a href="https://youtu.be/aYLfzXEr2Rk"><img src="assets/kitaru-guided-tour.webp" alt="Watch the Kitaru guided tour on YouTube"></a>
+</p>
+
 ## Skills
 
 | Skill | Purpose |
