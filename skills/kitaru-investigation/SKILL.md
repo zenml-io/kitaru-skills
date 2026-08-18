@@ -33,6 +33,9 @@ behavior and, when they want to test a change, the
 - Run every Kitaru CLI command and SDK script with
   `KITARU_ACTIVE_SKILL=kitaru-investigation` set so the server attributes the
   resulting activity to this skill.
+- Start or restart a user-controlled worker with `--concurrency 10`. Use
+  `KITARU_WORKER_CONCURRENCY=10` only when the launch surface exposes worker
+  settings through environment variables instead of CLI options.
 - Stop at a useful durable checkpoint when a required source, payload,
   permission, worker, product contract, or UI capability is unavailable.
 
