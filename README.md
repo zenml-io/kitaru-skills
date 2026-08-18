@@ -53,7 +53,7 @@ These skills track the Kitaru CLI, MCP, SDK, and adapter contracts developed on
 Kitaru 0.22 or newer:
 
 ```bash
-uv add "kitaru[cli,mcp]>=0.22"
+uv add "kitaru[cli,mcp,worker]>=0.22"
 ```
 
 Each skill verifies the installed version and public schema before it acts, and
@@ -114,9 +114,10 @@ agents and traces. Your agent can select a skill from context, or you can ask
 for it by name. Exact invocation syntax varies by host.
 
 Configure Kitaru MCP separately according to your host and the official Kitaru
-MCP server guide. Restart the coding-agent process after adding MCP
-configuration so it can discover the server, then resume from the skill's
-checkpoint. A missing MCP server does not block a path the CLI fully supports.
+MCP server guide. Restart or reload the coding-agent host process or IDE after
+adding or changing MCP configuration. An already-open task cannot discover the
+new server. Then resume from the skill's checkpoint. A missing MCP server does
+not block a path the CLI fully supports.
 
 ### Optional Claude Code plugin installation
 

@@ -1,6 +1,6 @@
 ---
 name: kitaru-guided-tour
-description: Give first-time users a short, value-first Kitaru tour with the public returns-agent template. Use when someone has no agent or traces of their own, arrives from Kitaru onboarding, asks for a demo, tutorial, quickstart, or guided example, wants the coding agent to prepare trace annotations before they judge sessions, or wants to experience Kitaru's value before learning the full investigation method. Prepare a three-session frontend review, let the human provide verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. Route real agents, open-ended discovery, and production evidence to kitaru-investigation instead.
+description: Give first-time users a short, value-first Kitaru tour with the public returns-agent template. Use when someone has no agent or traces of their own, arrives from Kitaru onboarding, asks for a demo, tutorial, quickstart, or guided example, needs the public template cloned or prepared, wants the coding agent to prepare trace annotations before they judge sessions, or wants to experience Kitaru's value before learning the full investigation method. Prepare a three-session frontend review, let the human provide verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. Route real agents, open-ended discovery, and production evidence to kitaru-investigation instead.
 ---
 
 # Kitaru guided tour
@@ -79,16 +79,25 @@ frontend review and reusable evaluator, to one bounded experiment result.
 Begin read-only.
 
 1. Look for a candidate template checkout. If none exists, inspect the current
-   canonical template README through the trusted source, choose a new
-   `kitaru-template` destination in the current workspace, tell the user where
-   it will be created, and ask before cloning the repository. After approval,
-   clone and verify it. Never overwrite an existing destination.
+   canonical template README through the trusted source. Treat a prompt that
+   names the public template, its canonical URL, or the returns-agent tour as
+   intent to use this route; do not stop merely because the checkout is absent.
+   Check the local prerequisites, choose a new `kitaru-template` destination in
+   the current workspace, and preview the clone plus frozen-environment setup.
+   Ask once before those writes. After approval, clone it, verify the checkout
+   against the trusted canonical source, and only then install and verify the
+   frozen environment. Never overwrite an existing destination. Complete this
+   source setup before diagnosing Kitaru server connectivity.
    Use this route only when the resulting project root matches the public
    template contract in `starter-template.md`.
-2. Establish CLI and MCP readiness through `kitaru-operations.md`. Explain and
-   ask before installing the frozen project environment or changing host MCP
-   configuration. Treat MCP as preferred but optional when the CLI can complete
-   the tour.
+2. Establish the template environment, CLI, worker, and MCP package readiness
+   through `starter-template.md` and `kitaru-operations.md`. Install the whole
+   frozen template environment instead of adding packages piecemeal. Explain
+   and ask before changing the environment or host MCP configuration. Treat MCP
+   as preferred but optional when the CLI can complete the tour. If host MCP
+   configuration is added or changed, tell the user to restart or reload the
+   coding-agent host process or IDE, preserve a resume checkpoint, and do not
+   claim that the current task can discover the new tools.
 3. Inspect Kitaru connectivity and keep using the healthy selected server. Only
    offer the template's isolated local server when no usable server is selected,
    and ask before starting or selecting it. Then inspect the exact registered
