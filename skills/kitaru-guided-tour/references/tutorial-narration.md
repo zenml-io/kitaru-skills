@@ -4,6 +4,8 @@ Guide the user through Kitaru as the tour runs. Preserve the low-friction route,
 
 Assume the user has not read the sample agent, has not used Kitaru before, and does not know its vocabulary. Explain from the concrete returns example first. Introduce a product term only when the current step makes its purpose visible.
 
+Use only terms that exist in Kitaru's product, CLI, API, or documentation when naming an object. Do not coin a noun for a temporary explanation, group of fields, or stage in the tour, and do not replace an official object with a friendly-sounding alias. Explain an unfamiliar Kitaru term from the concrete example, then use that term consistently. Use ordinary verbs and sentences for everything else. For example, say “Here is what the experiment will do” rather than naming the summary a “run card,” and say “the agent configuration has changed” rather than teaching an “agent fingerprint.”
+
 ## Use a teaching rhythm
 
 Narrate each meaningful transition in two parts.
@@ -21,7 +23,7 @@ Do not narrate every command, file read, schema lookup, retry, or status check. 
 
 Avoid empty narration such as “Now I will create an investigation.” Explain the purpose instead:
 
-> We have three past runs with useful evidence. I’m going to package them into one short Kitaru review so you can inspect them in order and leave a durable judgment beside each trace. That review is called an investigation; in this tour, it is simply your three-stop review queue.
+> We have three past runs with useful evidence. I’m going to put them in a Kitaru investigation so you can inspect them in order and leave a durable judgment beside each trace.
 
 Keep the tone warm and confident. Invite the user along without quizzing them, presenting optional branches, or making them repeat explanations before continuing.
 
@@ -63,7 +65,7 @@ Send the user to the cohort and evaluator pages next. Explain what each page pre
 
 After the user returns, explain the difference between measuring recorded behavior and testing a change. The experiment will start fresh agent tasks from the reviewed cases' stored top-level inputs, apply one small candidate override, and compare the resulting sessions with the recorded evidence using the exact evaluator the user just inspected. It does not restore conversation checkpoints, process memory, files, or the original external world.
 
-Before experiment creation, explain the proposed change, explicit tool policy, expected model work, cost uncertainty, and what the comparison can establish. Let the replay-experiment skill show the complete run card and obtain approval. Do not make paid execution feel like an automatic consequence of completing the review.
+Before experiment creation, briefly explain the proposed change, tool behavior, expected model work, cost uncertainty, and what the comparison can establish. Let the replay-experiment skill obtain approval after that explanation. Do not make paid execution feel like an automatic consequence of completing the review.
 
 After settlement, lead with the experiment page. Explain how to select the run, where the baseline and candidate evidence appear, and what improved, regressed, stayed unchanged, failed, or remained missing. Ask the user to inspect it and return before the tour closes.
 

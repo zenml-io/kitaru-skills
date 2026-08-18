@@ -12,10 +12,13 @@ For agent-facing CLI calls, use `--output json --machine --non-interactive --no-
 
 After the template checkout is verified, inspect the project prerequisites, the active environment, and discovered native Kitaru MCP tools.
 
-- Follow the verified template README's frozen environment command when the project environment is missing. Explain that this installs the project-local Kitaru CLI and ask before changing the environment. Use the README's `uv run kitaru ...` form afterward.
+- Follow `starter-template.md` and the verified template README's frozen environment command when the project environment is missing or incomplete. Explain that this installs the project-local CLI, worker, MCP entrypoint, importer, adapter, and other locked template dependencies, then ask before changing the environment. Use the README's `uv run kitaru ...` form afterward.
 - Treat MCP as preferred, not required. If suitable MCP tools are already configured, use them for bounded operations. If they are absent, say once that the guided tour can continue through the project-local CLI and proceed.
-- When the user asks to install MCP, or the CLI cannot complete the next operation, follow the official host-specific Kitaru MCP setup. Explain and ask before installing packages or changing host configuration. Preserve the current checkpoint because the coding-agent host may need a restart before it discovers the new server.
+- When the user asks to install MCP, or the CLI cannot complete the next operation, distinguish package installation from host registration. First verify the template's `kitaru-mcp` entrypoint. Then inspect the configuration scope the current host actually loads and follow the official host-specific Kitaru MCP setup. Do not write `.mcp.json` into a newly cloned project unless that is the project scope the host will reopen. Explain and ask before installing packages or changing host configuration.
+- After adding or changing `.mcp.json` or equivalent host MCP configuration, state plainly that the user must restart or reload the coding-agent host process or IDE. An already-open task does not hot-load the new server. Preserve the exact template path, selected Kitaru server, completed setup, and next action in a compact checkpoint, then stop MCP-dependent work until the restarted host discovers the tools. Restarting only `kitaru-mcp`, refreshing the Kitaru webpage, or proving that a browser can reach `localhost` is not a substitute. If the user chooses not to restart now and the CLI covers the next operation, say that the tour is continuing through CLI only.
 - Do not install or reconfigure MCP solely to replace a working CLI during the short tour. Offer MCP setup after the AHA when it would improve the user's ongoing Kitaru workflow.
+
+Keep network contexts separate when diagnosing local setup. The user's browser, the IDE host, an isolated shell, and the MCP subprocess may not share the same view of `localhost`. Prefer `uv run kitaru status` from the verified template environment for CLI connectivity and discovered MCP tools for MCP connectivity. Do not declare the server unhealthy from a failed `curl` or browser-tool probe inside an isolated environment when the user's host browser reaches it.
 
 ## Preserve the selected server
 
@@ -94,13 +97,13 @@ Before cohort creation, show the exact proposed membership once and obtain confi
 
 Evaluation jobs require a live worker. Wait through the supported mechanism once, inspect the terminal job and every resulting evaluation, and keep missing or failed evaluations out of the quality numerator while retaining them in the population accounting.
 
-## Pause at three frontend checkpoints
+## Pause three times for frontend review
 
-Use the frontend three times during the normal tour. Pause after each checkpoint and wait for the user to return:
+Use the frontend three times during the normal tour. Pause after each visit and wait for the user to return:
 
-1. **Guided review:** use the investigation review route above so the user can inspect evidence and record verdicts.
-2. **Reusable check:** after cohort creation and baseline evaluation, show the cohort and evaluator pages so the user can see the frozen examples, exact rule, and stored results.
-3. **Experiment result:** after the bounded experiment settles, show its selected run so the user can inspect the candidate sessions and comparison.
+1. Use the investigation review route above so the user can inspect evidence and record verdicts.
+2. After cohort creation and baseline evaluation, show the cohort and evaluator pages so the user can see the frozen examples, exact rule, and stored results.
+3. After the bounded experiment settles, show its selected run so the user can inspect the candidate sessions and comparison.
 
 Use a product-owned link unchanged when a structured response supplies one. Otherwise, the current managed and self-hosted frontends support these compatibility routes from the verified `dashboard_url`:
 
@@ -112,8 +115,8 @@ DASHBOARD_URL/experiments/EXPERIMENT_ID?run=RUN_NUMBER
 
 Strip one trailing slash from `dashboard_url`. Use the parent cohort ID, not the cohort-version ID, and the parent evaluator ID, not the evaluator-version ID. Omit the experiment query only when no run number is available. Do not construct a separate evaluation URL; the cohort and experiment pages present the relevant results in context.
 
-At each checkpoint, lead with one or two direct links, explain in two or three sentences what now exists and what to inspect, and say exactly how to continue, such as “Come back here after you have looked.” Do not add frontend pauses for registration, import, individual annotations, jobs, or other routine objects.
+At each visit, lead with one or two direct links, explain in two or three sentences what now exists and what to inspect, and say exactly how to continue, such as “Come back here after you have looked.” Do not add frontend pauses for registration, import, individual annotations, jobs, or other routine objects.
 
 ## Run the final experiment safely
 
-Use `kitaru-replay-experiment` for the final candidate comparison. Carry the accepted behavior, exact cohort and evaluator versions, one small candidate change, and the requirement to return to the experiment frontend checkpoint after settlement. The replay skill owns adapter checks, the explicit tool policy, the complete run card, approval for remote writes and model work, execution, and interpretation. Do not create or start the experiment before that approval.
+Use `kitaru-replay-experiment` for the final candidate comparison. Carry the accepted behavior, exact cohort and evaluator versions, one small candidate change, and the requirement to return to the experiment page after settlement. The replay skill owns adapter checks, the explicit tool policy, a concise explanation of the proposed run, approval for remote writes and model work, execution, and interpretation. Do not create or start the experiment before that approval.

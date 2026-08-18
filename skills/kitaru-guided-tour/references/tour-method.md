@@ -82,13 +82,13 @@ After the user accepts the behavior and every proposed cohort member has a human
 
 If no human-confirmed problematic example remains, or the user rejects the proposed behavior, stop before cohort and evaluator creation. Treat that correction as a useful result and offer one more bounded prepared review only if the user wants it.
 
-## Land the reusable-check AHA
+## Explain the evaluator result
 
 Use this order:
 
 1. State the user's finding.
 2. State what Kitaru preserved that made the finding inspectable.
-3. State what the reusable check found across all ten sessions.
+3. State what the evaluator found across all ten sessions.
 4. Name one limitation, such as the synthetic population or missing external outcome evidence.
 5. Explain “cohort” and “evaluator version” only after the result is clear.
 
@@ -102,16 +102,16 @@ reusable rule, then pause until they return.
 
 ## Finish with one bounded experiment
 
-Continue into the final experiment chapter after the reusable-check checkpoint.
+Continue to the final experiment after the user has inspected the cohort and evaluator results.
 Choose one small candidate change that directly addresses the accepted behavior
 without including the expected answers. Hand the exact behavior, cohort version,
 evaluator version and parameters, candidate agent version, proposed override,
 and safe explicit tool policy to `kitaru-replay-experiment`.
 
-The replay skill must verify adapter support and show its complete run card
+The replay skill must verify adapter support and briefly explain the proposed run
 before asking for approval. Do not create the experiment or start paid or live
 execution before that approval. After settlement, open or present the documented
 experiment run route, explain the comparison in ordinary language, and pause
 until the user returns. The complete tour succeeds after this experiment result
 has been inspected; a declined or blocked run remains an honest resumable
-checkpoint.
+stopping point.

@@ -6,7 +6,7 @@ Verify the installed CLI, MCP schemas, API models, and adapter documentation bef
 
 An experiment run creates one fresh agent task per session in an exact cohort version. The task receives the historical session's stored top-level inputs after applying the experiment replay override. The override can replace the model, system prompt, prompt, or model parameters when the selected adapter construction path supports it.
 
-This path does not restore an arbitrary conversation checkpoint, process memory, adapter instance state, filesystem, external service state, or other hidden world state. Name every material missing state on the run card.
+This path does not restore an arbitrary conversation checkpoint, process memory, adapter instance state, filesystem, external service state, or other hidden world state. Explain every material missing state before asking the user to run the experiment.
 
 ## Experiment and run operations
 
@@ -63,7 +63,7 @@ Unsupported capability is a blocker. The user cannot approve past it.
 
 ## Mutable and asynchronous state
 
-An agent version's public run spec and capabilities can currently be updated in place. Canonically serialize and fingerprint the complete public models shown on the run card, then re-read them immediately before creation and execution. Do not inspect secret values. If a fingerprint changes, invalidate approval. These reads do not freeze the configuration a worker later resolves, and a transient mutation can escape pre-run and post-run checks. Require immutable runtime identity for a user-defined gate or live-effect run; otherwise narrow the use to exploration, report this residual risk, and return `cannot evaluate` for the gate.
+An agent version's public run spec and capabilities can currently be updated in place. Canonically serialize and hash the complete public models recorded for approval, then re-read them immediately before creation and execution. Do not inspect secret values. If a hash changes, invalidate approval and explain that the configuration changed. Treat the hash as an internal comparison mechanism, not a Kitaru object or user-facing concept. These reads do not freeze the configuration a worker later resolves, and a transient mutation can escape pre-run and post-run checks. Require immutable runtime identity for a user-defined gate or live-effect run; otherwise narrow the use to exploration, report this residual risk, and return `cannot evaluate` for the gate.
 
 Experiment runs are asynchronous and report `running`, `canceling`, `completed`, `failed`, or `canceled`. Progress counts pending, evaluating, completed, failed, canceled, and total replays. Page through all backing replay jobs needed for a complete accounting.
 

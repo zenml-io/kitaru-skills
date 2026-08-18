@@ -53,7 +53,7 @@ These skills track the Kitaru CLI, MCP, SDK, and adapter contracts developed on
 Kitaru 0.22 or newer:
 
 ```bash
-uv add "kitaru[cli,mcp]>=0.22"
+uv add "kitaru[cli,mcp,worker]>=0.22"
 ```
 
 Each skill verifies the installed version and public schema before it acts, and
@@ -64,14 +64,14 @@ learning the full method, `kitaru-guided-tour` uses the public template to
 prepare three evidence-anchored agent observations, open a frontend review for
 human verdicts, turn one accepted finding into a deterministic evaluator, and
 finish with one approved bounded replay experiment. The tour pauses at the
-frontend review, reusable-check result, and experiment result so the user can
-inspect each durable stage. The guided starter lives in
+investigation review, cohort and evaluator results, and experiment result so the
+user can inspect each durable stage. The guided starter lives in
 [`zenml-io/kitaru-template`](https://github.com/zenml-io/kitaru-template); the
 tour recognizes renamed clones and forks from stable root contents, compares
 them with the current public template, resumes existing setup, and uses the
 checked-in Langfuse JSONL without live credentials, trace regeneration, or a
 paid model call for the recorded-evidence and evaluator stages. The final
-experiment requires a complete run card and separate approval before model or
+experiment requires a brief explanation and separate approval before model or
 live tool execution. The coding agent prepares observations; the human supplies
 the whole-session verdicts. Customized templates and real user evidence route
 to `kitaru-investigation`, which supports one-run review, specific-behavior
@@ -114,9 +114,10 @@ agents and traces. Your agent can select a skill from context, or you can ask
 for it by name. Exact invocation syntax varies by host.
 
 Configure Kitaru MCP separately according to your host and the official Kitaru
-MCP server guide. Restart the coding-agent process after adding MCP
-configuration so it can discover the server, then resume from the skill's
-checkpoint. A missing MCP server does not block a path the CLI fully supports.
+MCP server guide. Restart or reload the coding-agent host process or IDE after
+adding or changing MCP configuration. An already-open task cannot discover the
+new server. Then resume from the skill's checkpoint. A missing MCP server does
+not block a path the CLI fully supports.
 
 ### Optional Claude Code plugin installation
 

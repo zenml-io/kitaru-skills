@@ -4,12 +4,9 @@ Use the guided tour only for a verified checkout of the public Kitaru returns-ag
 
 ## Recognize and verify the checkout
 
-When no candidate checkout exists, read the current public template README from
-the trusted canonical source. Choose a new `kitaru-template` destination in the
-current workspace, state that destination and the README's current clone
-command, and ask before cloning. After approval, run the clone for the user and
-apply the checks below. Do not require a no-repository user to find or clone the
-example first. Stop instead of overwriting when the destination already exists.
+When no candidate checkout exists, read the current public template README from the trusted canonical source. Choose a new `kitaru-template` destination in the current workspace. A prompt that names the canonical repository URL, the public returns-agent template, or the guided tour is enough to propose this route. Do not turn the missing checkout into a request for the user to find or clone the example themselves, and do not test server connectivity first.
+
+Before asking for approval, verify that Git and `uv` are available without changing the environment. State the destination and summarize the README's current clone and frozen-environment commands. Ask once to clone and prepare the project. After approval, clone it and apply the read-only checks below. Run the approved frozen-environment setup only after the cloned checkout passes those checks. Stop instead of overwriting when the destination already exists. If Git or `uv` is missing, report that single prerequisite and the official installation link from the template README; do not invent a package-manager command.
 
 Require these paths at one project root:
 
@@ -29,6 +26,20 @@ Read the root `README.md`. Verify through a trusted read-only comparison with th
 After verification, treat the current root README as the authority for exact clone, frozen environment, registration, worker, import, verification, and the optional local-workspace fallback. A healthy selected local or cloud server takes precedence over that fallback. Do not run the README's local login merely because this is the template route. Do not copy those commands into this skill or pin a template commit.
 
 If trusted comparison is unavailable or the agent, entrypoint, or trace input was materially customized, leave the guided route. Continue with `kitaru-investigation` using the actual code and evidence.
+
+## Install and verify the project environment
+
+Treat the template's frozen environment as one unit. Before installation, verify that the trusted current `pyproject.toml` still declares Kitaru with at least the `cli`, `worker`, and `mcp` extras, plus the Langfuse importer and PydanticAI adapter used by the template. The canonical template may also include the `server` extra for its optional local fallback. If those declarations are missing, fail the canonical comparison instead of repairing the project with ad hoc dependency additions.
+
+When the environment is absent or stale, follow the verified README's frozen sync command after approval. Do not run separate `uv add` or `pip install` commands: the lockfile owns the complete compatible dependency set. Afterward, verify all of these from the template root:
+
+- the installed Kitaru version and CLI schema are readable through `uv run`;
+- one side-effect-free, no-sync Python probe can import `kitaru.worker`, `mcp.server`, `kitaru.mcp.server`, `kitaru_langfuse_importer`, `kitaru_pydantic_ai`, and `returns_agent.agent`; and
+- the `kitaru` and `kitaru-mcp` entrypoints resolve inside the same project environment.
+
+The import probe must not load `.env`, contact a server, create an agent, or make a model call. Do not use worker help or `kitaru-mcp --help` or `--version` as proof that their optional runtimes are installed: those base-safe routes can return before importing the worker or MCP dependencies.
+
+If a probe fails, inspect the frozen sync result and project environment before diagnosing the Kitaru server. A working web page at `localhost` does not prove that the coding-agent process loaded MCP, and a failed loopback probe from an isolated shell does not prove that the server is down.
 
 ## Keep setup light and safe
 
