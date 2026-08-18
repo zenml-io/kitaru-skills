@@ -54,14 +54,14 @@ The checked TypeScript reference is merged into Kitaru's `develop` branch:
 ```text
 branch: origin/develop
 commit: 3675d90e02a690f2bd9a3ff43eba576f0a813515
-core SDK: packages/core/ (@zenml-io/kitaru@0.1.0-rc.2)
-Mastra adapter: packages/mastra/ (@zenml-io/kitaru-mastra@0.1.0-rc.2)
-Vercel AI adapter: packages/vercel-ai/ (@zenml-io/kitaru-vercel-ai@0.1.0-rc.2)
+core SDK: packages/core/ (@zenml-io/kitaru)
+Mastra adapter: packages/mastra/ (@zenml-io/kitaru-mastra)
+Vercel AI adapter: packages/vercel-ai/ (@zenml-io/kitaru-vercel-ai)
 ```
 
-Those exact release-candidate versions are published to npm. Still inspect the
-project's installed package and lockfile before relying on them because the
-project may pin another version.
+These packages are published independently from Kitaru's Python distributions.
+Inspect npm and the project's lockfile for the current versions before relying
+on them.
 
 All three packages are ESM-only and require Node `>=22.22.0 <23`. The core
 package exports its public client and types plus `./client`, `./environment`,
