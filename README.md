@@ -64,8 +64,8 @@ learning the full method, `kitaru-guided-tour` uses the public template to
 prepare three evidence-anchored agent observations, open a frontend review for
 human verdicts, turn one accepted finding into a deterministic evaluator, and
 finish with one approved bounded replay experiment. The tour pauses at the
-investigation review, cohort and evaluator results, and experiment result so the user can
-inspect each durable stage. The guided starter lives in
+investigation review, cohort and evaluator results, and experiment result so the
+user can inspect each durable stage. The guided starter lives in
 [`zenml-io/kitaru-template`](https://github.com/zenml-io/kitaru-template); the
 tour recognizes renamed clones and forks from stable root contents, compares
 them with the current public template, resumes existing setup, and uses the
