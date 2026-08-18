@@ -58,20 +58,21 @@ package confirms it. Never copy tokens into code, fixtures, logs, or reports.
 
 The checked `develop` source at commit
 `3675d90e02a690f2bd9a3ff43eba576f0a813515` contains independently versioned
-adapter distributions. These exact release candidates are published to PyPI:
+adapter distributions:
 
 | Framework | Distribution | Checked source | Advertised capability |
 |---|---|---|---|
-| PydanticAI | `kitaru-pydantic-ai` 0.1.0rc0 | `plugins/packages/pydantic-ai/` | Recording and replay |
-| LangGraph, LangChain, and Deep Agents | `kitaru-langgraph` 0.1.0rc0 | `plugins/packages/langgraph/` | Recording and replay |
-| OpenAI Agents SDK | `kitaru-openai-agents` 0.1.0rc0 | `plugins/packages/openai-agents/` | Recording and restricted replay |
+| PydanticAI | `kitaru-pydantic-ai` | `plugins/packages/pydantic-ai/` | Recording and replay |
+| LangGraph, LangChain, and Deep Agents | `kitaru-langgraph` | `plugins/packages/langgraph/` | Recording and replay |
+| OpenAI Agents SDK | `kitaru-openai-agents` | `plugins/packages/openai-agents/` | Recording and restricted replay |
 
 Their tests live under `plugins/tests/adapters/pydantic_ai/`,
 `plugins/tests/adapters/langgraph/`, and
 `plugins/tests/adapters/openai_agents/`. Adapter distributions are installed by
-agent projects rather than bundled into the core Kitaru wheel. This inventory
-describes the checked source tree and registry state, not what is installed in
-the user's project.
+agent projects rather than bundled into the core Kitaru wheel. They are
+published independently from Kitaru core, so inspect PyPI and the project's
+lockfile for the current version. This inventory describes the checked source
+tree, not what is installed in the user's project.
 
 Check the project's installed distributions and current Kitaru documentation
 before designing a custom adapter. When one of these packages supports the
