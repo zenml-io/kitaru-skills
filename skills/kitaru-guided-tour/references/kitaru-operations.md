@@ -122,13 +122,13 @@ Before cohort creation, show the exact proposed membership once and obtain confi
 
 Evaluation jobs require a live worker. Wait through the supported mechanism once, inspect the terminal job and every resulting evaluation, and keep missing or failed evaluations out of the quality numerator while retaining them in the population accounting.
 
-## Pause at three frontend checkpoints
+## Pause three times for frontend review
 
-Use the frontend three times during the normal tour. Pause after each checkpoint and wait for the user to return:
+Use the frontend three times during the normal tour. Pause after each visit and wait for the user to return:
 
-1. **Guided review:** use the investigation review route above so the user can inspect evidence and record verdicts.
-2. **Reusable check:** after cohort creation and baseline evaluation, show the cohort and evaluator pages so the user can see the frozen examples, exact rule, and stored results.
-3. **Experiment result:** after the bounded experiment settles, show its selected run so the user can inspect the candidate sessions and comparison.
+1. Use the investigation review route above so the user can inspect evidence and record verdicts.
+2. After cohort creation and baseline evaluation, show the cohort and evaluator pages so the user can see the frozen examples, exact rule, and stored results.
+3. After the bounded experiment settles, show its selected run so the user can inspect the candidate sessions and comparison.
 
 Use a product-owned link unchanged when a structured response supplies one. Otherwise, the current managed and self-hosted frontends support these compatibility routes from the verified `dashboard_url`:
 
@@ -140,8 +140,8 @@ DASHBOARD_URL/experiments/EXPERIMENT_ID?run=RUN_NUMBER
 
 Strip one trailing slash from `dashboard_url`. Use the parent cohort ID, not the cohort-version ID, and the parent evaluator ID, not the evaluator-version ID. Omit the experiment query only when no run number is available. Do not construct a separate evaluation URL; the cohort and experiment pages present the relevant results in context.
 
-At each checkpoint, lead with one or two direct links, explain in two or three sentences what now exists and what to inspect, and say exactly how to continue, such as “Come back here after you have looked.” Do not add frontend pauses for registration, import, individual annotations, jobs, or other routine objects.
+At each visit, lead with one or two direct links, explain in two or three sentences what now exists and what to inspect, and say exactly how to continue, such as “Come back here after you have looked.” Do not add frontend pauses for registration, import, individual annotations, jobs, or other routine objects.
 
 ## Run the final experiment safely
 
-Use `kitaru-replay-experiment` for the final candidate comparison. Carry the accepted behavior, exact cohort and evaluator versions, one small candidate change, and the requirement to return to the experiment frontend checkpoint after settlement. The replay skill owns adapter checks, the explicit tool policy, the complete run card, approval for remote writes and model work, execution, and interpretation. Do not create or start the experiment before that approval.
+Use `kitaru-replay-experiment` for the final candidate comparison. Carry the accepted behavior, exact cohort and evaluator versions, one small candidate change, and the requirement to return to the experiment page after settlement. The replay skill owns adapter checks, the explicit tool policy, a concise explanation of the proposed run, approval for remote writes and model work, execution, and interpretation. Do not create or start the experiment before that approval.

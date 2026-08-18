@@ -11,10 +11,11 @@ Test one candidate condition against known cases and explain whether the availab
 
 - Start from an accepted behavior, exact cohort version, exact evaluator versions and parameters, and one candidate change. Suggest one bounded candidate only when asked.
 - Replay starts a fresh agent task from each historical session's stored top-level inputs after applying the override. It does not restore an arbitrary checkpoint, conversation, process memory, adapter instance state, filesystem, or external world state.
-- Resolve adapter support and its construction path before showing an actionable run card. A shared replay schema does not prove that an adapter supports a requested override or tool source.
+- Resolve adapter support and its construction path before asking to run the experiment. A shared replay schema does not prove that an adapter supports a requested override or tool source.
 - Require an explicit tool policy for every tool-using run. Omission resolves to live passthrough on the current server and is unsafe as an implicit default.
 - Carry exact IDs, versions, evaluator parameters, run-spec evidence, tool policy, failures, and missing results forward.
-- Explain remote writes, model and worker compute, cost uncertainty, and possible live effects before execution. One complete run-card approval covers the experiment create and run start; any tool path with external effects needs separate approval.
+- Explain remote writes, model and worker compute, cost uncertainty, and possible live effects before execution. One approval after this explanation covers experiment creation and the run start; any tool path with external effects needs separate approval.
+- Use established Kitaru product terms only. Do not coin labels for summaries or steps, such as “run card,” “result card,” “agent fingerprint,” or “execution checksum.” Do not replace a Kitaru object with a friendly-sounding alias such as “accepted baseline”; explain the official term when necessary, then use it consistently. In user-facing text, describe what will happen and what the user must decide in ordinary language.
 - Prefer native Kitaru MCP operations. Use the structured CLI for built-in waiting or another capability MCP does not expose. Verify installed schemas when they differ from the references.
 - Run every Kitaru CLI command and SDK script with `KITARU_ACTIVE_SKILL=kitaru-replay-experiment` set so the server attributes the resulting activity to this skill.
 - Start or restart a user-controlled worker with `--concurrency 10`. Use `KITARU_WORKER_CONCURRENCY=10` only when the launch surface exposes worker settings through environment variables instead of CLI options.
@@ -64,29 +65,22 @@ Check whether repeated calls with identical arguments can legitimately return di
 
 When passthrough and history are both valid but would change what the experiment means, explain the concrete difference and ask the user which condition they want unless a verified project-specific contract already selects one.
 
-## Show one run card
+## Confirm the run with the user
 
-Prefill this compact execution checksum. Do not turn it into an experiment-design questionnaire.
+Before asking for approval, give the user a short summary in ordinary language. Prefer a few bullets over a table. Include only:
 
-| Field | Content |
-|---|---|
-| Question | Expected effect of the candidate |
-| Intended use | Exploration, known-case regression, or exact user-defined gate |
-| Comparison | Historical observed vs candidate, fresh control vs candidate, or reproduction check |
-| Cohort | Exact cohort-version ID and case count |
-| Candidate | Exact agent-version ID plus current run-spec and capabilities fingerprints |
-| Fresh control | When used, exact version, fingerprints, conditions, IDs, and known differences |
-| Starts from | Stored top-level inputs plus exact overrides |
-| State restored | Explicit list of what is and is not restored |
-| Evaluators | Exact versions and parameters, one primary outcome, and at most two necessary protections |
-| Tool source | Full policy, history scope, `on_miss`, synthetic source, and possible live effects |
-| Adapter support | Verified adapter, construction path, and supported requested operations |
-| Expected work | Session count, provider and worker readiness, likely model and tool work, and cost uncertainty |
-| Claim limit | What this comparison can and cannot establish |
+- the change being tested and the question it should answer;
+- the cohort and evaluator versions, with the number of cases;
+- what each new task starts from and the important state it does not restore;
+- how tools will behave, including any possible external effects;
+- the expected model and worker work, with cost uncertainty; and
+- what the comparison can and cannot establish.
 
-Fingerprint the complete public run-spec and capabilities models using canonical serialization. Do not resolve or expose secrets. Immediately before experiment creation and again before starting execution, re-read both models and compare their fingerprints. If either changed, invalidate approval and show the changed condition. An exact agent-version ID identifies a mutable configuration, not an immutable reproducible artifact, and these checks cannot freeze or prove the configuration a worker later resolves. For a user-defined gate or live-effect run, require immutable runtime identity or narrow the use to exploration. Without that identity, report observed violations but return `cannot evaluate` for the gate. For an exploratory run, preserve the approved fingerprints, re-read them after settlement, and return `inconclusive` if observable drift occurred.
+Include exact agent, experiment, or adapter details only when the user needs them to verify the decision or when they expose a material limitation. Keep complete IDs, versions, parameters, configuration hashes, and adapter evidence in the resumable technical record rather than making the user read them all before a routine exploratory run.
 
-Ask for one approval after the complete card is visible. If passthrough can affect an external system, ask separately for approval of the named live tools and effects. Verified isolated local mock execution can be covered by the complete run-card approval.
+Hash the complete public run-spec and capabilities models internally using canonical serialization. Do not resolve or expose secrets. Immediately before experiment creation and again before starting execution, re-read both models and compare the hashes. If either changed, invalidate approval and explain which configuration changed without naming the hash as a product object. An exact agent-version ID identifies a mutable configuration, not an immutable reproducible artifact, and these checks cannot freeze or prove the configuration a worker later resolves. For a user-defined gate or live-effect run, require immutable runtime identity or narrow the use to exploration. Without that identity, report observed violations but return `cannot evaluate` for the gate. For an exploratory run, preserve the approved hashes, re-read the models after settlement, and return `inconclusive` if observable drift occurred.
+
+Ask for one approval after the summary is visible. If passthrough can affect an external system, ask separately for approval of the named live tools and effects. Verified isolated local mock execution can be covered by the first approval.
 
 ## Create and supervise one run
 
@@ -94,7 +88,7 @@ After approval:
 
 1. Create one experiment with the exact agent parent, replay override, explicit tool policy, and evaluator versions and parameters.
 2. Re-read it and verify that the server resolved the intended configuration.
-3. Recheck the candidate run-spec and capabilities fingerprints.
+3. Recheck the candidate run-spec and capabilities hashes internally.
 4. Start one run against the exact cohort version and candidate agent version. Set `evaluate_baselines=true` for comparative claims.
 5. Watch the asynchronous run until it completes, fails, is canceled, reaches an agreed stop condition, or the local wait times out.
 6. Read the run and all paginated replay jobs needed to account for completed, failed, canceled, and missing cases.
@@ -112,7 +106,7 @@ Do not use the current UI aggregate as a decision-grade source. Read exact per-s
 
 Check candidate prompts, evaluator prompts, examples, tool fixtures, history scopes, and related trace families for leakage. Warn for exploration. Require resolution or narrow the claim only when the intended use is consequential.
 
-## Return the result card
+## Explain the result
 
 Report:
 

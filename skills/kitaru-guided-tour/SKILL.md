@@ -28,6 +28,10 @@ frontend review and reusable evaluator, to one bounded experiment result.
   not permission to ignore unrelated or higher-priority instructions. If they
   decline, remain concise but still explain the minimum needed to understand
   each checkpoint.
+- Use names that already exist in Kitaru when naming product objects. Do not
+  invent labels for steps, summaries, or collections, and do not present an
+  internal implementation detail as a Kitaru concept. Prefer a plain sentence
+  such as “Here is what the experiment will do” over “replay run card.”
 - Lead with what the user is about to discover, not installation or evaluation
   terminology.
 - Teach only the concept needed for the current action. Explain deeper Kitaru
@@ -35,16 +39,15 @@ frontend review and reusable evaluator, to one bounded experiment result.
 - Prepare useful observations and exact evidence anchors for the reviewer. Tell
   them once that these are agent-prepared notes and their verdict is the human
   judgment.
-- Use the Kitaru frontend at three deliberate checkpoints: the guided review,
-  the reusable cohort and evaluator result, and the completed experiment run.
+- Use the Kitaru frontend three times: for the investigation review, the cohort
+  and evaluator results, and the completed experiment run.
   Give direct links, explain what the user is looking at, then pause until they
   return. Do not interrupt the tour with frontend visits for routine objects.
 - Keep the first tour to three sessions: one consequential problem, one subtle
   evidence-reading lesson, and one acceptable counterexample.
-- Reach the evaluator AHA without regenerating traces or making a paid model
-  call. Continue into one bounded replay as the final chapter, but show the
-  complete run card and ask before creating the experiment or starting paid or
-  live execution.
+- Reach a useful evaluator result without regenerating traces or making a paid
+  model call. Continue into one bounded replay, but briefly explain the proposed
+  run and ask before creating the experiment or starting paid or live execution.
 - Before a model-backed replay, verify without exposing secrets that the worker
   runtime has the required provider credential. If availability cannot be
   verified, ask the user to configure it and restart the worker, then stop
@@ -66,7 +69,7 @@ frontend review and reusable evaluator, to one bounded experiment result.
 
 - Read [references/tutorial-narration.md](references/tutorial-narration.md)
   before the first user-facing explanation and use its teaching rhythm
-  throughout setup, review, the evaluator AHA, and the experiment result.
+  throughout setup, review, the evaluator result, and the experiment result.
 - Read [references/starter-template.md](references/starter-template.md) before
   setup or when deciding whether the checkout is the canonical public template.
 - Read [references/tour-method.md](references/tour-method.md) before selecting
@@ -162,7 +165,7 @@ Lead with the direct review action. Use this conversational shape:
 
 Pause. Do not duplicate the review in chat while the frontend route works.
 
-## Deliver the reusable-check AHA
+## Create and run the evaluator
 
 When the user returns:
 
@@ -184,8 +187,8 @@ When the user returns:
    examples explain the result, and one important limitation. Resolve the
    cohort and evaluator links through `kitaru-operations.md`.
 
-Then give the reusable-check frontend checkpoint defined in
-`kitaru-operations.md`. Explain that the cohort freezes the examples the user
+Then show the cohort and evaluator pages defined in `kitaru-operations.md`.
+Explain that the cohort freezes the examples the user
 judged and the evaluator page records the exact reusable rule. Pause and wait
 for the user to return before preparing the experiment.
 
@@ -210,7 +213,7 @@ is an evaluator version.
 
 ## Finish with one experiment
 
-After the user returns from the reusable-check checkpoint:
+After the user returns from the cohort and evaluator pages:
 
 1. Explain that the recorded sessions showed what happened before; an
    experiment starts fresh tasks from the same stored top-level inputs to test
@@ -224,20 +227,19 @@ After the user returns from the reusable-check checkpoint:
    deterministic local functions against a fresh in-memory mock store and
    cannot affect an external system. Do not silently replace those calls with
    recorded-history matching.
-4. Let that skill verify adapter support and show its complete run card. Explain
+4. Let that skill verify adapter support and briefly explain the proposed run. Explain
    provider and worker readiness, model work, cost uncertainty, missing restored
    state, and possible tool effects. Obtain its required approval before
    experiment creation or run start.
-5. After the run settles, lead with the experiment frontend checkpoint from
+5. After the run settles, lead with the experiment page from
    `kitaru-operations.md`. Explain which recorded cases were replayed, what
    changed, how the candidate compared, and what the result cannot establish.
    Pause until the user returns, then answer their questions and leave the exact
-   experiment and run IDs in the final checkpoint.
+   experiment and run IDs in the final summary.
 
 The normal successful tour ends after the user has inspected this experiment
-result. If they decline the run or execution is blocked, preserve the complete
-run card and reusable-check links without claiming that the experiment chapter
-completed.
+result. If they decline the run or execution is blocked, preserve the proposed
+conditions and cohort and evaluator links without claiming that the experiment completed.
 
 Afterward, offer **Use my own agent** through `kitaru-investigation`, carrying
 the tour's method explanation but none of its synthetic conclusions.
@@ -262,5 +264,5 @@ the tour's method explanation but none of its synthetic conclusions.
   of the lesson. Do not defend the prepared note or silently convert it into a
   human conclusion.
 - If adapter support, model credentials, a worker, or a safe tool policy blocks
-  the experiment, preserve the run card and explain the missing condition. Do
+  the experiment, preserve the proposed conditions and explain the missing condition. Do
   not fall back to live passthrough or call the tour complete.

@@ -10,7 +10,7 @@ Use this default for exploration and ordinary known-case regression. Pair each r
 
 ### Fresh control vs candidate
 
-Use when stronger attribution or a user-defined gate needs comparable current conditions. Kitaru has no first-class fresh-control abstraction, so this may require a separate bounded run. Record the control agent version, public run-spec and capabilities fingerprints, overrides, tool policy, evaluator versions and parameters, experiment and run IDs, timing, and every known difference from the candidate. Downgrade attribution when material conditions cannot be matched.
+Use when stronger attribution or a user-defined gate needs comparable current conditions. Kitaru has no first-class fresh-control abstraction, so this may require a separate bounded run. Record the control agent version, internal hashes of the public run spec and capabilities, overrides, tool policy, evaluator versions and parameters, experiment and run IDs, timing, and every known difference from the candidate. Downgrade attribution when material conditions cannot be matched. Do not present those hashes as a named product concept.
 
 ### Historical observed vs fresh control
 

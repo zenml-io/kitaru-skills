@@ -64,14 +64,14 @@ learning the full method, `kitaru-guided-tour` uses the public template to
 prepare three evidence-anchored agent observations, open a frontend review for
 human verdicts, turn one accepted finding into a deterministic evaluator, and
 finish with one approved bounded replay experiment. The tour pauses at the
-frontend review, reusable-check result, and experiment result so the user can
+investigation review, cohort and evaluator results, and experiment result so the user can
 inspect each durable stage. The guided starter lives in
 [`zenml-io/kitaru-template`](https://github.com/zenml-io/kitaru-template); the
 tour recognizes renamed clones and forks from stable root contents, compares
 them with the current public template, resumes existing setup, and uses the
 checked-in Langfuse JSONL without live credentials, trace regeneration, or a
 paid model call for the recorded-evidence and evaluator stages. The final
-experiment requires a complete run card and separate approval before model or
+experiment requires a brief explanation and separate approval before model or
 live tool execution. The coding agent prepares observations; the human supplies
 the whole-session verdicts. Customized templates and real user evidence route
 to `kitaru-investigation`, which supports one-run review, specific-behavior
