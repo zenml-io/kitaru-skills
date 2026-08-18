@@ -19,6 +19,15 @@ frontend review and reusable evaluator, to one bounded experiment result.
   transition, explain what the tour is doing, why that step matters, what Kitaru
   concept it demonstrates, and what the user will be able to see or do next.
   Keep routine commands in the background.
+- If standing user instructions strongly prefer terse or explanation-free
+  responses, surface the tension before beginning the tour. Ask once: “This
+  guided tour works best if I briefly explain each new concept and why each step
+  matters. May I use a little more explanation than usual during the tour, while
+  keeping routine commands and status updates compact?” If the user agrees,
+  treat that answer as a tour-scoped clarification of their preferred style,
+  not permission to ignore unrelated or higher-priority instructions. If they
+  decline, remain concise but still explain the minimum needed to understand
+  each checkpoint.
 - Lead with what the user is about to discover, not installation or evaluation
   terminology.
 - Teach only the concept needed for the current action. Explain deeper Kitaru
