@@ -80,7 +80,6 @@ Treat setup as part of reaching the first usable session, not as an unexplained 
 
 - Use `kitaru status` first when server selection, credentials, compatibility, or live-worker readiness is uncertain. Use `kitaru doctor` when one of those checks fails or the cause is unclear.
 - Prefer an exact agent version when recording or importing a session. If a session has no `agent_version_id`, report that provenance gap and reconcile it from other evidence only when the program revision is still unambiguous.
-- Resolve the installed importer catalog before treating a provider export as unsupported. When `kitaru/phoenix` is present, import Phoenix UI JSONL with media type `application/x-ndjson`, or a Phoenix CLI JSON trace object, array, or envelope with `application/json`, through `kitaru/phoenix@latest`. Each Phoenix trace becomes one Kitaru session. Other Phoenix payload shapes still require a matching installed importer or an importer-builder handoff.
 - Inspect the repository before running an agent to record a session. Explain the inputs, credentials, tool effects, and external mutations that may occur, and obtain any approval required by those effects.
 - Use the CLI for a local import payload because MCP never reads local files. Use MCP import only when the payload already exists as a Kitaru blob.
 - Import creates a job and does not make sessions available synchronously unless the CLI waits successfully. Inspect the job and resulting sessions before starting an investigation.

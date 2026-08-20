@@ -147,9 +147,8 @@ Begin with read-only inspection.
    requires a host restart, return a resume checkpoint first.
 4. Resolve the registered agent and exact agent version when possible.
 5. Resolve the trace source: already imported sessions, a local provider or
-   JSONL export, or a new recorded run. For a provider export, inspect the
-   installed importer catalog before calling its format unsupported. Ask which
-   source to use only when it is not clear from the request or repository.
+   JSONL export, or a new recorded run. Ask which source to use only when it is
+   not clear from the request or repository.
 6. Explain that importing converts trace records into Kitaru sessions. Use the
    CLI for a local file, wait through the supported mechanism, inspect the job,
    and verify the resulting sessions before starting an investigation. Import
@@ -204,15 +203,13 @@ agent or checked-in trace input was customized, and continue through this
 skill's generic investigation path instead.
 
 Route a missing integration only when it blocks usable sessions. Resolve the
-installed importer catalog first. When it includes `kitaru/phoenix`, use that
-built-in for Phoenix UI JSONL downloads or CLI JSON trace envelopes; do not
-send those supported files to a builder.
+installed importer catalog before treating a provider or export shape as
+unsupported.
 
 - Continue with the `kitaru-importer-builder` skill when existing traces use an
-  provider or export shape that the installed catalog does not support. This
-  includes Phoenix payloads outside the built-in importer's documented file
-  shapes. Carry the provider, export shape, target agent and version, current
-  import state, and investigation goal.
+  provider or export shape that the installed catalog does not support. Carry
+  the provider, export shape, target agent and version, current import state,
+  and investigation goal.
 - Continue with the `kitaru-adapter-builder` skill when the user needs
   in-process recording but no supported adapter covers the installed framework
   and invocation mode. Carry the repository, entrypoint, language, installed
