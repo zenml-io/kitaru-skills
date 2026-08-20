@@ -48,7 +48,7 @@ Start read-only.
 1. Identify the target repository, provider or format, representative export, and intended use of the imported sessions.
 2. Inspect the installed Kitaru version, offline command schema, and parser import path.
 3. Build the capability fingerprint in [references/importer-contract.md](references/importer-contract.md).
-4. Inspect the installed importer catalog and existing local importer files. When a suitable exact importer version accepts the observed payload shape, stop and return that importer to the calling workflow instead of scaffolding another one.
+4. Inspect existing local importer files. When a Kitaru connection is already configured, also inspect the installed importer catalog. If a suitable exact importer version accepts the observed payload shape, stop and return it to the calling workflow instead of scaffolding another one. When no connection is available, continue the local workflow without requiring registry discovery.
 5. Otherwise, decide whether to add a version to an existing custom importer or create a new private name.
 6. Stop before overwriting a path or changing the installed Kitaru version.
 
