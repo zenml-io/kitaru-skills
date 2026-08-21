@@ -57,8 +57,15 @@ Stop and resolve before releasing if any of these fail:
 7. Fast-forward `main`: `git push origin develop:main`. No `--force` ever —
    a rejection means the push is not a fast-forward; go back to
    Preconditions.
-8. Publish: `gh release create vX.Y.Z --title "vX.Y.Z" --notes "..."` with
-   the drafted notes.
+8. Publish the drafted notes via a file, never inline in the command —
+   commit subjects routinely contain backticks, which the shell would
+   execute as command substitution inside a `--notes "..."` argument.
+   Write the notes to a scratch file with a file-writing tool (or a
+   quoted heredoc, `cat > notes.md <<'EOF'`), then:
+
+   ```bash
+   gh release create vX.Y.Z --title "vX.Y.Z" --notes-file notes.md
+   ```
 9. Verify: `git ls-remote origin refs/heads/main refs/heads/develop` shows
    identical SHAs, and the GitHub Release page exists.
 
