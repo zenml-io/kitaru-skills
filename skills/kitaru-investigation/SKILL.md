@@ -202,11 +202,14 @@ included agent through a paid model. Leave that demo route when its canonical
 agent or checked-in trace input was customized, and continue through this
 skill's generic investigation path instead.
 
-Route a missing integration only when it blocks usable sessions:
+Route a missing integration only when it blocks usable sessions. Resolve the
+installed importer catalog before treating a provider or export shape as
+unsupported.
 
 - Continue with the `kitaru-importer-builder` skill when existing traces use an
-  unsupported provider or export format. Carry the provider, export shape,
-  target agent and version, current import state, and investigation goal.
+  provider or export shape that the installed catalog does not support. Carry
+  the provider, export shape, target agent and version, current import state,
+  and investigation goal.
 - Continue with the `kitaru-adapter-builder` skill when the user needs
   in-process recording but no supported adapter covers the installed framework
   and invocation mode. Carry the repository, entrypoint, language, installed
