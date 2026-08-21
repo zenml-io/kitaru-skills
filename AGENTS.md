@@ -126,6 +126,20 @@ of these in the same change:
 Bump all three plugin version fields together when preparing a distribution
 update.
 
+## Branching and releases
+
+`develop` is the working base. Branch from `develop` and target pull requests
+at `develop`. `main` is release-only: it always holds the latest released
+snapshot of `develop`, it is what the Claude Code marketplace installs, and a
+repository ruleset blocks all non-admin pushes and PR merges to it.
+
+A release fast-forwards `main` to `develop` and bumps all three plugin
+version fields together (`.claude-plugin/plugin.json` version, plus both
+version fields in `.claude-plugin/marketplace.json`). Releases use this
+repository's own plugin version numbers, not Kitaru product versions. Follow
+the `skills-release` skill (`.claude/skills/skills-release/SKILL.md`) when
+cutting one.
+
 ## Commits and pull requests
 
 Use short imperative commit subjects. Pull requests should explain what

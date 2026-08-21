@@ -126,6 +126,15 @@ frontmatter descriptions.
 - Preserve project-local adapter success as the ordinary outcome. Treat an OSS
   contribution as a separately approved final step.
 
+## Branching and releases
+
+Branch from `develop` and target pull requests at `develop`. `main` is
+release-only and is what the marketplace installs; a repository ruleset
+blocks non-admin pushes and PR merges to it. To cut a release, follow the
+`skills-release` skill (`.claude/skills/skills-release/SKILL.md`, canonical;
+`.agents/skills/skills-release` is a symlink to it): bump all three plugin
+version fields together, tag `vX.Y.Z`, and fast-forward `main` to `develop`.
+
 ## Local Claude Code testing
 
 ```bash
