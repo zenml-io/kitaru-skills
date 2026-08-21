@@ -234,10 +234,14 @@ Before generation:
 4. classify every observable tool by effect;
 5. establish the exact miss policy and execution order.
 
-For history replay, the same public-API limitation applies as in Python: a
-`found/result` lookup does not prove unique cardinality. Require a complete
-preflight that proves unique baseline keys or an installed API that exposes
-ambiguity. Otherwise mark history replay unsupported.
+For history replay, the same public contract applies as in Python. For
+baseline scope, keep one counter per cache key, send it as a zero-based
+`occurrence`, and increment it only on a hit, so repeated identical calls
+replay their own recorded results in baseline order. Never send `occurrence`
+for other scopes, the server rejects it. When the installed API lacks
+`occurrence` or the scope is not baseline, a `found/result` lookup does not
+prove unique cardinality: require a complete preflight that proves unique
+baseline keys. Otherwise mark history replay unsupported.
 
 When several tool calls can run concurrently, ensure that a failure in an
 earlier replay decision prevents later write-capable calls from starting.
