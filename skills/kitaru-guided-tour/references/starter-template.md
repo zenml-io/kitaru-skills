@@ -1,10 +1,10 @@
-# Canonical starter route
+# Quickstart example route
 
-Use the guided tour only for a verified copy of `examples/python/pydantic_ai_ticket_resolver` from the Kitaru repository. A fork or renamed Kitaru checkout can qualify; the example contents must still match the canonical tutorial contract.
+Use the guided tour only for a verified copy of `examples/python/pydantic_ai_ticket_resolver` from the Kitaru repository. A fork or renamed Kitaru checkout can qualify; the example contents must still match the quickstart tutorial contract.
 
 ## Recognize and verify the checkout
 
-When no candidate example directory exists, read the current example README from the trusted `zenml-io/kitaru` source. Choose a new `kitaru` checkout destination in the current workspace. A prompt that names the canonical example URL, the returns-agent example, or the guided tour is enough to propose this route. Do not turn the missing checkout into a request for the user to find or clone the example themselves, and do not test server connectivity first.
+When no candidate example directory exists, read the current example README from the trusted `zenml-io/kitaru` source. Choose a new `kitaru` checkout destination in the current workspace. A prompt that names the PydanticAI returns-agent example URL, the returns-agent example, or the guided tour is enough to propose this route. Do not turn the missing checkout into a request for the user to find or clone the example themselves, and do not test server connectivity first.
 
 Before asking for approval, verify that Git and `uv` are available without changing the environment. State the Kitaru checkout destination and the example subdirectory, then summarize the README's current clone and frozen-environment commands. Ask once to clone and prepare the example. After approval, clone Kitaru and apply the read-only checks below from `examples/python/pydantic_ai_ticket_resolver`. Run the approved frozen-environment setup only after that directory passes those checks. Stop instead of overwriting when the destination already exists. If Git or `uv` is missing, report that single prerequisite and the official installation link from the example README; do not invent a package-manager command.
 
@@ -29,7 +29,7 @@ If trusted comparison is unavailable or the agent, entrypoint, or trace input wa
 
 ## Install and verify the project environment
 
-Treat the example's frozen environment as one unit. Before installation, verify that the trusted current `pyproject.toml` still declares Kitaru with at least the `cli`, `worker`, and `mcp` extras, plus the Langfuse importer and PydanticAI adapter used by the example. The canonical example may also include the `server` extra for its optional local fallback. If those declarations are missing, fail the canonical comparison instead of repairing the project with ad hoc dependency additions.
+Treat the example's frozen environment as one unit. Before installation, verify that the trusted current `pyproject.toml` still declares Kitaru with at least the `cli`, `worker`, and `mcp` extras, plus the Langfuse importer and PydanticAI adapter used by the example. The quickstart example may also include the `server` extra for its optional local fallback. If those declarations are missing, fail the trusted comparison instead of repairing the project with ad hoc dependency additions.
 
 When the environment is absent or stale, follow the verified README's frozen sync command after approval. Do not run separate `uv add` or `pip install` commands: the lockfile owns the complete compatible dependency set. Afterward, verify all of these from the example root:
 

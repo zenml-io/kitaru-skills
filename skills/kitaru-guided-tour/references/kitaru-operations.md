@@ -48,7 +48,7 @@ Transport and server selection are separate. CLI and MCP may both address the sa
 
 Inspect exact argument names before constructing commands. Prefer exact IDs and versions over display names.
 
-If both `kitaru status` and `kitaru doctor` fail before returning a structured selected-server result, do not inspect credential files or guess at server state. First use a discovered working MCP connection when it identifies a reachable server. Otherwise verify the installed CLI version and explain that no usable server selection can be read. Offer the canonical example README's local-workspace command as a fallback, not as an automatic recovery, and ask before running it. Re-run `status` afterward before registration or import.
+If both `kitaru status` and `kitaru doctor` fail before returning a structured selected-server result, do not inspect credential files or guess at server state. First use a discovered working MCP connection when it identifies a reachable server. Otherwise verify the installed CLI version and explain that no usable server selection can be read. Offer the quickstart example README's local-workspace command as a fallback, not as an automatic recovery, and ask before running it. Re-run `status` afterward before registration or import.
 
 ## Keep prepared notes separate from verdicts
 

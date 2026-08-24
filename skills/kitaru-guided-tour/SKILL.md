@@ -1,11 +1,11 @@
 ---
 name: kitaru-guided-tour
-description: Give first-time users a short, value-first Kitaru tour with the canonical returns-agent example in the Kitaru repository. Use when someone has no agent or traces of their own, arrives from Kitaru onboarding, asks for a demo, tutorial, quickstart, or guided example, needs the canonical example cloned or prepared, wants the coding agent to prepare trace annotations before they judge sessions, or wants to experience Kitaru's value before learning the full investigation method. Prepare a three-session frontend review, let the human provide verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. Route real agents, open-ended discovery, and production evidence to kitaru-investigation instead.
+description: Give first-time users a short, value-first Kitaru tour with the PydanticAI returns-agent example in the Kitaru repository. Use when someone has no agent or traces of their own, arrives from Kitaru onboarding, asks for a demo, tutorial, quickstart, or guided example, needs the quickstart example cloned or prepared, wants the coding agent to prepare trace annotations before they judge sessions, or wants to experience Kitaru's value before learning the full investigation method. Prepare a three-session frontend review, let the human provide verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. Route real agents, open-ended discovery, and production evidence to kitaru-investigation instead.
 ---
 
 # Kitaru guided tour
 
-Deliver an AHA before teaching the complete method. Use Kitaru's canonical
+Deliver an AHA before teaching the complete method. Use Kitaru's PydanticAI
 returns-agent example to move from recorded traces, through a short prepared
 frontend review and reusable evaluator, to one bounded experiment result.
 
@@ -56,7 +56,7 @@ frontend review and reusable evaluator, to one bounded experiment result.
   `KITARU_WORKER_CONCURRENCY=10` only when the launch surface exposes worker
   settings through environment variables instead of CLI options.
 - Preserve the user's healthy selected Kitaru server, whether local or cloud.
-  Do not switch servers merely because the canonical example documents a local
+  Do not switch servers merely because the quickstart example documents a local
   quickstart.
 - Resume durable agents, imports, sessions, exact-match annotations, cohorts,
   evaluator versions, experiments, and runs before creating replacements.
@@ -71,7 +71,7 @@ frontend review and reusable evaluator, to one bounded experiment result.
   before the first user-facing explanation and use its teaching rhythm
   throughout setup, review, the evaluator result, and the experiment result.
 - Read [references/starter-template.md](references/starter-template.md) before
-  setup or when deciding whether the directory is the canonical example.
+  setup or when deciding whether the directory is the quickstart example.
 - Read [references/tour-method.md](references/tour-method.md) before selecting
   sessions, writing observations, creating the review, or producing the AHA.
 - Read [references/kitaru-operations.md](references/kitaru-operations.md) before
@@ -82,14 +82,14 @@ frontend review and reusable evaluator, to one bounded experiment result.
 Begin read-only.
 
 1. Look for the example in a candidate Kitaru checkout. If none exists, inspect
-   the current canonical example README through the trusted source. Treat a prompt that
-   names the canonical example, its URL, or the returns-agent tour as
+   the current quickstart example README through the trusted source. Treat a prompt that
+   names the PydanticAI returns-agent example, its URL, or the returns-agent tour as
    intent to use this route; do not stop merely because the checkout is absent.
    Check the local prerequisites, choose a new `kitaru` destination in the
    current workspace, and preview cloning Kitaru, entering
    `examples/python/pydantic_ai_ticket_resolver`, and syncing its frozen environment.
    Ask once before those writes. After approval, clone Kitaru, verify the example
-   directory against the trusted canonical source, and only then install and
+   directory against the trusted source, and only then install and
    verify the frozen environment. Never overwrite an existing destination.
    Complete this source setup before diagnosing Kitaru server connectivity.
    Use this route only when the example directory matches the contract in
@@ -115,7 +115,7 @@ Begin read-only.
    conclusion needs a defensible open-ended investigation.
 
 Do not ask a first-time user to choose a framework, trace provider, review
-method, or sampling strategy on the canonical route.
+method, or sampling strategy on the quickstart route.
 
 ## Orient in three short beats
 
@@ -224,7 +224,7 @@ After the user returns from the cohort and evaluator pages:
 3. Continue with `kitaru-replay-experiment`, carrying the exact accepted
    behavior, cohort version, evaluator version and parameters, candidate agent
    version, proposed override, and an explicit tool policy. For the verified
-   canonical example, use passthrough for all six tools: each task calls
+   quickstart example, use passthrough for all six tools: each task calls
    deterministic local functions against a fresh in-memory mock store and
    cannot affect an external system. Do not silently replace those calls with
    recorded-history matching.

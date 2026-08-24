@@ -1,6 +1,6 @@
 # Guided tour method
 
-Use this method to create a small prepared lesson from the canonical returns-agent traces. Optimize for a concrete insight, not for a representative audit.
+Use this method to create a small prepared lesson from the PydanticAI returns-agent traces. Optimize for a concrete insight, not for a representative audit.
 
 ## Select three teaching moments
 
