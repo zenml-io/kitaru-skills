@@ -14,6 +14,12 @@ metadata. It is not a Python package.
 - `skills/kitaru-guided-tour/references/` contains the starter contract, tour
   method, friendly tutorial narration, and the bounded operations needed for
   that experience.
+- `skills/kitaru-workshop-tour/SKILL.md` gives the expanded returns-agent
+  template a deterministic 30-session survey, evidence-selected human review,
+  one population evaluator, and one bounded replay comparison.
+- `skills/kitaru-workshop-tour/references/` retains the guided tour's structure
+  while defining the expanded starter, selection, review, and operation
+  contracts.
 - `skills/kitaru-investigation/references/` contains method, transport, public
   starter, and evaluator details loaded only when needed.
 - `skills/kitaru-replay-experiment/SKILL.md` guides one safe, bounded candidate
@@ -77,6 +83,10 @@ host environment.
   human supply verdicts in the frontend, and pause only at the guided review,
   reusable-check result, and experiment result. Teach Kitaru concepts through
   those concrete checkpoints rather than a methodology lecture.
+- Keep the expanded tour evidence-led: survey every one of the 30 sessions with
+  pinned deterministic evaluators, deep-read no more than six candidates, and
+  require the human's consequential answer plus all three verdicts before
+  creating a cohort or behavior evaluator.
 - Align first-time orientation with Kitaru's Observe, Judge, Define, Replay,
   and Compare method. Treat registration, recording, and import as setup for
   Observe rather than extra method stages.

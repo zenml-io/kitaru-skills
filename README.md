@@ -27,6 +27,7 @@ improvement, and compare the result.
 | Skill | Purpose |
 |---|---|
 | [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | Give a first-time user a prepared three-session frontend review of the public returns-agent template, collect human verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. |
+| [`kitaru-workshop-tour`](skills/kitaru-workshop-tour/SKILL.md) | Survey the expanded 30-session returns-agent template with pinned deterministic evaluators, select three evidence-grounded sessions for human review, define one population check, and compare one bounded replay candidate. |
 | [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Act as Kitaru's front door: verify setup, record or import sessions, guide human review, define one accepted behavior and cohort, select an evaluator, and offer a bounded replay experiment. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
 | [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
@@ -42,6 +43,7 @@ product handoff rather than recreating the review UI in chat.
 
 - "I do not have an agent yet. Show me why Kitaru is useful."
 - "Give me a guided tour of Kitaru with the public returns-agent example."
+- "Use kitaru-workshop-tour on this expanded returns-agent template."
 - "Investigate why this Kitaru session gave a bad support answer."
 - "I am new to Kitaru. Help me review one run before we investigate more."
 - "Help me discover recurring failure modes in last week's agent sessions."
@@ -86,6 +88,10 @@ live tool execution. The coding agent prepares observations; the human supplies
 the whole-session verdicts. Customized templates and real user evidence route
 to `kitaru-investigation`, which supports one-run review, specific-behavior
 debugging, and bounded recurring-problem discovery. If an
+expanded companion checkout is available, `kitaru-workshop-tour` instead
+surveys all 30 sessions with pinned deterministic evaluators, selects three
+sessions from visible evidence, requires a human answer and three verdicts,
+then evaluates and replays only the confirmed relationship. If an
 unsupported provider prevents sessions from entering Kitaru, the
 `kitaru-importer-builder` skill creates and validates the missing integration,
 then hands usable sessions back. If no supported framework integration can
@@ -118,10 +124,19 @@ recommended route for Codex, Cursor, Claude Code, and other compatible hosts:
 npx skills add zenml-io/kitaru-skills
 ```
 
+The remote installer exposes skills published from the repository's default
+branch. To install `kitaru-workshop-tour` from this feature branch, run the
+installer against this checkout:
+
+```bash
+npx skills add /absolute/path/to/kitaru-skills --skill kitaru-workshop-tour --copy --yes
+```
+
 When the installer asks, select the host you actually use. Include
-`kitaru-guided-tour` for the public demo and `kitaru-investigation` for your own
-agents and traces. Your agent can select a skill from context, or you can ask
-for it by name. Exact invocation syntax varies by host.
+`kitaru-guided-tour` for the public example, `kitaru-workshop-tour` for the
+expanded companion template, and `kitaru-investigation` for your own agents and
+traces. Your agent can select a skill from context, or you can ask for it by
+name. Exact invocation syntax varies by host.
 
 Configure Kitaru MCP separately according to your host and the official Kitaru
 MCP server guide. Restart or reload the coding-agent host process or IDE after
@@ -132,7 +147,7 @@ not block a path the CLI fully supports.
 ### Optional Claude Code plugin installation
 
 Claude Code users who prefer its plugin marketplace can install the same skills
-as a plugin:
+as a plugin after they are published to the repository's default branch:
 
 ```bash
 /plugin marketplace add zenml-io/kitaru-skills
@@ -140,8 +155,9 @@ as a plugin:
 ```
 
 You can then invoke
-`/kitaru-guided-tour`, `/kitaru-investigation`, `/kitaru-replay-experiment`,
-`/kitaru-importer-builder`, or `/kitaru-adapter-builder` explicitly.
+`/kitaru-guided-tour`, `/kitaru-workshop-tour`, `/kitaru-investigation`,
+`/kitaru-replay-experiment`, `/kitaru-importer-builder`, or
+`/kitaru-adapter-builder` explicitly.
 
 ### Manual installation
 

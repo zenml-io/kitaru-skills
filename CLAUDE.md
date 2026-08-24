@@ -8,6 +8,9 @@ The repository contains public Kitaru skills plus Claude Code plugin packaging.
 `kitaru-guided-tour` gives first-time users a value-first prepared review of
 the public returns-agent template and turns one accepted finding into a
 deterministic evaluator followed by one approved bounded replay experiment.
+`kitaru-workshop-tour` runs the expanded returns-agent template's deterministic
+30-session survey, selects a bounded evidence-grounded review, requires genuine
+human annotations, and hands one confirmed cohort to bounded replay.
 `kitaru-investigation` conducts evidence-grounded review of Kitaru agent
 sessions and can turn an accepted behavior into a versioned cohort and optional
 installed or custom evaluator. `kitaru-replay-experiment` safely compares one
@@ -30,6 +33,15 @@ skills/
       kitaru-operations.md
       starter-template.md
       tutorial-narration.md
+      tour-method.md
+  kitaru-workshop-tour/
+    SKILL.md
+    agents/
+      openai.yaml
+    references/
+      kitaru-operations.md
+      starter-template.md
+      functional-explanations.md
       tour-method.md
   kitaru-importer-builder/
     SKILL.md
@@ -61,7 +73,8 @@ skills/
       experiment-method.md
 ```
 
-Claude Code exposes the skills as `/kitaru-guided-tour`, `/kitaru-investigation`,
+Claude Code exposes the skills as `/kitaru-guided-tour`,
+`/kitaru-workshop-tour`, `/kitaru-investigation`,
 `/kitaru-replay-experiment`, `/kitaru-importer-builder`, and
 `/kitaru-adapter-builder`, and may also select them automatically from their
 frontmatter descriptions.
@@ -93,6 +106,10 @@ frontmatter descriptions.
   frontend for human verdicts, and pause at the guided review, reusable-check
   result, and experiment result. Require the replay skill's complete run card
   and approval before creating or running the final experiment.
+- Keep `kitaru-workshop-tour` tied to the expanded companion template's
+  content contract. Account for all deterministic results before selection,
+  preserve genuine human answers and verdicts, and pass fixed comparison
+  conditions to the unchanged replay skill.
 - Narrate the guided tour as a friendly introduction for someone who has read
   neither the sample agent nor Kitaru documentation. Explain what each
   meaningful stage does, why it matters, and what it enables next without
@@ -140,6 +157,7 @@ version fields together, tag `vX.Y.Z`, and fast-forward `main` to `develop`.
 ```bash
 mkdir -p .claude/skills
 cp -R skills/kitaru-guided-tour .claude/skills/
+cp -R skills/kitaru-workshop-tour .claude/skills/
 cp -R skills/kitaru-importer-builder .claude/skills/
 cp -R skills/kitaru-adapter-builder .claude/skills/
 cp -R skills/kitaru-investigation .claude/skills/

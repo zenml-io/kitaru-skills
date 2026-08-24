@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kitaru Workshop Tour"
+  short_description: "Evaluate 30 traces from survey through replay"
+  default_prompt: "Use $kitaru-workshop-tour to evaluate the expanded returns-agent population through one safe experiment."
