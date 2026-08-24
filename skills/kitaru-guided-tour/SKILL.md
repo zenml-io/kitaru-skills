@@ -1,17 +1,17 @@
 ---
 name: kitaru-guided-tour
-description: Give first-time users a short, value-first Kitaru tour with the public returns-agent template. Use when someone has no agent or traces of their own, arrives from Kitaru onboarding, asks for a demo, tutorial, quickstart, or guided example, needs the public template cloned or prepared, wants the coding agent to prepare trace annotations before they judge sessions, or wants to experience Kitaru's value before learning the full investigation method. Prepare a three-session frontend review, let the human provide verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. Route real agents, open-ended discovery, and production evidence to kitaru-investigation instead.
+description: Give first-time users a short, value-first Kitaru tour with the canonical returns-agent example in the Kitaru repository. Use when someone has no agent or traces of their own, arrives from Kitaru onboarding, asks for a demo, tutorial, quickstart, or guided example, needs the canonical example cloned or prepared, wants the coding agent to prepare trace annotations before they judge sessions, or wants to experience Kitaru's value before learning the full investigation method. Prepare a three-session frontend review, let the human provide verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. Route real agents, open-ended discovery, and production evidence to kitaru-investigation instead.
 ---
 
 # Kitaru guided tour
 
-Deliver an AHA before teaching the complete method. Use the public Kitaru
-returns-agent template to move from recorded traces, through a short prepared
+Deliver an AHA before teaching the complete method. Use Kitaru's canonical
+returns-agent example to move from recorded traces, through a short prepared
 frontend review and reusable evaluator, to one bounded experiment result.
 
 ## Experience contract
 
-- Assume the user has not read the template agent and does not yet know how
+- Assume the user has not read the example agent and does not yet know how
   Kitaru works. Explain each example from the evidence visible in the review,
   translate internal names into plain language, and never require missing code
   or product context to understand a question.
@@ -56,7 +56,7 @@ frontend review and reusable evaluator, to one bounded experiment result.
   `KITARU_WORKER_CONCURRENCY=10` only when the launch surface exposes worker
   settings through environment variables instead of CLI options.
 - Preserve the user's healthy selected Kitaru server, whether local or cloud.
-  Do not switch servers merely because the public template documents a local
+  Do not switch servers merely because the canonical example documents a local
   quickstart.
 - Resume durable agents, imports, sessions, exact-match annotations, cohorts,
   evaluator versions, experiments, and runs before creating replacements.
@@ -71,7 +71,7 @@ frontend review and reusable evaluator, to one bounded experiment result.
   before the first user-facing explanation and use its teaching rhythm
   throughout setup, review, the evaluator result, and the experiment result.
 - Read [references/starter-template.md](references/starter-template.md) before
-  setup or when deciding whether the checkout is the canonical public template.
+  setup or when deciding whether the directory is the canonical example.
 - Read [references/tour-method.md](references/tour-method.md) before selecting
   sessions, writing observations, creating the review, or producing the AHA.
 - Read [references/kitaru-operations.md](references/kitaru-operations.md) before
@@ -81,35 +81,36 @@ frontend review and reusable evaluator, to one bounded experiment result.
 
 Begin read-only.
 
-1. Look for a candidate template checkout. If none exists, inspect the current
-   canonical template README through the trusted source. Treat a prompt that
-   names the public template, its canonical URL, or the returns-agent tour as
+1. Look for the example in a candidate Kitaru checkout. If none exists, inspect
+   the current canonical example README through the trusted source. Treat a prompt that
+   names the canonical example, its URL, or the returns-agent tour as
    intent to use this route; do not stop merely because the checkout is absent.
-   Check the local prerequisites, choose a new `kitaru-template` destination in
-   the current workspace, and preview the clone plus frozen-environment setup.
-   Ask once before those writes. After approval, clone it, verify the checkout
-   against the trusted canonical source, and only then install and verify the
-   frozen environment. Never overwrite an existing destination. Complete this
-   source setup before diagnosing Kitaru server connectivity.
-   Use this route only when the resulting project root matches the public
-   template contract in `starter-template.md`.
-2. Establish the template environment, CLI, worker, and MCP package readiness
+   Check the local prerequisites, choose a new `kitaru` destination in the
+   current workspace, and preview cloning Kitaru, entering
+   `examples/python/pydantic_ai_ticket_resolver`, and syncing its frozen environment.
+   Ask once before those writes. After approval, clone Kitaru, verify the example
+   directory against the trusted canonical source, and only then install and
+   verify the frozen environment. Never overwrite an existing destination.
+   Complete this source setup before diagnosing Kitaru server connectivity.
+   Use this route only when the example directory matches the contract in
+   `starter-template.md`.
+2. Establish the example environment, CLI, worker, and MCP package readiness
    through `starter-template.md` and `kitaru-operations.md`. Install the whole
-   frozen template environment instead of adding packages piecemeal. Explain
+   frozen example environment instead of adding packages piecemeal. Explain
    and ask before changing the environment or host MCP configuration. Treat MCP
    as preferred but optional when the CLI can complete the tour. If host MCP
    configuration is added or changed, tell the user to restart or reload the
    coding-agent host process or IDE, preserve a resume checkpoint, and do not
    claim that the current task can discover the new tools.
 3. Inspect Kitaru connectivity and keep using the healthy selected server. Only
-   offer the template's isolated local server when no usable server is selected,
+   offer the example's isolated local server when no usable server is selected,
    and ask before starting or selecting it. Then inspect the exact registered
    `returns-resolver` agent version, relevant import jobs, and the complete
    imported population carrying the `returns-baseline` tag.
 4. Resume matching durable state. Perform only missing setup steps from the
-   verified template README, with one clear explanation and approval before
+   verified example README, with one clear explanation and approval before
    environment changes, service starts, registration, or import.
-5. Stop and route to `kitaru-investigation` when the template was materially
+5. Stop and route to `kitaru-investigation` when the example was materially
    customized, the user supplies their own agent or evidence, or the requested
    conclusion needs a defensible open-ended investigation.
 
@@ -223,7 +224,7 @@ After the user returns from the cohort and evaluator pages:
 3. Continue with `kitaru-replay-experiment`, carrying the exact accepted
    behavior, cohort version, evaluator version and parameters, candidate agent
    version, proposed override, and an explicit tool policy. For the verified
-   public template, use passthrough for all six tools: each task calls
+   canonical example, use passthrough for all six tools: each task calls
    deterministic local functions against a fresh in-memory mock store and
    cannot affect an external system. Do not silently replace those calls with
    recorded-history matching.
@@ -246,7 +247,7 @@ the tour's method explanation but none of its synthetic conclusions.
 
 ## Preserve a pleasant failure path
 
-- If the template setup is incomplete, state the current checkpoint and the one
+- If the example setup is incomplete, state the current checkpoint and the one
   missing action. Do not dump a generic setup checklist.
 - If the imported sessions or full node payloads are unavailable, stop before
   inventing observations.

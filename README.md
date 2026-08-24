@@ -14,7 +14,7 @@ investigation without replacing human judgment.
 
 Want to see the skills in action before installing them? [Watch the 26-minute
 Kitaru guided tour](https://youtu.be/aYLfzXEr2Rk). Alex starts with the Kitaru
-Quickstart, then uses `kitaru-guided-tour` on the public returns-agent template
+Quickstart, then uses `kitaru-guided-tour` on the canonical returns-agent example
 to review recorded sessions, define an evaluator and cohort, replay one
 improvement, and compare the result.
 
@@ -26,7 +26,7 @@ improvement, and compare the result.
 
 | Skill | Purpose |
 |---|---|
-| [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | Give a first-time user a prepared three-session frontend review of the public returns-agent template, collect human verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. |
+| [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | Give a first-time user a prepared three-session frontend review of the canonical returns-agent example, collect human verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. |
 | [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Act as Kitaru's front door: verify setup, record or import sessions, guide human review, define one accepted behavior and cohort, select an evaluator, and offer a bounded replay experiment. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
 | [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
@@ -70,15 +70,15 @@ Each skill verifies the installed version and public schema before it acts, and
 stops when the required contract is unavailable.
 
 When a first-time user wants to experience Kitaru before bringing an agent or
-learning the full method, `kitaru-guided-tour` uses the public template to
+learning the full method, `kitaru-guided-tour` uses the canonical example to
 prepare three evidence-anchored agent observations, open a frontend review for
 human verdicts, turn one accepted finding into a deterministic evaluator, and
 finish with one approved bounded replay experiment. The tour pauses at the
 investigation review, cohort and evaluator results, and experiment result so the
 user can inspect each durable stage. The guided starter lives in
-[`zenml-io/kitaru-template`](https://github.com/zenml-io/kitaru-template); the
+[`zenml-io/kitaru` canonical example](https://github.com/zenml-io/kitaru/tree/develop/examples/python/pydantic_ai_ticket_resolver); the
 tour recognizes renamed clones and forks from stable root contents, compares
-them with the current public template, resumes existing setup, and uses the
+them with the current canonical source, resumes existing setup, and uses the
 checked-in Langfuse JSONL without live credentials, trace regeneration, or a
 paid model call for the recorded-evidence and evaluator stages. The final
 experiment requires a brief explanation and separate approval before model or

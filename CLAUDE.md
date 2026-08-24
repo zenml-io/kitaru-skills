@@ -6,7 +6,7 @@ Shared contributor guidance lives in [`AGENTS.md`](AGENTS.md). Follow it first.
 
 The repository contains public Kitaru skills plus Claude Code plugin packaging.
 `kitaru-guided-tour` gives first-time users a value-first prepared review of
-the public returns-agent template and turns one accepted finding into a
+the canonical returns-agent example and turns one accepted finding into a
 deterministic evaluator followed by one approved bounded replay experiment.
 `kitaru-investigation` conducts evidence-grounded review of Kitaru agent
 sessions and can turn an accepted behavior into a versioned cohort and optional
@@ -73,8 +73,8 @@ frontmatter descriptions.
   `references/investigation-method.md`.
 - Keep exact CLI/MCP routing and current product gaps in
   `references/kitaru-operations.md`.
-- Keep public-template recognition, untrusted-content boundaries, and
-  idempotent demo setup in `references/starter-template.md`. Let the template's
+- Keep canonical-example recognition, untrusted-content boundaries, and
+  idempotent demo setup in `references/starter-template.md`. Let the example's
   current root README own exact commands only after trusted comparison.
 - Check installed evaluators after the user accepts a behavior and cohort. Load
   custom evaluator guidance only after checking that catalog. Continue when no

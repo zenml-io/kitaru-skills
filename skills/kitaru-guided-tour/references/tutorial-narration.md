@@ -39,7 +39,7 @@ When CLI or MCP setup is relevant, explain the distinction without turning it in
 
 Before registration, explain that Kitaru ties recorded behavior to an exact agent version so later findings can be traced back to the code that produced them. Registration does not run the agent or judge its quality; it gives that code version a durable identity.
 
-Before import, explain that the template includes ten already-recorded customer-support runs. Importing them gives Kitaru the complete sequence of model messages, tool calls, and tool results, which is what lets the user inspect what actually happened rather than trusting the final reply alone.
+Before import, explain that the example includes ten already-recorded customer-support runs. Importing them gives Kitaru the complete sequence of model messages, tool calls, and tool results, which is what lets the user inspect what actually happened rather than trusting the final reply alone.
 
 After registration or import, state the exact durable result in approachable terms. For example: “Kitaru now knows which version of the returns agent produced these ten runs, so we can review its behavior without running or paying for the model again.”
 
