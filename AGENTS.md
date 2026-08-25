@@ -84,9 +84,10 @@ host environment.
   reusable-check result, and experiment result. Teach Kitaru concepts through
   those concrete checkpoints rather than a methodology lecture.
 - Keep the expanded tour evidence-led: survey every one of the 30 sessions with
-  pinned deterministic evaluators, deep-read no more than six candidates, and
-  require the human's consequential answer plus all three verdicts before
-  creating a cohort or behavior evaluator.
+  pinned deterministic evaluators, explain their findings in compact tables,
+  and inspect complete traces until the three review roles are supported or the
+  population is exhausted. Require all three human verdicts before creating a
+  cohort or behavior evaluator; written answers remain optional context.
 - Align first-time orientation with Kitaru's Observe, Judge, Define, Replay,
   and Compare method. Treat registration, recording, and import as setup for
   Observe rather than extra method stages.

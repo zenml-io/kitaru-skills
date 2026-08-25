@@ -25,29 +25,63 @@ Configure `kitaru/resource-budget@1` separately because adding it to the descrip
 
 At least one field is required. Include `max_cost` when cost is part of the condition. After confirmation, freeze the exact parameter object in the current task context and run one separate 30-pair resource-budget job. Account for its completed, failed, and missing results independently. Reuse the identical evaluator version and parameter object in replay.
 
+Show the proposed parameter object and explain each ceiling in one compact
+table. Do not call it confirmed or start the resource-budget job until the human
+explicitly accepts that exact object. An approval for registration, import, or
+other setup does not confirm the budget.
+
 If the human declines to confirm a resource ceiling, stop successfully before selection and replay. Preserve the descriptive survey result, but do not silently substitute an agent-authored budget or claim that the four-evaluator population survey completed.
 
-Show a compact table with one row per evaluator version and columns for expected, completed, failed, and missing. Selection begins only after the denominator is explicit for all four evaluators.
+Show a compact table with one row per evaluator version and columns for
+expected, completed, failed, and missing. Then show the audience-facing
+findings summary and small session matrix defined in
+`functional-explanations.md`. Selection begins only after both the denominator
+and the useful findings are visible.
 
-## Reduce the population deterministically
+## Find three useful review cases
 
-Build one cheap survey record per session from the pinned evaluator outputs, visible session-level inputs and outputs, terminal-action category, and resource metrics. Exclude full trace-node payloads at this stage, along with template tests, fixture-family labels, hidden expected outcomes, and ticket-to-answer mappings. The descriptive evaluators expose diagnostics, trajectory shape, tool health, and resource use; they do not establish a semantic policy violation.
+Build one compact survey record per session from the pinned evaluator outputs,
+visible session-level inputs and outputs, terminal-action category, and resource
+metrics. Exclude template tests, fixture-family labels, hidden expected
+outcomes, and ticket-to-answer mappings. The descriptive evaluators expose
+diagnostics, trajectory shape, tool health, and resource use; they do not
+establish a semantic policy violation.
 
-Form stable strata from evaluation completeness, diagnostic and trajectory signals, terminal-action category, visible request and amount bands, tool-health result, and resource bands. Represent absent values with one explicit sentinel. Canonicalize each survey record as sorted-key JSON, sort set-like arrays, preserve sequence-valued evidence in its recorded order, and compute its SHA-256 digest. Canonicalize the stratum key the same way.
+Use the compact records to identify promising cases across different final
+actions, policy conditions, operational signals, and resource results. Begin
+with cases whose visible evidence suggests a possible mismatch between policy
+or state and a later action or outcome. Also retain nearby cases that may show
+where the apparent problem stops.
 
-Build the shortlist with a fixed round-robin: sort non-empty strata by canonical stratum key, sort members within each stratum by evidence digest and then stable source-trace ID solely as a digest-collision fallback, and take one member from each stratum per round until six are selected or all strata are exhausted. If more than six strata exist, order strata first by evaluation completeness, then by the count of non-clean diagnostic, trajectory, tool-health, and resource results in descending order, then by canonical stratum key. This includes strong signals without allowing API order or a ticket identifier to become a quality signal.
+Use a stable reading order: sort first by the number of named descriptive
+signals, then place resource-budget failures before passes and unresolved
+results, and use the Kitaru session ID only as a final tie-breaker. This order
+only decides which complete trace to read next; it does not assign a review
+role or establish that a behavior is problematic.
 
-Do not add randomness or use API order, session order, names, or ticket IDs as a quality signal. Keep unresolved records visible but never select one as an acceptable control merely because its evaluations are absent. Given the same visible survey records, a shuffled API listing must produce the same shortlist.
+Read complete node payloads for promising cases in small batches. Continue
+until the evidence supports all three roles below or all 30 sessions have been
+read. Do not stop at an arbitrary candidate count, and do not use ticket IDs,
+API order, or fixture knowledge as quality signals.
 
-Shortlist no more than six sessions. Only then deep-read every node and full payload for that shortlist. Use that evidence to decide whether a relational policy/state-versus-action mismatch exists and assign three roles:
+1. **Suspected problem:** a complete trace where observable policy or state
+   appears to conflict with a later action or outcome. This is a hypothesis for
+   human review, not a settled verdict.
+2. **Evidence-reading or boundary case:** a nearby trace whose node-level
+   evidence changes or limits the apparent interpretation.
+3. **Nearby comparison:** a complete case that appears to follow the relevant
+   policy or state relationship and should remain outside the suspected
+   problem.
 
-1. **Consequential problem:** a complete trace where an observable policy or state conflicts with a later action or outcome.
-2. **Evidence-reading or boundary case:** a nearby trace whose node-level evidence changes or limits the apparent interpretation.
-3. **Acceptable counterexample:** a nearby complete case that should remain outside the proposed problem.
+For every proposed case, record one concise reason and the exact node or field
+that supports it. Before writing review objects, challenge each role against the
+complete evidence. A tool failure, escalation, high cost, or unusual trajectory
+is not automatically a behavior problem. The suggested relationship must
+explain why the suspected case may be problematic and why the nearby comparison
+may be acceptable.
 
-For reproducible role assignment, canonicalize the visible deep-read evidence for each candidate and compute a second SHA-256 digest. Record whether each candidate satisfies each role's predicate above and one concise evidence reason. Process the roles in the listed order and choose the first unused eligible candidate by deep-read digest, using stable source-trace ID only as a digest-collision fallback. Before writing anything, rerun selection from the retained canonical records in reverse listing order and require the same shortlist and three role assignments.
-
-If the evidence cannot support all three roles, stop with the ranked evidence and missing role instead of substituting a fixed answer-key selection.
+If the full population cannot support all three roles, stop with the evidence
+read and the missing role instead of substituting a fixed answer-key selection.
 
 ## Write agent observations
 
@@ -57,9 +91,17 @@ Start every durable note with `Agent observation:`. State what the evidence show
 
 ## Prepare the investigation
 
-Keep one session-specific question per session. Ask a direct acceptability question grounded in the recorded values and behavior. Attach the most important observation selector as the primary highlight. Order the sessions consequential problem, nearby boundary case, acceptable counterexample.
+Keep one session-specific question per session. Ask a direct acceptability
+question grounded in the recorded values and behavior. Attach the most
+important observation selector as the primary highlight. Order the sessions
+suspected problem, nearby boundary case, nearby comparison.
 
-For the consequential session, explicitly ask the reviewer to write one short evidence-grounded answer explaining what the highlighted evidence shows and whether the resulting action was acceptable. State this required answer in the investigation description and question. The answer belongs to that investigation session and question key. For all three sessions, ask for the whole-session verdict: Acceptable, Problematic, or Uncertain. Do not ask the coding agent to draft or submit any human field.
+Ask for the whole-session verdict on all three sessions: Acceptable,
+Problematic, or Uncertain. The frontend may also expose a written-answer field,
+but it is optional. Do not ask the reviewer to repeat the verdict in prose. If
+the question invites a note, ask for complementary reasoning such as which
+evidence mattered or what action should have happened instead. Do not ask the
+coding agent to draft or submit any human field.
 
 Give the investigation a valid machine name such as `expanded-returns-tour`, adding a short letter-or-digit suffix only when a distinct investigation is required. Put the readable title and the agent-versus-human division of labor in the description. Retain the exact investigation ID in the current task context.
 
@@ -69,24 +111,28 @@ Before the combined write approval, show three compact rows:
 
 | Session role | What the human will inspect | Why it matters |
 |---|---|---|
-| Consequential problem | The consequential action and governing evidence | Supplies the required written interpretation and verdict. |
+| Suspected problem | The action and governing evidence that may conflict | Tests whether the apparent problem is real. |
 | Nearby boundary | The nearby inconsistency or boundary | Tests whether the proposed relationship is too broad. |
-| Acceptable counterexample | The acceptable behavior and evidence | Protects behavior that should not be swept into the problem. |
+| Nearby comparison | Similar behavior and its governing evidence | Protects behavior that should not be swept into the problem. |
 
 Adapt the descriptions to the selected traces. Do not show internal IDs, raw JSON, ranking machinery, or a research plan in the conversational lead.
 
 ## Read the human records
 
-After the human selects Done, read answers and verdicts through their separate storage paths. Require:
-
-- one human-authored answer for the consequential investigation-session ID and question key; and
-- one whole-session verdict for each of the three investigation sessions.
-
-An `Agent observation:` annotation cannot satisfy either requirement. Verdicts without the consequential answer remain incomplete. The answer without all three verdicts also remains incomplete. Report the exact missing field and return the same review link without creating a cohort or evaluator.
+After the human selects Done, read the three whole-session verdicts. Read any
+written answers as optional context, but do not require them and do not treat
+their mere presence as evidence that the reviewer understood or endorsed the
+agent-prepared observation. An `Agent observation:` annotation cannot satisfy a
+missing verdict. Report an exact missing verdict and return the same review link
+without creating a cohort or evaluator.
 
 Lead with the human's choices and the evidence beside them. A verdict does not automatically endorse every agent observation.
 
-If the records reject the proposed behavior, preserve that correction and create no cohort, evaluator, experiment, or replay for it. Offer one re-selection only after the human explicitly chooses to continue. That re-selection must use the already qualified candidates, reassign the same three roles from their read evidence, and repeat the human gate. Otherwise stop successfully. Do not run another population survey or steer the reviewer toward the original claim.
+If the verdicts reject the proposed behavior, preserve that correction and
+create no cohort, evaluator, experiment, or replay for it. Offer one re-selection
+only after the human explicitly chooses to continue. Continue inspecting the
+remaining population rather than rerunning the deterministic survey or steering
+the reviewer toward the original claim.
 
 ## Turn one confirmed relationship into a check
 

@@ -90,8 +90,9 @@ to `kitaru-investigation`, which supports one-run review, specific-behavior
 debugging, and bounded recurring-problem discovery. If an
 expanded companion checkout is available, `kitaru-workshop-tour` instead
 surveys all 30 sessions with pinned deterministic evaluators, selects three
-sessions from visible evidence, requires a human answer and three verdicts,
-then evaluates and replays only the confirmed relationship. If an
+sessions from visible evidence, requires three human verdicts, treats written
+reasoning as optional context, then evaluates and replays only the confirmed
+relationship. If an
 unsupported provider prevents sessions from entering Kitaru, the
 `kitaru-importer-builder` skill creates and validates the missing integration,
 then hands usable sessions back. If no supported framework integration can

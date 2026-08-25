@@ -1,6 +1,9 @@
 # Functional explanations
 
-Explain the Kitaru flow as it runs. Keep setup compact, but state what each durable operation produced and why that object is needed next.
+Explain the Kitaru flow as it runs. Treat the visible conversation as a concise
+product walkthrough, not a log of the coding agent's internal work. Keep setup
+compact, but state what each durable operation produced and why that object is
+needed next.
 
 Assume the user has not read the sample agent, has not used Kitaru before, and does not know its vocabulary. Explain from the concrete returns example first. Introduce a product term only when the current step makes its purpose visible.
 
@@ -10,7 +13,19 @@ Use only terms that exist in Kitaru's product, CLI, API, or documentation when n
 
 Before a durable action, state what will change, why it is needed, what the user can inspect afterward, and whether approval is required. Afterward, state what was created or reused, retain the exact ID in the current task context, and name the next decision.
 
-Do not explain every command, file read, schema lookup, retry, or status check. Do explain installations, server selection, registration, imports, durable review writes, and evaluator runs because they change the user's environment or create a new Kitaru object. When a command updates or installs something, explain what capability it provides and why the tour needs it before asking for approval.
+Do not narrate commands, file reads, reference loading, schema lookup, cache
+paths, temporary files, parsing, quoting, retries, or status checks. In
+particular, avoid updates such as “I found,” “I loaded,” “I hit a parsing
+problem,” or “I am deriving the payload shape.” These statements describe the
+coding agent, not Kitaru. Resolve routine work quietly. If recovery becomes a
+real blocker, name the intended Kitaru action, the blocker, and the smallest
+recovery once.
+
+Do explain installations, server selection, registration, imports, durable
+review writes, and evaluator runs because they change the user's environment or
+create a Kitaru object. When a command updates or installs something, explain
+what capability it provides and why the tour needs it before asking for
+approval.
 
 Keep explanations direct. Do not quiz the user or make them repeat information before continuing.
 
@@ -18,7 +33,11 @@ Keep explanations direct. Do not quiz the user or make them repeat information b
 
 ### Connect to Kitaru
 
-Explain that a Kitaru server is where agents, recorded runs, annotations, and review results are stored. If the user already has a healthy local or cloud server selected, say that the tour will keep using it. If setup is missing, explain the smallest required change and why it unlocks the next step.
+Explain that a Kitaru server is where agents, recorded runs, annotations, and
+review results are stored. This route uses Kitaru Cloud. If the user already has
+a healthy cloud server selected, say that the tour will keep using it. If setup
+is missing, explain the smallest required login or server-selection change and
+why it unlocks the next step.
 
 When CLI or MCP setup is relevant, explain the distinction without turning it into a choice the user must make: the CLI and MCP are two ways for the coding agent to work with the same Kitaru server. A working project-local CLI is enough for the tour; MCP can make later agent interactions more direct.
 
@@ -32,15 +51,56 @@ After registration or import, state the exact durable result in approachable ter
 
 ### Prepare the review
 
-Before the deterministic survey, explain that the coding agent will apply the same pinned checks to every recorded run before choosing what deserves close reading. The three descriptive evaluators fit in one 90-pair job. Resource budget runs separately so the human can confirm the exact ceiling and the comparison can reuse it later.
+Before the deterministic survey, explain that the coding agent will apply the
+same pinned checks to every recorded run before choosing what deserves close
+reading. State that these checks read stored evidence and make no model calls.
+Show this compact orientation table before running them:
 
-After the survey, show expected, completed, failed, and missing counts. Explain that missing or failed evaluations remain unresolved evidence rather than quietly disappearing from the population.
+| Evaluator | Plain-language question |
+|---|---|
+| Session diagnostics | Is the recorded trace complete and structurally trustworthy? |
+| Trajectory signals | Did the agent repeat tools, retry a failure, or enter a short cycle? |
+| Tool health | Did a tool fail, return no useful result, or contradict its recorded status? |
+| Resource budget | Did the run stay within the ceilings the human chose? |
+
+Explain that the first three are descriptive signals. They help choose what to
+inspect but do not decide whether a refund, replacement, or escalation was
+correct. Resource budget is a configured rule and can return pass, fail, or
+unresolved. The three descriptive evaluators fit in one 90-pair job. Resource
+budget runs separately so the human can confirm the exact ceiling and the
+comparison can reuse it later.
+
+After the survey, first show expected, completed, failed, and missing pair
+counts. Then show a findings table that makes the results useful without
+inventing one aggregate verdict for the descriptive evaluators:
+
+| Evaluator | Completed pairs | Unresolved pairs | Named signals or result |
+|---|---:|---:|---|
+
+For session diagnostics, trajectory signals, and tool health, report the named
+signals the evaluator actually returned and how many sessions exposed each
+one. Do not translate their absence into a synthetic `clean` verdict. Report
+resource-budget results separately as pass, fail, or unresolved using the
+evaluator's own top-level result. If an output has mixed ceiling details but no
+top-level result, keep it unresolved and describe the mixed details rather than
+choosing a label. Summarize the findings in ordinary language, then show a
+small session matrix containing the customer request, final action, notable
+signals, resource result, and reason a session may deserve inspection. Do not
+dump every stored evaluation row. Missing or failed evaluations remain
+unresolved evidence rather than quietly disappearing from the population.
 
 Before adding observations and highlights, explain that the coding agent has read the complete traces and will point to evidence worth noticing. An annotation records the observation; a highlight places it beside the exact tool result, message, or field that supports it. These are prepared suggestions, not the user's verdict.
 
-Before creating the investigation, explain that it turns the three selected runs into one ordered frontend review. The consequential written answer records how the human interpreted the evidence, while the verdict buttons record the human decision on each complete session.
+Before creating the investigation, explain that it turns the three selected
+runs into one ordered frontend review. The verdict buttons record the required
+human decision on each complete session. Written notes are optional and should
+record additional reasoning only when the reviewer finds that useful.
 
-After creation, say what was saved and make the division of labor explicit: the coding agent prepared the evidence, Kitaru keeps it attached to the trace, and the user writes the consequential answer and decides Acceptable, Problematic, or Uncertain for all three sessions.
+After creation, say what was saved and make the division of labor explicit:
+the coding agent prepared evidence pointers, Kitaru keeps them attached to the
+trace, and the user decides Acceptable, Problematic, or Uncertain for all three
+sessions. Do not overstate the meaning of optional notes or later treat them as
+careful annotations when the user was simply moving through the review.
 
 ### Turn judgment into a reusable check
 
@@ -63,7 +123,10 @@ After settlement, lead with the experiment page. Explain how to select the run, 
 ## Keep explanations honest
 
 - Explain what the current action actually proves. Registration identifies code; it does not validate behavior. Import preserves recorded evidence; it does not make the evidence representative.
-- Distinguish the coding agent's prepared observations from the user's verdicts every time that distinction becomes relevant, without repeating a warning mechanically.
+- Distinguish the coding agent's prepared observations from the user's verdicts
+  when that distinction becomes relevant. Optional written notes may be useful
+  context, but they are not required labels and their presence does not prove
+  that the reviewer understood or endorsed the prepared observation.
 - Do not claim prevalence from three reviewed examples. The full 30-session evaluator result can describe this synthetic population only.
 - If a step is resumed rather than created, explain that Kitaru already has the durable result and the tour is reusing it. This shows persistence without pretending the work happened again.
 - If something fails, preserve the explanation: name the intended concept, the exact blocked action, and the smallest recovery. Do not replace the tour with raw command output.

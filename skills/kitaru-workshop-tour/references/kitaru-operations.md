@@ -1,6 +1,10 @@
 # Kitaru expanded-tour operations
 
-Use this reference before reading or mutating Kitaru state. Inspect the installed CLI schema and discovered MCP tool schemas first; they are authoritative when they differ from this reference.
+Use this reference before reading or mutating Kitaru state. The companion
+template's frozen environment and the command forms below are the normal route.
+Do not rediscover argument shapes with repeated help, schema, source, or probe
+writes. Inspect the installed schema only when a known-good command is rejected
+or the installed Kitaru version differs from the frozen environment.
 
 ## Choose a transport
 
@@ -20,14 +24,38 @@ After the template checkout is verified, inspect the project prerequisites, the 
 
 Keep network contexts separate when diagnosing local setup. The user's browser, the IDE host, an isolated shell, and the MCP subprocess may not share the same view of `localhost`. Prefer `uv run kitaru status` from the verified template environment for CLI connectivity and discovered MCP tools for MCP connectivity. Do not declare the server unhealthy from a failed `curl` or browser-tool probe inside an isolated environment when the user's host browser reaches it.
 
+## Use the cloud and writable worker caches
+
+This expanded route runs against Kitaru Cloud. Resolve `KITARU_API_URL` from the
+inherited environment or ask the user for the server URL once. Authenticate with
+an inherited `KITARU_API_KEY` when available. Otherwise run the normal
+interactive `uv run kitaru login "$KITARU_API_URL"` flow. Check only whether a
+credential is available; never print, inspect, or copy its value into chat.
+
+Start the worker from the template root with the README's known-good command.
+It includes `--concurrency 10`, `--blob-cache-root
+.kitaru/cache/blobs`, and `--payload-cache-root
+.kitaru/cache/payloads`. The `.kitaru/` directory is writable and ignored by
+Git. Do not try `XDG_CACHE_HOME`, the default home cache, background shell
+redirection, a timed foreground worker, or ad hoc cache environment variables
+before using these explicit flags.
+
+Keep one foreground worker running in a user-controlled terminal or supported
+interactive command session. Verify it once through `kitaru status` or
+`kitaru worker list`, then continue. Do not narrate worker process management or
+cache setup unless the known-good launch fails.
+
 ## Preserve the selected server
 
-Transport and server selection are separate. CLI and MCP may both address the same selected local or cloud Kitaru server.
+Transport and server selection are separate. CLI and MCP may both address the
+same selected Kitaru Cloud server.
 
 1. Read the current server selection and connectivity before following any workspace command from the template README.
 2. When the selected server is healthy, keep using it for registration, import, review, cohorts, and evaluation. Do not ask the user to choose again and do not run `login --local`.
 3. If the selected server is reachable but lacks permission or a required capability, report that exact blocker. Do not silently switch servers.
-4. Only when no usable server is selected, offer the README's isolated local workspace as the local fallback. Explain the state change and ask before starting or selecting it.
+4. When no usable cloud server is selected, request its URL or start the normal
+   cloud login flow. Do not offer or select the local-server fallback in this
+   expanded route.
 
 ## Operation map
 
@@ -47,9 +75,11 @@ Transport and server selection are separate. CLI and MCP may both address the sa
 | Evaluate baseline sessions | `kitaru session evaluate ... --wait` | `kitaru_workflow_start`, evaluation |
 | Create and run experiment | `kitaru experiment create`; `kitaru experiment run start ... --wait` | `kitaru_experiments_manage`; `kitaru_workflow_start`, experiment run |
 
-Inspect exact argument names before constructing commands. Prefer exact IDs and versions over display names.
+Use the known-good forms in this reference and the verified template README.
+Inspect exact argument names only after a version mismatch or rejected command.
+Prefer exact IDs and versions over display names.
 
-If both `kitaru status` and `kitaru doctor` fail before returning a structured selected-server result, do not inspect credential files or guess at server state. First use a discovered working MCP connection when it identifies a reachable server. Otherwise verify the installed CLI version and explain that no usable server selection can be read. Offer the canonical template README's local-workspace command as a fallback, not as an automatic recovery, and ask before running it. Re-run `status` afterward before registration or import.
+If both `kitaru status` and `kitaru doctor` fail before returning a structured selected-server result, do not inspect credential files or guess at server state. First use a discovered working MCP connection when it identifies a reachable server. Otherwise verify the installed CLI version, request or confirm the intended Kitaru Cloud URL, and use the normal cloud login flow from the template README. Re-run `status` before registration or import. If the cloud selection still cannot be read, stop with that precise blocker instead of offering a local server.
 
 ## Run and account for the population survey
 
@@ -61,7 +91,13 @@ Run `kitaru/resource-budget@1` separately over the same 30 IDs after the human c
 --evaluator-params 'kitaru/resource-budget@1={...}'
 ```
 
-Retain the exact object for replay. For both jobs, read the terminal workflow and page through every evaluation result. Derive expected pairs from the 30 source session IDs and exact evaluator-version IDs, then classify every expected pair as completed, failed, pending, or missing. A pair is pending only while its exact job remains non-terminal. Do not infer completeness from the job's terminal state or the first result page.
+Retain the exact object for replay. For both jobs, retain the exact job ID, read
+that terminal workflow, and page through results belonging to that job. Do not
+list and aggregate every evaluation previously stored in the workspace. Derive
+expected pairs from the 30 source session IDs and exact evaluator-version IDs,
+then classify every expected pair as completed, failed, pending, or missing. A
+pair is pending only while its exact job remains non-terminal. Do not infer
+completeness from the job's terminal state or the first result page.
 
 ## Keep agent notes separate from human records
 
@@ -75,7 +111,9 @@ kitaru annotation create --session SESSION --value '"Agent observation: The refu
 
 Do not pass `--value 'Agent observation: ...'`; shell quotes group that text but do not make it a JSON string. Use a JSON encoder rather than hand-escaping text that contains quotes, backslashes, or line breaks.
 
-Do not create an investigation-answer annotation for the reviewer. The human must author the consequential answer in the frontend. That record carries the investigation-session ID and question key and is separate from the whole-session verdict.
+Do not create an investigation-answer annotation for the reviewer. Written
+answers are optional and must be authored by the human in the frontend. They
+are separate from the required whole-session verdicts.
 
 Current annotations record an owning account but no typed human, agent, or suggestion provenance. Keep the durable `Agent observation:` prefix. Explain its meaning once in chat and move on.
 
@@ -84,6 +122,16 @@ Before retrying annotation creation, list existing manual annotations for the se
 ## Create and open the review
 
 Every investigation session needs one non-empty question list. Supply one question with one primary highlight for each selected session. Use the question's highlight selector to place the prompt beside its key evidence.
+
+Use the verified repeated-option shapes below. Encode the highlights as JSON
+before inserting them and create the real investigation once. Do not create a
+probe investigation merely to discover the payload shape.
+
+```text
+--session SESSION_ID
+--session-question 'SESSION_ID:question-key=Direct question grounded in the trace'
+--session-highlights 'SESSION_ID:question-key=[{"selector":{"node_id":"NODE_ID"},"description":"What this evidence shows."}]'
+```
 
 Before creating the investigation, inspect the installed name constraint. Under the current schema, use a machine name containing only letters, digits, hyphens, or underscores and starting and ending with a letter or digit, such as `expanded-returns-tour`. Add a short letter-or-digit suffix if a distinct investigation is required. Put the readable tour title in the description instead of passing a spaced title as the name. This validation belongs before the write so the tour does not need a failed create attempt to discover the constraint.
 
@@ -102,7 +150,11 @@ If neither route works, preserve the investigation and report its exact ID, the 
 
 ## Resume and evaluate
 
-After frontend review, re-read investigation questions, ordinary annotations, answers, and verdicts. Investigation session listings expose verdicts, not answers. Read answers from annotations filtered by the exact investigation ID, then account for them by investigation-session ID plus question key. Require the consequential answer and all three verdicts. Do not infer one record type from the other.
+After frontend review, re-read investigation questions, ordinary annotations,
+optional answers, and verdicts. Investigation session listings expose verdicts,
+not answers. Read answers only when present and useful. Require all three
+verdicts, but never block cohort or evaluator work on an empty written-answer
+field. Do not infer one record type from the other.
 
 Resume an investigation's verdicts only when the current conversation already carries its exact investigation ID or the user explicitly identifies that investigation as their review. A matching tour name is not proof that the current reviewer supplied its judgments. Reuse its sessions and exact-match prepared annotations, but create a fresh investigation when reviewer identity is ambiguous.
 

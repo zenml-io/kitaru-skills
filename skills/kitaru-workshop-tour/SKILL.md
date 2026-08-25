@@ -11,14 +11,21 @@ reusable evaluator, to one bounded experiment result.
 
 ## Experience contract
 
-- Assume the user has not read the template agent and does not yet know how
-  Kitaru works. Explain each example from the evidence visible in the review,
-  translate internal names into plain language, and never require missing code
-  or product context to understand a question.
-- At each meaningful transition, explain what the tour is doing, why that step
-  matters, and what the user will be able to inspect or decide next. Keep
-  routine commands in the background and follow the user's normal response
-  preferences.
+- Treat every visible progress update as part of the product explanation. Write
+  for someone watching the screen who has not used Codex or Kitaru. Explain the
+  returns-agent story, the Kitaru concept currently becoming visible, or the
+  decision the human will make next.
+- Never narrate file searches, reference loading, schema discovery, cache
+  configuration, temporary files, parsing, shell quoting, retries, or other
+  coding-agent mechanics. Resolve routine operational work quietly. If it
+  blocks the tour, state the intended Kitaru action, the concrete blocker, and
+  the smallest recovery in one concise update.
+- At each meaningful transition, say what the tour is about to learn, why that
+  matters, and what the user will be able to inspect or decide next. After the
+  action, lead with the useful result rather than the command that produced it.
+- Assume the user has not read the template agent. Explain each example from
+  visible trace evidence, translate internal names into plain language, and
+  never require missing code or product context to understand a question.
 - Use names that already exist in Kitaru when naming product objects. Do not
   invent labels for steps, summaries, or collections, and do not present an
   internal implementation detail as a Kitaru concept. Prefer a plain sentence
@@ -26,19 +33,21 @@ reusable evaluator, to one bounded experiment result.
 - Lead with what the user is about to discover, not installation or evaluation
   terminology.
 - Introduce only the Kitaru concept needed for the current action.
-- Prepare useful observations and exact evidence anchors for the reviewer. Tell
-  them once that these are agent-prepared notes and their verdict is the human
-  judgment.
+- Prepare concise observations and exact evidence anchors for the reviewer.
+  Tell them once that these are agent-prepared reading aids. Do not emphasize
+  their annotations or treat an optional written note as proof of a behavior;
+  the three verdicts carry the required human judgments.
 - Use the Kitaru frontend three times: for the investigation review, the cohort
   and evaluator results, and the completed experiment run.
   Give direct links, explain what the user is looking at, then pause until they
   return. Do not interrupt the tour with frontend visits for routine objects.
 - Survey all 30 sessions before selection, then keep the human review to three:
-  one consequential problem, one evidence-reading or boundary case, and one
-  acceptable counterexample. Deep-read no more than six candidates.
+  one suspected problem, one evidence-reading or boundary case, and one nearby
+  comparison. Inspect as many complete traces as needed to support those roles,
+  up to the full 30-session population.
 - Ask the human to confirm the resource-budget parameter object before running
-  that evaluator. Require one human-authored answer for the consequential
-  session and one human verdict for each of the three sessions.
+  that evaluator. Require one human verdict for each of the three sessions;
+  written answers and notes are optional.
 - Reach a useful evaluator result without regenerating traces or making a paid
   model call. Continue into one bounded replay, but briefly explain the proposed
   run and ask before creating the experiment or starting paid or live execution.
@@ -49,9 +58,10 @@ reusable evaluator, to one bounded experiment result.
 - Start or restart a user-controlled worker with `--concurrency 10`. Use
   `KITARU_WORKER_CONCURRENCY=10` only when the launch surface exposes worker
   settings through environment variables instead of CLI options.
-- Preserve the user's healthy selected Kitaru server, whether local or cloud.
-  Do not switch servers merely because the companion template documents a local
-  quickstart.
+- Run this expanded route against a Kitaru Cloud server. Preserve a healthy
+  selected cloud server. If none is selected, ask for its URL and authenticate
+  through an inherited `KITARU_API_KEY` or the normal interactive login flow.
+  Never print credential values or switch to a local server.
 - Resume durable agents, imports, sessions, exact-match annotations, cohorts,
   evaluator versions, experiments, and runs before creating replacements.
   Resume an investigation and its verdicts only when this conversation holds
@@ -78,15 +88,12 @@ reusable evaluator, to one bounded experiment result.
 
 Begin read-only.
 
-1. Look for a candidate expanded-template checkout and verify its contents
-   through `starter-template.md` before trusting its README. Do not infer
-   compatibility from its directory, remote, or branch. If none exists, report
-   the missing companion checkout; do not substitute another template or
-   fabricated outputs. Point to the local companion-checkout instructions
-   distributed with this feature branch. If that checkout cannot be obtained,
-   offer `kitaru-guided-tour` with the public template as the supported smaller
-   route. Complete source verification before diagnosing Kitaru server
-   connectivity.
+1. Look for a candidate expanded-template checkout and verify its compact
+   readiness contract through `starter-template.md` before trusting its README.
+   Do not infer compatibility from its directory, remote, or branch. If none
+   exists, report the missing companion checkout; do not substitute another
+   template or fabricated outputs. If that checkout cannot be obtained, offer
+   `kitaru-guided-tour` with the public template as the supported smaller route.
 2. Establish the template environment, CLI, worker, and MCP package readiness
    through `starter-template.md` and `kitaru-operations.md`. Install the whole
    frozen template environment instead of adding packages piecemeal. Explain
@@ -99,9 +106,8 @@ Begin read-only.
    containing the template path, selected server, exact agent-version and import
    job IDs, any investigation ID, and the frozen resource-budget parameters.
    This in-chat handoff is not an external checkpoint artifact.
-3. Inspect Kitaru connectivity and keep using the healthy selected server. Only
-   offer the template's isolated local server when no usable server is selected,
-   and ask before starting or selecting it. Then inspect the exact registered
+3. Inspect Kitaru Cloud connectivity through the known-good environment and
+   command forms in `kitaru-operations.md`. Then inspect the exact registered
    `returns-resolver` agent version, relevant import jobs, and the complete
    30-session imported population carrying the `returns-baseline` tag.
 4. Resume matching durable state. Perform only missing setup steps from the
@@ -123,9 +129,9 @@ Before selecting the tour, explain:
 2. Kitaru preserved 30 complete historical runs, including the model and tool
    evidence needed to understand what actually happened.
 3. The coding agent will survey the whole population with pinned deterministic
-   checks, then prepare three evidence-selected observations. The user will
-   supply one short answer and decide whether each complete session is
-   acceptable, problematic, or uncertain.
+   checks, explain the findings in compact tables, then prepare three
+   evidence-selected observations. The user will decide whether each complete
+   session is acceptable, problematic, or uncertain.
 
 Then continue. Do not explain cohorts or evaluator versions yet.
 
@@ -133,11 +139,12 @@ Then continue. Do not explain cohorts or evaluator versions yet.
 
 Follow `tour-method.md` to run the 90-pair descriptive survey, obtain human
 confirmation for the separately configured 30-pair resource-budget survey,
-account for all results, form stable evidence strata, and deep-read at most six
-candidates before assembling the three-session review. Before
+account for all results, explain what the evaluators measure and found, and
+inspect complete traces until the three review roles are supported. Before
 writing, show a compact preview of what happened in each selected session, why
-it matters, and the evidence that will be highlighted. Avoid an exhaustive
-investigation plan.
+it matters, and the evidence that will be highlighted. Treat the first role as
+a suspected problem until the human judges it. Avoid an exhaustive
+investigation plan or internal selection machinery.
 
 Ask once to:
 
@@ -155,8 +162,10 @@ Never write the user's answer or verdict for them.
 
 Lead with the direct review action. Provide the resolved review link, distinguish
 the agent-prepared observations from the human records, and ask the user to
-write the consequential answer and record one verdict for each session. Tell
-them how to complete the frontend review and return to the task.
+record one verdict for each session. Explain that written notes are optional
+and useful only when the reviewer wants to record reasoning that the verdict
+does not capture. Tell them how to complete the frontend review and return to
+the task.
 
 Pause. Do not duplicate the review in chat while the frontend route works.
 
@@ -165,15 +174,14 @@ Pause. Do not duplicate the review in chat while the frontend route works.
 When the user returns:
 
 1. Re-read the investigation, its ordered sessions, manual annotations,
-   separately stored answer coverage, and verdict coverage. Require the exact
-   consequential investigation-session ID and question key for the answer.
+   optional written answers, and verdict coverage.
 2. Lead with what the user decided. Explain how each verdict now sits beside
    the exact recorded evidence that motivated the review.
-3. If the human-authored consequential answer and all three verdicts are
-   present, including at least one problematic target and one acceptable
-   counterexample, propose one observable relationship that best explains the
-   difference. Ask one short confirmation before turning it into a reusable
-   check.
+3. If all three verdicts are present, including at least one problematic target
+   and one acceptable comparison, propose one observable relationship that
+   best explains the difference. Ask one short confirmation before turning it
+   into a reusable check. Treat optional notes as context, not as a required
+   label or independent confirmation.
 4. If the user accepts that relationship, create an exact cohort version from
    all three reviewed sessions. Check the installed evaluator catalog before
    authoring code.
@@ -195,14 +203,14 @@ Explain that the cohort freezes the examples the user
 judged and the evaluator page records the exact reusable rule. Pause and wait
 for the user to return before preparing the experiment.
 
-If the answer and verdicts do not support the proposed behavior, preserve that
-human correction and create no cohort, evaluator, experiment, or replay for it.
-Offer one re-selection from the already qualified candidates only after the
-user explicitly chooses to continue; otherwise stop successfully.
+If the verdicts do not support the proposed behavior, preserve that correction
+and create no cohort, evaluator, experiment, or replay for it. Offer one
+re-selection from the remaining population only after the user explicitly
+chooses to continue; otherwise stop successfully.
 
-If the consequential answer or any verdict is missing, stop before behavior
-confirmation, cohort creation, or evaluator work. Report the exact missing
-human record and keep the same review link available for completion.
+If any verdict is missing, stop before behavior confirmation, cohort creation,
+or evaluator work. Report the exact missing verdict and keep the same review
+link available for completion. Never block on an empty written-answer field.
 
 Use ordinary language before object names. Report the relationship the human
 actually confirmed, the reviewed sessions and evidence that support it, and the
@@ -262,11 +270,11 @@ the tour's method explanation but none of its synthetic conclusions.
   response, re-read state before retrying.
 - If the review URL cannot be resolved, preserve the created investigation and
   report the broken handoff with its exact ID and one retry action.
-- If the ranked evidence cannot support all three review roles, stop and say
-  which role is missing. Do not substitute a fixed or smaller selection.
-- If the user stops after only part of the review, summarize the persisted human
-  records and what they already show. Offer the same link for the missing answer
-  or verdicts, but do not treat agent observations as human judgments.
+- If the complete population cannot support all three review roles, stop and
+  say which role is missing. Do not substitute a fixed or smaller selection.
+- If the user stops after only part of the review, summarize the persisted
+  verdicts and what they already show. Offer the same link for missing verdicts,
+  but do not treat agent observations or optional notes as human judgments.
 - In a fresh task, require an exact investigation, cohort version, evaluator
   version, experiment, or run ID or link before resuming human-derived state.
   Read the identified object and its relationships to recover the remaining

@@ -9,8 +9,8 @@ The repository contains public Kitaru skills plus Claude Code plugin packaging.
 the public returns-agent template and turns one accepted finding into a
 deterministic evaluator followed by one approved bounded replay experiment.
 `kitaru-workshop-tour` runs the expanded returns-agent template's deterministic
-30-session survey, selects a bounded evidence-grounded review, requires genuine
-human annotations, and hands one confirmed cohort to bounded replay.
+30-session survey, explains the findings, prepares an evidence-grounded review,
+requires three human verdicts, and hands one confirmed cohort to bounded replay.
 `kitaru-investigation` conducts evidence-grounded review of Kitaru agent
 sessions and can turn an accepted behavior into a versioned cohort and optional
 installed or custom evaluator. `kitaru-replay-experiment` safely compares one
@@ -108,8 +108,8 @@ frontmatter descriptions.
   and approval before creating or running the final experiment.
 - Keep `kitaru-workshop-tour` tied to the expanded companion template's
   content contract. Account for all deterministic results before selection,
-  preserve genuine human answers and verdicts, and pass fixed comparison
-  conditions to the unchanged replay skill.
+  explain their useful findings, preserve human verdicts and optional written
+  context, and pass fixed comparison conditions to the unchanged replay skill.
 - Narrate the guided tour as a friendly introduction for someone who has read
   neither the sample agent nor Kitaru documentation. Explain what each
   meaningful stage does, why it matters, and what it enables next without
