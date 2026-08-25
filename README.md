@@ -76,7 +76,7 @@ human verdicts, turn one accepted finding into a deterministic evaluator, and
 finish with one approved bounded replay experiment. The tour pauses at the
 investigation review, cohort and evaluator results, and experiment result so the
 user can inspect each durable stage. The guided starter lives in
-[`zenml-io/kitaru` PydanticAI returns agent](https://github.com/zenml-io/kitaru/tree/develop/examples/python/pydantic_ai_ticket_resolver); the
+[`zenml-io/kitaru` PydanticAI returns agent](https://github.com/zenml-io/kitaru/tree/main/examples/python/pydantic_ai_ticket_resolver); the
 tour recognizes renamed clones and forks from stable root contents, compares
 them with the current trusted source, resumes existing setup, and uses the
 checked-in Langfuse JSONL without live credentials, trace regeneration, or a
