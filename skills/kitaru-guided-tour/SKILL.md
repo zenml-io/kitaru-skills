@@ -180,9 +180,10 @@ When the user returns:
 4. If the user accepts that behavior, create an exact cohort version from the
    confirmed target and counterexample sessions. Check the installed evaluator
    catalog before authoring code.
-5. Select or create one narrow deterministic evaluator, test it, register an
-   immutable version, and run it across the complete prepared baseline
-   population.
+5. Select an eligible global or same-agent evaluator, or create one narrow
+   deterministic evaluator scoped to the tour's registered agent. Test it,
+   register an immutable version, verify its returned agent scope, and run it
+   across the complete same-agent prepared baseline population.
 6. Report the useful result first: how many sessions matched, which reviewed
    examples explain the result, and one important limitation. Resolve the
    cohort and evaluator links through `kitaru-operations.md`.
@@ -221,8 +222,9 @@ After the user returns from the cohort and evaluator pages:
 2. Propose one small candidate change grounded in the accepted behavior. Do not
    start an automatic prompt search or introduce an unrelated model change.
 3. Continue with `kitaru-replay-experiment`, carrying the exact accepted
-   behavior, cohort version, evaluator version and parameters, candidate agent
-   version, proposed override, and an explicit tool policy. For the verified
+   behavior, cohort version, evaluator version, parent agent scope and
+   parameters, candidate agent version, proposed override, and an explicit tool
+   policy. For the verified
    public template, use passthrough for all six tools: each task calls
    deterministic local functions against a fresh in-memory mock store and
    cannot affect an external system. Do not silently replace those calls with

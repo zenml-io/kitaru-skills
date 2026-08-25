@@ -4,7 +4,7 @@ Use the installed Kitaru evaluator catalog as the authority. Re-read it before s
 
 ## Start with descriptive evidence
 
-First list the installed evaluators and exact versions through the current registry operation. Do not try a name from this reference until the server returns it. Then run only the descriptive evaluators relevant to the accepted behavior on a small selected set. Current default installations may expose version-1 bundles such as:
+First resolve the cohort's exact agent ID, then list the installed evaluators and exact versions through the current registry operation. Keep only global evaluators, whose `agent_id` is null, and evaluators scoped to that agent. Do not try an evaluator scoped to another agent or a name from this reference until the server returns an eligible match. Then run only the descriptive evaluators relevant to the accepted behavior on a small selected set. Current default installations may expose version-1 bundles such as:
 
 | Evaluator | Useful evidence |
 |---|---|
@@ -37,7 +37,7 @@ Do not force a configured evaluator to stand in for an interpretive outcome. Exa
 For an installed match, run it and return:
 
 - accepted behavior and exact cohort-version ID;
-- exact evaluator and evaluator-version IDs;
+- exact evaluator and evaluator-version IDs plus the evaluator parent's agent scope;
 - exact parameters and configuration hash when available;
 - descriptive evidence used to choose it;
 - missing evidence and infrastructure failures;

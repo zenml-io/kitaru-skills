@@ -17,7 +17,7 @@ behavior and, when they want to test a change, the
 - Preserve durable Kitaru state. Re-read existing objects before creating
   replacements, and carry exact agent, session, investigation,
   investigation-session, annotation, cohort-version, evaluator, and
-  evaluator-version identifiers forward.
+  evaluator-version identifiers plus evaluator agent scope forward.
 - Separate observed behavior from desired behavior. A trace records what
   happened, not what should have happened or whether the external outcome was
   correct.
@@ -393,7 +393,8 @@ Do not encode prevalence claims from an adaptive discovery sample.
 If repeatable measurement is useful, continue with
 [references/deterministic-evaluators.md](references/deterministic-evaluators.md).
 Run relevant descriptive evaluators first, then prefer an installed configured
-evaluator that directly expresses the accepted criterion. Only continue to
+evaluator that directly expresses the accepted criterion and is global or
+scoped to the cohort's agent. Only continue to
 [references/evaluator-authoring.md](references/evaluator-authoring.md) when the
 installed catalog cannot express it.
 
@@ -401,10 +402,11 @@ If the cause is an obvious prompt ambiguity, missing capability, ordinary bug,
 or dependency failure, recommend the direct fix. Add an evaluator only when
 preserving the case as a regression check is useful.
 
-Finish with a compact factual checkpoint: evaluator and version IDs, exact
-parameters, checks run, reviewed fixtures and verdict coverage, measured human
-agreement or its absence, held-out evidence or its absence, freshness limits,
-the claim supported, and stronger claims not supported.
+Finish with a compact factual checkpoint: evaluator and version IDs, evaluator
+agent scope, exact parameters, checks run, reviewed fixtures and verdict
+coverage, measured human agreement or its absence, held-out evidence or its
+absence, freshness limits, the claim supported, and stronger claims not
+supported.
 
 Then explain that **Define** is complete and **Replay** tests one bounded change
 against the reviewed cohort. Ask whether the user wants to continue. If yes,
@@ -412,7 +414,7 @@ continue with the `kitaru-replay-experiment` skill and carry:
 
 - the accepted behavior and intended use;
 - exact cohort-version ID;
-- evaluator-version IDs and parameters;
+- evaluator-version IDs, parent agent scopes, and parameters;
 - factual checks, evidence, and limitations;
 - candidate agent-version ID when known;
 - one proposed override;
