@@ -33,6 +33,20 @@ reusable evaluator, to one bounded experiment result.
 - Lead with what the user is about to discover, not installation or evaluation
   terminology.
 - Introduce only the Kitaru concept needed for the current action.
+- When the coding-agent harness provides a native task, todo, or plan view,
+  create a short visible outline before any readiness checks. Use four to six
+  audience-meaningful tasks such as understanding the recorded runs, surveying
+  the population, reviewing three cases, making a reusable check, and comparing
+  one change. Mark tasks complete as their durable result becomes visible, and
+  revise the outline when the evidence changes the route. Do not put file
+  reads, command discovery, cache work, or other agent mechanics in that view.
+  If the harness has no task view, give the same compact outline once in the
+  opening explanation rather than creating a separate artifact.
+- Use natural reading breaks at the opening, before the combined review write,
+  after each frontend handoff, and before paid or live execution. At each one,
+  finish with the useful result or planned action and wait for the user's next
+  instruction, approval, or return. Do not label these as pauses or turn them
+  into timing instructions for a presenter.
 - Prepare concise observations and exact evidence anchors for the reviewer.
   Tell them once that these are agent-prepared reading aids. Do not emphasize
   their annotations or treat an optional written note as proof of a behavior;
@@ -84,6 +98,25 @@ reusable evaluator, to one bounded experiment result.
 - Read [references/kitaru-operations.md](references/kitaru-operations.md) before
   any Kitaru CLI or MCP operation. Treat installed schemas as authoritative.
 
+## Orient the audience
+
+Before any readiness inspection or Kitaru operation, give a concise opening:
+
+1. Explain that a coding agent is an assistant that can read the template,
+   operate Kitaru through the available tools, and ask before consequential
+   changes. It is not the returns agent being evaluated.
+2. Explain that the tour will use the template's synthetic returns and delivery
+   agent and its recorded runs to show the full Kitaru method: inspect evidence,
+   make human judgments, turn one confirmed relationship into a repeatable
+   check, and compare one bounded change.
+3. State that the agent will first verify the prepared environment, then use the
+   visible task outline to show where the tour is going. Do not imply that a
+   server, imported population, or worker is already available before checking.
+
+Create the harness-native task outline described above, then stop before the
+readiness checks. End with the first useful thing the tour will establish, not
+with an internal setup description.
+
 ## Establish the template route
 
 Begin read-only.
@@ -119,21 +152,6 @@ Begin read-only.
 
 Do not ask a first-time user to choose a framework, trace provider, review
 method, or sampling strategy on the compatible route.
-
-## Explain the starting state
-
-Before selecting the tour, explain:
-
-1. The sample agent resolves synthetic return and delivery requests with lookup,
-   policy, shipment, refund, replacement, and escalation tools.
-2. Kitaru preserved 30 complete historical runs, including the model and tool
-   evidence needed to understand what actually happened.
-3. The coding agent will survey the whole population with pinned deterministic
-   checks, explain the findings in compact tables, then prepare three
-   evidence-selected observations. The user will decide whether each complete
-   session is acceptable, problematic, or uncertain.
-
-Then continue. Do not explain cohorts or evaluator versions yet.
 
 ## Prepare one expanded review
 

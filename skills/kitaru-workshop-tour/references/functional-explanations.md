@@ -29,6 +29,28 @@ approval.
 
 Keep explanations direct. Do not quiz the user or make them repeat information before continuing.
 
+## Give the audience a starting mental model
+
+Before any setup check, distinguish the coding agent from the returns agent in
+one or two sentences. The coding agent is the assistant conducting this tour:
+it can inspect the template and use Kitaru tools, while the returns agent is
+the recorded customer-support system whose past behavior the audience will
+inspect. Then state the path in ordinary language: establish the prepared
+environment, survey the recorded runs, review three examples, make one
+repeatable check from a human-confirmed relationship, and compare one bounded
+change.
+
+When the host offers a visible task, todo, or plan interface, keep that same
+path there as a short status outline. The outline is for the audience to orient
+themselves, not a transcript of agent mechanics. Update it only when a stage
+has produced a durable result or the evidence changes the route.
+
+At the opening, conclude with what the first readiness check will establish and
+wait for the user to continue. Use the same pattern at consequential handoffs:
+state what the audience has just learned, name the next meaningful action, and
+let the user or existing approval gate control continuation. Do not announce a
+"pause" or ask the audience to perform a ritual acknowledgement.
+
 ## Explain the flow in context
 
 ### Connect to Kitaru
