@@ -1,12 +1,12 @@
 ---
 name: kitaru-guided-tour
-description: Give first-time users a short, value-first Kitaru tour with the PydanticAI returns-agent example in the Kitaru repository. Use when someone has no agent or traces of their own, arrives from Kitaru onboarding, asks for a demo, tutorial, quickstart, or guided example, needs the quickstart example cloned or prepared, wants the coding agent to prepare trace annotations before they judge sessions, or wants to experience Kitaru's value before learning the full investigation method. Prepare a three-session frontend review, let the human provide verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. Route real agents, open-ended discovery, and production evidence to kitaru-investigation instead.
+description: Give first-time users a short, value-first Kitaru tour with the PydanticAI returns agent example in the Kitaru repository. Use when someone has no agent or traces of their own, arrives from Kitaru onboarding, asks for a demo, tutorial, quickstart, or guided example, needs the quickstart example cloned or prepared, wants the coding agent to prepare trace annotations before they judge sessions, or wants to experience Kitaru's value before learning the full investigation method. Prepare a three-session frontend review, let the human provide verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. Route real agents, open-ended discovery, and production evidence to kitaru-investigation instead.
 ---
 
 # Kitaru guided tour
 
 Deliver an AHA before teaching the complete method. Use Kitaru's PydanticAI
-returns-agent example to move from recorded traces, through a short prepared
+returns agent example to move from recorded traces, through a short prepared
 frontend review and reusable evaluator, to one bounded experiment result.
 
 ## Experience contract
@@ -83,7 +83,7 @@ Begin read-only.
 
 1. Look for the example in a candidate Kitaru checkout. If none exists, inspect
    the current quickstart example README through the trusted source. Treat a prompt that
-   names the PydanticAI returns-agent example, its URL, or the returns-agent tour as
+   names the PydanticAI returns agent example, its URL, or the returns agent tour as
    intent to use this route; do not stop merely because the checkout is absent.
    Check the local prerequisites, choose a new `kitaru` destination in the
    current workspace, and preview cloning Kitaru, entering

@@ -9,7 +9,7 @@ metadata. It is not a Python package.
   playbook, from setup and session evidence through reviewed behavior,
   evaluator selection, and replay handoff.
 - `skills/kitaru-guided-tour/SKILL.md` gives first-time users a value-first
-  quickstart-example tour with prepared observations, frontend verdicts, and one
+  quickstart example tour with prepared observations, frontend verdicts, and one
   deterministic evaluator followed by an approved bounded replay experiment.
 - `skills/kitaru-guided-tour/references/` contains the starter contract, tour
   method, friendly tutorial narration, and the bounded operations needed for

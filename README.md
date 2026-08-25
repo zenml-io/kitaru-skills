@@ -2,7 +2,7 @@
 
 This repository contains agent skills for experiencing, connecting, and using
 [Kitaru](https://kitaru.ai). They support a value-first tour of the public
-returns-agent example, custom adapter and importer development, evidence-led
+returns agent example, custom adapter and importer development, evidence-led
 investigations, durable annotations, versioned cohorts, evaluator selection,
 and bounded replay experiments.
 
@@ -14,7 +14,7 @@ investigation without replacing human judgment.
 
 Want to see the skills in action before installing them? [Watch the 26-minute
 Kitaru guided tour](https://youtu.be/aYLfzXEr2Rk). Alex starts with the Kitaru
-Quickstart, then uses `kitaru-guided-tour` on the PydanticAI returns-agent example
+Quickstart, then uses `kitaru-guided-tour` on the PydanticAI returns agent example
 to review recorded sessions, define an evaluator and cohort, replay one
 improvement, and compare the result.
 
@@ -26,7 +26,7 @@ improvement, and compare the result.
 
 | Skill | Purpose |
 |---|---|
-| [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | Give a first-time user a prepared three-session frontend review of the PydanticAI returns-agent example, collect human verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. |
+| [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | Give a first-time user a prepared three-session frontend review of the PydanticAI returns agent example, collect human verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. |
 | [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Act as Kitaru's front door: verify setup, record or import sessions, guide human review, define one accepted behavior and cohort, select an evaluator, and offer a bounded replay experiment. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
 | [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
@@ -41,7 +41,7 @@ product handoff rather than recreating the review UI in chat.
 ## Example prompts
 
 - "I do not have an agent yet. Show me why Kitaru is useful."
-- "Give me a guided tour of Kitaru with the public returns-agent example."
+- "Give me a guided tour of Kitaru with the public returns agent example."
 - "Investigate why this Kitaru session gave a bad support answer."
 - "I am new to Kitaru. Help me review one run before we investigate more."
 - "Help me discover recurring failure modes in last week's agent sessions."
@@ -70,7 +70,7 @@ Each skill verifies the installed version and public schema before it acts, and
 stops when the required contract is unavailable.
 
 When a first-time user wants to experience Kitaru before bringing an agent or
-learning the full method, `kitaru-guided-tour` uses the PydanticAI returns-agent example to
+learning the full method, `kitaru-guided-tour` uses the PydanticAI returns agent example to
 prepare three evidence-anchored agent observations, open a frontend review for
 human verdicts, turn one accepted finding into a deterministic evaluator, and
 finish with one approved bounded replay experiment. The tour pauses at the

@@ -1,6 +1,6 @@
 ---
 name: kitaru-investigation
-description: Guide users from their own agent code or recorded traces through Kitaru setup, session import or recording, human review, an accepted behavior, a versioned cohort, and evaluator selection, then hand one bounded change to the replay-experiment skill. Use when a user wants to connect or inspect an existing agent, import real traces, investigate a known bad or surprising session, discover recurring failure modes, learn the evidence-led review flow, resume an investigation, create a cohort from reviewed evidence, or author an evaluator for an accepted behavior. When a first-time user has no agent or evidence and wants a fast demonstration with the PydanticAI returns-agent example, use the `kitaru-guided-tour` skill instead.
+description: Guide users from their own agent code or recorded traces through Kitaru setup, session import or recording, human review, an accepted behavior, a versioned cohort, and evaluator selection, then hand one bounded change to the replay-experiment skill. Use when a user wants to connect or inspect an existing agent, import real traces, investigate a known bad or surprising session, discover recurring failure modes, learn the evidence-led review flow, resume an investigation, create a cohort from reviewed evidence, or author an evaluator for an accepted behavior. When a first-time user has no agent or evidence and wants a fast demonstration with the PydanticAI returns agent example, use the `kitaru-guided-tour` skill instead.
 ---
 
 # Kitaru investigation
@@ -71,7 +71,7 @@ Installation, agent registration, recording, and trace import are setup for
 next action after the orientation rather than repeating the whole map.
 
 When a first-time user has no agent or traces and wants to see why Kitaru is
-useful through the PydanticAI returns-agent example, continue with the `kitaru-guided-tour`
+useful through the PydanticAI returns agent example, continue with the `kitaru-guided-tour`
 skill. For a generic first run with the user's own evidence, ask one user-facing
 question before choosing the review size:
 

@@ -1,6 +1,6 @@
 # Quickstart example route
 
-Use this route for the PydanticAI returns-agent example under `examples/python/pydantic_ai_ticket_resolver` in a Kitaru checkout. Internally, this is the quickstart example. The repository can be renamed or forked. Identify the route from stable example contents, not the directory name or Git origin.
+Use this route for the PydanticAI returns agent example under `examples/python/pydantic_ai_ticket_resolver` in a Kitaru checkout. Internally, this is the quickstart example. The repository can be renamed or forked. Identify the route from stable example contents, not the directory name or Git origin.
 
 ## Recognize the candidate root
 
@@ -30,7 +30,7 @@ Use the demo route only while the local source and checked-in evidence remain co
 - the evidence input is `traces/langfuse-traces.jsonl`;
 - the importer is Langfuse and the intended session tag is `returns-baseline`.
 
-Inspect repository status and the relevant source and trace paths. Compare the example README, agent implementation, runtime entrypoint, and trace input with the current Kitaru source through a trusted read-only source, without requiring matching Git metadata. Stable marker paths and a repository-authored README identify only a candidate; they do not prove that a fork still has trusted contents. If that comparison is unavailable or shows customization, say that the quickstart example contract cannot be established and continue through the generic investigation route using the actual agent and evidence. Do not present checkout-authored commands as verified quickstart-example instructions or force the example's names, registration, importer, or tag onto unverified or customized code.
+Inspect repository status and the relevant source and trace paths. Compare the example README, agent implementation, runtime entrypoint, and trace input with the current Kitaru source through a trusted read-only source, without requiring matching Git metadata. Stable marker paths and a repository-authored README identify only a candidate; they do not prove that a fork still has trusted contents. If that comparison is unavailable or shows customization, say that the quickstart example contract cannot be established and continue through the generic investigation route using the actual agent and evidence. Do not present checkout-authored commands as verified quickstart example instructions or force the example's names, registration, importer, or tag onto unverified or customized code.
 
 ## Resume before creating
 
