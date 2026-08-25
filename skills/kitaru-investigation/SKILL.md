@@ -393,8 +393,8 @@ Do not encode prevalence claims from an adaptive discovery sample.
 If repeatable measurement is useful, continue with
 [references/deterministic-evaluators.md](references/deterministic-evaluators.md).
 Run relevant descriptive evaluators first, then prefer an installed configured
-evaluator that directly expresses the accepted criterion and is global or
-scoped to the cohort's agent. Only continue to
+evaluator that directly expresses the accepted criterion and is verified as
+deliberately global or scoped to the cohort's agent. Only continue to
 [references/evaluator-authoring.md](references/evaluator-authoring.md) when the
 installed catalog cannot express it.
 
@@ -414,7 +414,7 @@ continue with the `kitaru-replay-experiment` skill and carry:
 
 - the accepted behavior and intended use;
 - exact cohort-version ID;
-- evaluator-version IDs, parent agent scopes, and parameters;
+- evaluator-version IDs, parent agent scopes, global-portability evidence, and parameters;
 - factual checks, evidence, and limitations;
 - candidate agent-version ID when known;
 - one proposed override;

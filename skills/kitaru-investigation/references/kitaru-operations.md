@@ -75,8 +75,8 @@ Treat setup as part of reaching the first usable session, not as an unexplained 
 - MCP list operations return one page of at most 100 items. Continue through opaque cursors rather than requesting an unbounded population.
 - MCP investigation creation accepts at most 100 sessions. Every session input needs a non-empty list of uniquely keyed questions. Split larger review rounds into explicit follow-up investigations.
 - MCP evaluation starts accept at most 100 session IDs, 100 evaluator selections, and 100 total session/evaluator pairs. Split a larger matrix into separately identified batches.
-- Every evaluation batch must contain sessions from exactly one agent. A scoped evaluator is eligible only when its `agent_id` matches that agent; a global evaluator has a null `agent_id` and remains eligible for any single-agent batch.
-- Evaluator scope cannot be edited through evaluator update or version registration. Deleting its scoped agent clears `agent_id` to null, so re-read the parent before creating a version or starting work. When the MCP evaluator-create schema lacks `agent_id`, use CLI registration for a scoped parent instead of silently creating a global evaluator.
+- Every evaluation batch must contain sessions from exactly one agent. A scoped evaluator is eligible only when its `agent_id` matches that agent. A null `agent_id` is only a candidate global scope because deleting a scoped evaluator's agent also clears the field. Use a null-scoped parent only when a trusted creation record or known default-catalog identity establishes deliberate global scope, or after revalidating its criterion, implementation, and intended reuse for the batch's agent. Otherwise exclude it.
+- Evaluator scope cannot be edited through evaluator update or version registration. Re-read the parent before creating a version or starting work, but do not treat a newly null scope as proof of global portability. When the MCP evaluator-create schema lacks `agent_id`, use CLI registration for a scoped parent instead of silently creating a global evaluator.
 
 ### Pre-investigation setup
 

@@ -36,7 +36,7 @@ Use JSON objects for `--override`, `--tool-policy`, and `--evaluator-params`. Ve
 
 An experiment requires at least one exact evaluator selection. An omitted evaluator version resolves to latest in the API model, but this skill always pins a version. Configuration can be updated only before the experiment has runs; use a new experiment for a changed condition afterward.
 
-An evaluator parent gets its agent scope at creation, and evaluator updates or version registration cannot change it. A null `agent_id` makes it global; any other value limits it to experiments, replays, and single-agent evaluation batches for that exact agent. Deleting the scoped agent clears `agent_id` to null, so re-read each evaluator parent and verify its current scope against the experiment's agent before creating the experiment.
+An evaluator parent gets its agent scope at creation, and evaluator updates or version registration cannot change it. A non-null value limits it to experiments, replays, and single-agent evaluation batches for that exact agent. A null `agent_id` is only a candidate global scope because deleting the scoped agent also clears the field. Before creating the experiment, re-read every parent and accept a null-scoped evaluator only when a trusted creation record or known default-catalog identity establishes deliberate global scope, or after revalidating its criterion, implementation, and intended reuse for the experiment's agent. Exclude it when portability cannot be established.
 
 ## Replay configuration
 

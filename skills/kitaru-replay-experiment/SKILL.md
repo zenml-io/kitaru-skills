@@ -44,7 +44,7 @@ Route to `kitaru-investigation` when no behavior or cohort has been accepted. Us
 
 If an experiment or run already exists, re-read it and resume supervision or interpretation. Experiment configuration freezes after it has runs, so create a new experiment for a materially changed candidate, evaluator set, override, or tool policy.
 
-Re-read every evaluator parent before approval. A global evaluator has a null `agent_id`; a scoped evaluator is eligible only when its `agent_id` matches the experiment's agent. Reject a mismatched scope before experiment creation rather than relying on the server error, and carry the verified scope in the resumable technical record.
+Re-read every evaluator parent before approval. A scoped evaluator is eligible only when its `agent_id` matches the experiment's agent. A null `agent_id` is only a candidate global scope because deleting a scoped evaluator's agent also clears the field. Use a null-scoped parent only when a trusted creation record or known default-catalog identity establishes deliberate global scope, or after revalidating its criterion, implementation, and intended reuse for the experiment's agent. Reject a mismatched or unverified scope before experiment creation rather than relying on the server error, and carry the verified scope and any global-portability evidence in the resumable technical record.
 
 ## Preflight capability and safety
 

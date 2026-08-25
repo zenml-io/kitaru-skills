@@ -80,10 +80,10 @@ For an LLM judge, add cheap probes where relevant: reverse pairwise order, remov
 After the checks pass and the user approves the remote write:
 
 1. Resolve the cohort's exact agent ID and choose the evaluator parent scope before creation. Default a custom evaluator derived from one agent's reviewed evidence to that agent. Use a global evaluator only when its criterion, implementation, and intended reuse are deliberately portable across agents. Include this creation-time scope in the existing remote-write confirmation rather than adding a second approval.
-2. Re-read any evaluator with the intended name before registration. Reuse it only when its scope is global by deliberate choice or matches the cohort's agent. Evaluator names remain workspace-unique and scope cannot be updated, so choose a new unambiguous name when an existing parent has the wrong scope.
+2. Re-read any evaluator with the intended name before registration. Reuse it when its scope matches the cohort's agent. Reuse a null-scoped parent only when a trusted creation record establishes deliberate global scope or after revalidating its criterion, implementation, and intended reuse for this agent; agent deletion also produces a null `agent_id`, so the field alone is insufficient. Evaluator names remain workspace-unique and scope cannot be updated, so choose a new unambiguous name when an existing parent has the wrong or unverified scope.
 3. Register one immutable evaluator version through the path resolved above. For a new scoped parent and local script, use `kitaru evaluator register NAME --agent-id AGENT_ID --script PATH --entrypoint NAME`. For an existing compatible parent, use `kitaru evaluator version register EVALUATOR --script PATH --entrypoint NAME` without an agent-scope option. Use MCP only when the implementation already exists as a server blob or exact package pin and, for a new scoped parent, the installed create schema exposes `agent_id`; otherwise use the CLI or stop with the exact transport limitation.
 4. Re-read the evaluator and registered version, and verify the returned `agent_id` before evaluating sessions.
-5. Return exact evaluator, evaluator-version, cohort-version, and agent-scope IDs plus exact parameters and configuration hashes when available.
+5. Return exact evaluator, evaluator-version, cohort-version, and agent-scope IDs plus exact parameters and configuration hashes when available. For a null-scoped parent, also record the evidence that established deliberate global portability.
 6. Report the evidence as facts:
 
 ```text

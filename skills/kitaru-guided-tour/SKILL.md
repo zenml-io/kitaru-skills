@@ -180,7 +180,7 @@ When the user returns:
 4. If the user accepts that behavior, create an exact cohort version from the
    confirmed target and counterexample sessions. Check the installed evaluator
    catalog before authoring code.
-5. Select an eligible global or same-agent evaluator, or create one narrow
+5. Select a verified global or same-agent evaluator, or create one narrow
    deterministic evaluator scoped to the tour's registered agent. Test it,
    register an immutable version, verify its returned agent scope, and run it
    across the complete same-agent prepared baseline population.
