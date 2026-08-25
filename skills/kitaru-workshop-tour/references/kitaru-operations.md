@@ -152,7 +152,7 @@ If neither route works, preserve the investigation and report its exact ID, the 
 
 After frontend review, re-read investigation questions, ordinary annotations,
 optional answers, and verdicts. Investigation session listings expose verdicts,
-not answers. Read answers only when present and useful. Require all three
+not answers. Read answers only when present and useful. Require all five
 verdicts, but never block cohort or evaluator work on an empty written-answer
 field. Do not infer one record type from the other.
 
@@ -162,29 +162,31 @@ Before cohort creation, show the exact proposed membership once and obtain confi
 
 Evaluation jobs require a live worker. Wait through the supported mechanism once. If the exact job remains non-terminal, report its job ID, state, completed/failed/pending progress, and worker availability, then stop with an exact-ID resume instruction. Resume by re-reading that job rather than submitting a duplicate request. Once terminal, inspect every resulting evaluation and keep missing or failed evaluations out of the quality numerator while retaining them in the population accounting.
 
-## Pause three times for frontend review
+## Pause four times for frontend review
 
-Use the frontend three times during the normal tour. Pause after each visit and wait for the user to return:
+Use the frontend four times during the normal tour. Pause after each visit and wait for the user to return:
 
-1. Use the investigation review route above so the user can inspect evidence and record verdicts.
-2. After cohort creation and baseline evaluation, show the cohort and evaluator pages so the user can see the frozen examples, exact rule, and stored results.
-3. After the bounded experiment settles, show its selected run so the user can inspect the candidate sessions and comparison.
+1. After import, show the agent's sessions page so the user can see the recorded population before any evaluation or selection.
+2. Use the investigation review route above so the user can inspect evidence and record verdicts.
+3. After cohort creation and baseline evaluation, show the cohort and evaluator pages so the user can see the frozen examples, exact rule, and stored results.
+4. After the bounded experiment settles, show its selected run so the user can inspect the candidate sessions and comparison.
 
 Use a product-owned link unchanged when a structured response supplies one. Otherwise, the current managed and self-hosted frontends support these compatibility routes from the verified `dashboard_url`:
 
 ```text
 DASHBOARD_URL/agents/AGENT_ID/cohorts/COHORT_ID/sessions
+DASHBOARD_URL/agents/AGENT_ID/sessions
 DASHBOARD_URL/evaluators/EVALUATOR_ID
 DASHBOARD_URL/experiments/EXPERIMENT_ID?run=RUN_NUMBER
 ```
 
 Strip one trailing slash from `dashboard_url`. Use the parent cohort ID, not the cohort-version ID, and the parent evaluator ID, not the evaluator-version ID. Omit the experiment query only when no run number is available. Do not construct a separate evaluation URL; the cohort and experiment pages present the relevant results in context.
 
-At each visit, lead with one or two direct links, briefly explain what now exists and what to inspect, and say exactly how to continue, such as “Come back here after you have looked.” Do not add frontend pauses for registration, import, individual annotations, jobs, or other routine objects.
+At each visit, lead with one or two direct links, briefly explain what now exists and what to inspect, and say exactly how to continue, such as “Come back here after you have looked.” Do not add frontend pauses for registration, individual annotations, jobs, or other routine objects.
 
 ## Run the final experiment safely
 
-Use the unchanged `kitaru-replay-experiment` skill for the final candidate comparison. Carry the accepted behavior, exact source-matched `returns-resolver` agent-version ID, exact three-session cohort, exact behavior evaluator, `kitaru/tool-health@1`, `kitaru/resource-budget@1` with its frozen parameters, one system-prompt clarification, the fixed `openai:gpt-5-nano` returns model, and `evaluate_baselines=true`.
+Use the unchanged `kitaru-replay-experiment` skill for the final candidate comparison. Carry the accepted behavior, exact source-matched `returns-resolver` agent-version ID, exact five-session cohort, exact behavior evaluator, `kitaru/tool-health@1`, `kitaru/resource-budget@1` with its frozen parameters, one system-prompt clarification, the fixed `openai:gpt-5-nano` returns model, and `evaluate_baselines=true`.
 
 Carry an explicit tool policy with a restrictive default of history from `baseline` and `on_miss=fail`, plus exact `passthrough` entries for `lookup_order`, `get_return_policy`, `check_shipping`, `issue_refund`, `create_replacement`, and `escalate_to_human`. Do not use default passthrough because it would also allow an unexpected tool. The replay skill owns adapter checks, explanation, approval, execution, cancellation, configuration-drift checks, and result accounting. Do not create or start the experiment before that approval.
 

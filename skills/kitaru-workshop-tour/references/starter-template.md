@@ -55,12 +55,12 @@ additions.
 
 When the environment is absent or stale, follow the verified README's frozen
 sync command after approval. Do not run separate `uv add` or `pip install`
-commands: the lockfile owns the complete compatible dependency set. Afterward,
-run the README's provider-free contract tests once. They verify the agent,
-tools, fixture count, checked-in traces, importer contract, and documented
-setup without contacting Kitaru or a model provider. Confirm that the installed
-Kitaru CLI and worker imports resolve from the same frozen environment. Do not
-repeat those checks as many ad hoc shell and Python probes.
+commands: the lockfile owns the complete compatible dependency set. Treat the
+prepared template and its checked-in 30-trace corpus as the workshop starting
+point. Confirm that the installed Kitaru CLI and worker imports resolve from
+the same frozen environment, but do not run the repository test suite merely
+to re-prove the prepared example. Use focused tests only to diagnose an actual
+setup discrepancy or a failed workshop operation.
 
 If the bounded verification fails, inspect that failure and the frozen sync
 result before diagnosing the Kitaru server.

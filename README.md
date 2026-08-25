@@ -27,7 +27,7 @@ improvement, and compare the result.
 | Skill | Purpose |
 |---|---|
 | [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | Give a first-time user a prepared three-session frontend review of the public returns-agent template, collect human verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. |
-| [`kitaru-workshop-tour`](skills/kitaru-workshop-tour/SKILL.md) | Survey the expanded 30-session returns-agent template with pinned deterministic evaluators, select three evidence-grounded sessions for human review, define one population check, and compare one bounded replay candidate. |
+| [`kitaru-workshop-tour`](skills/kitaru-workshop-tour/SKILL.md) | Survey the expanded 30-session returns-agent template with pinned deterministic evaluators, inspect the imported sessions in the frontend, select five evidence-grounded sessions for human review, define one population check, and compare one bounded replay candidate. |
 | [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Act as Kitaru's front door: verify setup, record or import sessions, guide human review, define one accepted behavior and cohort, select an evaluator, and offer a bounded replay experiment. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
 | [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
@@ -89,8 +89,9 @@ the whole-session verdicts. Customized templates and real user evidence route
 to `kitaru-investigation`, which supports one-run review, specific-behavior
 debugging, and bounded recurring-problem discovery. If an
 expanded companion checkout is available, `kitaru-workshop-tour` instead
-surveys all 30 sessions with pinned deterministic evaluators, selects three
-sessions from visible evidence, requires three human verdicts, treats written
+surveys all 30 sessions with pinned deterministic evaluators, opens the imported
+population in the frontend, selects five sessions from visible evidence,
+requires five human verdicts, treats written
 reasoning as optional context, then evaluates and replays only the confirmed
 relationship. If an
 unsupported provider prevents sessions from entering Kitaru, the

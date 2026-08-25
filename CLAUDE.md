@@ -10,7 +10,7 @@ the public returns-agent template and turns one accepted finding into a
 deterministic evaluator followed by one approved bounded replay experiment.
 `kitaru-workshop-tour` runs the expanded returns-agent template's deterministic
 30-session survey, explains the findings, prepares an evidence-grounded review,
-requires three human verdicts, and hands one confirmed cohort to bounded replay.
+requires five human verdicts, and hands one confirmed cohort to bounded replay.
 `kitaru-investigation` conducts evidence-grounded review of Kitaru agent
 sessions and can turn an accepted behavior into a versioned cohort and optional
 installed or custom evaluator. `kitaru-replay-experiment` safely compares one

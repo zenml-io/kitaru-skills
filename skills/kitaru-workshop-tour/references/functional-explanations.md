@@ -36,7 +36,7 @@ one or two sentences. The coding agent is the assistant conducting this tour:
 it can inspect the template and use Kitaru tools, while the returns agent is
 the recorded customer-support system whose past behavior the audience will
 inspect. Then state the path in ordinary language: establish the prepared
-environment, survey the recorded runs, review three examples, make one
+environment, inspect the recorded population, review five examples, make one
 repeatable check from a human-confirmed relationship, and compare one bounded
 change.
 
@@ -45,11 +45,13 @@ path there as a short status outline. The outline is for the audience to orient
 themselves, not a transcript of agent mechanics. Update it only when a stage
 has produced a durable result or the evidence changes the route.
 
-At the opening, conclude with what the first readiness check will establish and
-wait for the user to continue. Use the same pattern at consequential handoffs:
-state what the audience has just learned, name the next meaningful action, and
-let the user or existing approval gate control continuation. Do not announce a
-"pause" or ask the audience to perform a ritual acknowledgement.
+At the opening, conclude with what the first readiness check will establish,
+then continue into that read-only check. Use a wait only at consequential
+handoffs: after the imported population is opened in the frontend, before
+durable review writes, after later frontend visits, and before paid or live
+execution. State what the audience has just learned and name the next
+meaningful action. Do not announce a "pause" or ask the audience to perform a
+ritual acknowledgement.
 
 ## Explain the flow in context
 
@@ -70,6 +72,11 @@ Before registration, explain that Kitaru ties recorded behavior to an exact agen
 Before import, explain that the template includes 30 already-recorded customer-support runs. Importing them gives Kitaru the complete sequence of model messages, tool calls, and tool results, which is what lets the user inspect what actually happened rather than trusting the final reply alone.
 
 After registration or import, state the exact durable result in approachable terms. For example: “Kitaru now knows which version of the returns agent produced these 30 runs, so we can review its behavior without running or paying for the model again.”
+
+After that statement, open the agent sessions page. Explain that each row is a
+recorded run with its input, model and tool evidence, final action, and later
+review or evaluation results. The audience should inspect the population before
+the tour applies any evaluator or chooses a case. Wait for their return.
 
 ### Prepare the review
 
@@ -113,14 +120,14 @@ unresolved evidence rather than quietly disappearing from the population.
 
 Before adding observations and highlights, explain that the coding agent has read the complete traces and will point to evidence worth noticing. An annotation records the observation; a highlight places it beside the exact tool result, message, or field that supports it. These are prepared suggestions, not the user's verdict.
 
-Before creating the investigation, explain that it turns the three selected
+Before creating the investigation, explain that it turns the five selected
 runs into one ordered frontend review. The verdict buttons record the required
 human decision on each complete session. Written notes are optional and should
 record additional reasoning only when the reviewer finds that useful.
 
 After creation, say what was saved and make the division of labor explicit:
 the coding agent prepared evidence pointers, Kitaru keeps them attached to the
-trace, and the user decides Acceptable, Problematic, or Uncertain for all three
+trace, and the user decides Acceptable, Problematic, or Uncertain for all five
 sessions. Do not overstate the meaning of optional notes or later treat them as
 careful annotations when the user was simply moving through the review.
 
@@ -140,6 +147,22 @@ After the user returns, explain the difference between measuring recorded behavi
 
 Before experiment creation, briefly explain the proposed change, tool behavior, expected model work, cost uncertainty, and what the comparison can establish. Let the replay-experiment skill obtain approval after that explanation. Do not make paid execution feel like an automatic consequence of completing the review.
 
+Make the candidate change inspectable before asking for approval. Show a short
+before-and-after prompt or configuration diff containing only the relevant
+changed instruction, then show this compact flow in ordinary language:
+
+```text
+Recorded ticket -> same agent with the visible override -> fresh replay
+                -> behavior evaluator + tool health + resource budget
+```
+
+Explain that Kitaru stores the candidate separately as an experiment override;
+the checked-in agent code and the recorded baseline do not change. If the
+normal creation route uses the CLI, show the prepared override fragment or
+equivalent configuration before approval. After an approved creation, it may
+show the resolved configuration. Do not interrupt the tour to discover a
+command solely for display, and never show credentials.
+
 After settlement, lead with the experiment page. Explain how to select the run, where the baseline and candidate evidence appear, and what improved, regressed, stayed unchanged, failed, or remained missing. Ask the user to inspect it and return before the flow completes.
 
 ## Keep explanations honest
@@ -149,6 +172,6 @@ After settlement, lead with the experiment page. Explain how to select the run, 
   when that distinction becomes relevant. Optional written notes may be useful
   context, but they are not required labels and their presence does not prove
   that the reviewer understood or endorsed the prepared observation.
-- Do not claim prevalence from three reviewed examples. The full 30-session evaluator result can describe this synthetic population only.
+- Do not claim prevalence from five reviewed examples. The full 30-session evaluator result can describe this synthetic population only.
 - If a step is resumed rather than created, explain that Kitaru already has the durable result and the tour is reusing it. This shows persistence without pretending the work happened again.
 - If something fails, preserve the explanation: name the intended concept, the exact blocked action, and the smallest recovery. Do not replace the tour with raw command output.

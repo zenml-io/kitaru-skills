@@ -6,7 +6,7 @@ description: Guide the expanded 30-trace Kitaru returns-agent tour from determin
 # Kitaru expanded tour
 
 Use the expanded Kitaru returns-agent template to move from a deterministic
-survey of 30 recorded traces, through a three-session human review and one
+survey of 30 recorded traces, through a five-session human review and one
 reusable evaluator, to one bounded experiment result.
 
 ## Experience contract
@@ -36,31 +36,38 @@ reusable evaluator, to one bounded experiment result.
 - When the coding-agent harness provides a native task, todo, or plan view,
   create a short visible outline before any readiness checks. Use four to six
   audience-meaningful tasks such as understanding the recorded runs, surveying
-  the population, reviewing three cases, making a reusable check, and comparing
-  one change. Mark tasks complete as their durable result becomes visible, and
+  the population, reviewing five cases, making a reusable check, and comparing
+  one change. Mark tasks complete as their durable result becomes visible,
+  including the final experiment task when its result has been explained, and
   revise the outline when the evidence changes the route. Do not put file
   reads, command discovery, cache work, or other agent mechanics in that view.
   If the harness has no task view, give the same compact outline once in the
   opening explanation rather than creating a separate artifact.
-- Use natural reading breaks at the opening, before the combined review write,
-  after each frontend handoff, and before paid or live execution. At each one,
-  finish with the useful result or planned action and wait for the user's next
-  instruction, approval, or return. Do not label these as pauses or turn them
-  into timing instructions for a presenter.
+- Keep the conversation alive during long work, but send visible updates only
+  when they give the audience a useful Kitaru fact, result, or next decision.
+  Do not send standalone messages about loading references, looking up command
+  forms, parsing results, or deciding what to inspect. Continue directly from
+  the opening into read-only readiness checks. Wait only before the combined
+  review write, after a frontend handoff, and before paid or live execution.
+  Do not label these as pauses or turn them into timing instructions for a
+  presenter.
 - Prepare concise observations and exact evidence anchors for the reviewer.
   Tell them once that these are agent-prepared reading aids. Do not emphasize
   their annotations or treat an optional written note as proof of a behavior;
-  the three verdicts carry the required human judgments.
-- Use the Kitaru frontend three times: for the investigation review, the cohort
-  and evaluator results, and the completed experiment run.
+  the five verdicts carry the required human judgments.
+- Use the Kitaru frontend four times: after import to view the sessions, then
+  for the investigation review, the cohort and evaluator results, and the
+  completed experiment run.
   Give direct links, explain what the user is looking at, then pause until they
   return. Do not interrupt the tour with frontend visits for routine objects.
-- Survey all 30 sessions before selection, then keep the human review to three:
-  one suspected problem, one evidence-reading or boundary case, and one nearby
-  comparison. Inspect as many complete traces as needed to support those roles,
-  up to the full 30-session population.
+- Survey all 30 sessions before selection, then keep the human review to five.
+  Include at least one suspected problem, one boundary case,
+  and one nearby comparison. Use the remaining cases to show distinct evidence,
+  preferring additional suspected problems when complete traces support them.
+  Inspect as many complete traces as needed, up to the full 30-session
+  population.
 - Ask the human to confirm the resource-budget parameter object before running
-  that evaluator. Require one human verdict for each of the three sessions;
+  that evaluator. Require one human verdict for each of the five sessions;
   written answers and notes are optional.
 - Reach a useful evaluator result without regenerating traces or making a paid
   model call. Continue into one bounded replay, but briefly explain the proposed
@@ -113,9 +120,9 @@ Before any readiness inspection or Kitaru operation, give a concise opening:
    visible task outline to show where the tour is going. Do not imply that a
    server, imported population, or worker is already available before checking.
 
-Create the harness-native task outline described above, then stop before the
-readiness checks. End with the first useful thing the tour will establish, not
-with an internal setup description.
+Create the harness-native task outline described above, then continue directly
+into the readiness checks. End the opening with the first useful thing the tour
+will establish, not with an internal setup description or a request to proceed.
 
 ## Establish the template route
 
@@ -153,20 +160,25 @@ Begin read-only.
 Do not ask a first-time user to choose a framework, trace provider, review
 method, or sampling strategy on the compatible route.
 
+After a successful import and provenance check, resolve the agent sessions URL
+through `kitaru-operations.md`, explain that it is the population before any
+judgment has been made, and wait for the user to return. Do not begin the
+deterministic survey until they do.
+
 ## Prepare one expanded review
 
 Follow `tour-method.md` to run the 90-pair descriptive survey, obtain human
 confirmation for the separately configured 30-pair resource-budget survey,
 account for all results, explain what the evaluators measure and found, and
-inspect complete traces until the three review roles are supported. Before
-writing, show a compact preview of what happened in each selected session, why
+inspect complete traces until a meaningful five-case selection is supported.
+Before writing, show a compact preview of what happened in each selected session, why
 it matters, and the evidence that will be highlighted. Treat the first role as
 a suspected problem until the human judges it. Avoid an exhaustive
 investigation plan or internal selection machinery.
 
 Ask once to:
 
-- add the three sessions' agent observations as ordinary Kitaru annotations;
+- add the five sessions' agent observations as ordinary Kitaru annotations;
 - create one fixed investigation with the evidence-grounded questions and
   highlights;
 - open the resulting frontend review.
@@ -195,13 +207,14 @@ When the user returns:
    optional written answers, and verdict coverage.
 2. Lead with what the user decided. Explain how each verdict now sits beside
    the exact recorded evidence that motivated the review.
-3. If all three verdicts are present, including at least one problematic target
-   and one acceptable comparison, propose one observable relationship that
-   best explains the difference. Ask one short confirmation before turning it
+3. If all five verdicts are present, including at least one problematic target,
+   and the selected boundary and comparison support a human-confirmed
+   relationship, propose one observable relationship that best explains the
+   difference. Ask one short confirmation before turning it
    into a reusable check. Treat optional notes as context, not as a required
    label or independent confirmation.
 4. If the user accepts that relationship, create an exact cohort version from
-   all three reviewed sessions. Check the installed evaluator catalog before
+   all five reviewed sessions. Check the installed evaluator catalog before
    authoring code.
 5. Select or create exactly one relational deterministic evaluator. Test pass,
    fail, and acceptable-boundary behavior against the reviewed sessions. Test
@@ -247,7 +260,7 @@ After the user returns from the cohort and evaluator pages:
    Keep the returns-agent model fixed and do not
    start an automatic prompt search or introduce an unrelated model change.
 3. Continue with the unchanged `kitaru-replay-experiment`, carrying the exact
-   source-matched `returns-resolver` agent-version ID; three-session cohort;
+   source-matched `returns-resolver` agent-version ID; five-session cohort;
    behavior evaluator; `kitaru/tool-health@1`;
    `kitaru/resource-budget@1` with its frozen parameters;
    `openai:gpt-5-nano` as the fixed returns model;
@@ -271,6 +284,33 @@ result. If they decline the run or execution is blocked, preserve the proposed
 conditions and cohort and evaluator links without claiming that the experiment
 completed.
 
+## Offer an optional resource optimization coda
+
+After the completed experiment has been inspected, briefly offer a separate
+cost or tool-efficiency improvement as an optional next step. Begin it only if
+the user opts in. Do not automatically start a second loop or imply that the
+behavior fix was insufficient.
+
+1. Select five recorded sessions with the clearest resource-budget evidence,
+   preferring costly or tool-heavy cases that still have complete evidence.
+   Preview the selection and obtain confirmation before freezing it in a
+   separate cohort. This is an objective resource sample, not a substitute for
+   human semantic review.
+2. Read the traces to identify the likely resource driver. Do not assume that a
+   shorter answer reduces tool calls, or that fewer tool calls preserve policy
+   behavior.
+3. Propose one narrow candidate change. Show the exact prompt or configuration
+   difference and explain how Kitaru will apply it as an experiment override,
+   rather than editing the checked-in agent or deploying a change.
+   Wait for the user to inspect and discuss this proposal before creating the
+   experiment configuration.
+4. Carry the existing behavior evaluator and tool health as guardrails, and use
+   the frozen resource-budget parameters as the optimization measure. Let
+   `kitaru-replay-experiment` obtain explicit approval before the paid replay.
+5. Report the resource change and every behavior or tool trade-off together.
+   Do not claim an optimization succeeded when cost fell by breaking the
+   behavior evaluator or increasing unresolved evidence.
+
 Afterward, offer **Use my own agent** through `kitaru-investigation`, carrying
 the tour's method explanation but none of its synthetic conclusions.
 
@@ -288,8 +328,9 @@ the tour's method explanation but none of its synthetic conclusions.
   response, re-read state before retrying.
 - If the review URL cannot be resolved, preserve the created investigation and
   report the broken handoff with its exact ID and one retry action.
-- If the complete population cannot support all three review roles, stop and
-  say which role is missing. Do not substitute a fixed or smaller selection.
+- If the complete population cannot support a five-case selection containing a
+  suspected problem, boundary, and comparison, stop and say which evidence is
+  missing. Do not substitute a fixed answer-key selection.
 - If the user stops after only part of the review, summarize the persisted
   verdicts and what they already show. Offer the same link for missing verdicts,
   but do not treat agent observations or optional notes as human judgments.
