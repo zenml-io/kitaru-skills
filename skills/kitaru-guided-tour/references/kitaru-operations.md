@@ -42,7 +42,7 @@ Transport and server selection are separate. CLI and MCP may both address the sa
 | Create fixed investigation | `kitaru investigation create` with repeated session, question, and highlight options | `kitaru_review_manage`, `create_investigation` |
 | Read investigation and worklist | `kitaru investigation get`; `kitaru investigation session list` | `kitaru_review_read` |
 | Create cohort/version | `kitaru cohort create`; `kitaru cohort version create` | `kitaru_cohorts_manage` |
-| Check and register evaluators | `kitaru evaluator list`; `scaffold`; `test`; `register` | Registry reads; writes require the appropriate evaluator tool and existing script blob |
+| Check and register evaluators | `kitaru evaluator list`; `scaffold`; `test`; `register --agent-id AGENT` for the tour's custom evaluator | Registry reads; writes require the appropriate evaluator tool and existing script blob; use CLI registration when the installed MCP create schema lacks `agent_id` |
 | Evaluate baseline sessions | `kitaru session evaluate ... --wait` | `kitaru_workflow_start`, evaluation |
 | Create and run experiment | `kitaru experiment create`; `kitaru experiment run start ... --wait` | `kitaru_experiments_manage`; `kitaru_workflow_start`, experiment run |
 
@@ -93,9 +93,9 @@ After frontend review, re-read investigation questions, ordinary annotations, op
 
 Resume an investigation's verdicts only when the current conversation already carries its exact investigation ID or the user explicitly identifies that investigation as their review. A matching tutorial name is not proof that the current reviewer supplied its judgments. Reuse its sessions and exact-match prepared annotations, but create a fresh investigation when reviewer identity is ambiguous.
 
-Before cohort creation, show the exact proposed membership once and obtain confirmation together with the accepted behavior. Prefer an installed configured evaluator when it expresses that behavior. Otherwise keep custom code local until it passes the installed evaluator test command, then register one immutable version.
+Before cohort creation, show the exact proposed membership once and obtain confirmation together with the accepted behavior. Prefer an installed configured evaluator when it expresses that behavior and its parent is scoped to the tour's agent or is verified as deliberately global. A null `agent_id` alone is insufficient because deleting a scoped evaluator's agent also clears the field; require a trusted creation record or known default-catalog identity, or revalidate the evaluator's criterion, implementation, and intended reuse for the tour's agent. Otherwise keep custom code local until it passes the installed evaluator test command, then register one immutable version on a parent scoped to the tour's agent. Re-read the parent and verify its returned `agent_id` before evaluation. Scope cannot be edited through evaluator update or version registration, so do not reuse a same-named parent with another or unverified scope or silently fall back to a global parent.
 
-Evaluation jobs require a live worker. Wait through the supported mechanism once, inspect the terminal job and every resulting evaluation, and keep missing or failed evaluations out of the quality numerator while retaining them in the population accounting.
+Evaluation jobs require a live worker and all input sessions must belong to one agent. Verify that the complete prepared baseline population belongs to the tour's agent, wait through the supported mechanism once, inspect the terminal job and every resulting evaluation, and keep missing or failed evaluations out of the quality numerator while retaining them in the population accounting.
 
 ## Pause three times for frontend review
 

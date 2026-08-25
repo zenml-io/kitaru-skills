@@ -39,6 +39,7 @@ Draft one narrow criterion and show one prefilled card:
 | Mechanism | Deterministic, LLM judge, or small hybrid |
 | Examples | Representative reviewed session and node references |
 | Cohort | Exact cohort-version ID |
+| Evaluator scope | Exact agent ID, or global with the portability reason |
 
 Treat this card as a checksum, not a new form. If it preserves the behavior already accepted in investigation, continue without asking the user to accept the same meaning twice. Ask for a decision only when the draft adds or changes a boundary, permitted equivalence, or missing-evidence rule.
 
@@ -74,18 +75,22 @@ For every custom evaluator:
 
 For an LLM judge, add cheap probes where relevant: reverse pairwise order, remove irrelevant context, present a valid alternate path, pair the expected token or tool call with an incorrect outcome, and verify that missing evidence stays unresolved. These are implementation checks, not a separate product stage.
 
-## Register and report facts
+## Prepare registration, obtain approval, and report facts
 
-After the checks pass and the user approves the remote write:
+After the checks pass:
 
-1. Register a new immutable evaluator version. Use the CLI for local script upload; use MCP only when the implementation already exists as a server blob or exact package pin.
-2. Re-read the evaluator and registered version.
-3. Return exact evaluator, evaluator-version, and cohort-version IDs plus exact parameters and configuration hashes when available.
-4. Report the evidence as facts:
+1. Resolve the cohort's exact agent ID and choose the evaluator parent scope before creation. Default a custom evaluator derived from one agent's reviewed evidence to that agent. Use a global evaluator only when its criterion, implementation, and intended reuse are deliberately portable across agents.
+2. Re-read any evaluator with the intended name before registration. Reuse it when its scope matches the cohort's agent. Reuse a null-scoped parent only when a trusted creation record establishes deliberate global scope or after revalidating its criterion, implementation, and intended reuse for this agent; agent deletion also produces a null `agent_id`, so the field alone is insufficient. Evaluator names remain workspace-unique and scope cannot be updated, so choose a new unambiguous name when an existing parent has the wrong or unverified scope.
+3. Tell the user whether registration will create a new parent or add a version to an existing parent, name the exact parent and chosen scope, explain the remote write, and obtain approval once for that complete registration.
+4. Register one immutable evaluator version through the path resolved above. For a new scoped parent and local script, use `kitaru evaluator register NAME --agent-id AGENT_ID --script PATH --entrypoint NAME`. For an existing compatible parent, use `kitaru evaluator version register EVALUATOR --script PATH --entrypoint NAME` without an agent-scope option. Use MCP only when the implementation already exists as a server blob or exact package pin and, for a new scoped parent, the installed create schema exposes `agent_id`; otherwise use the CLI or stop with the exact transport limitation.
+5. Re-read the evaluator and registered version, and verify the returned `agent_id` before evaluating sessions.
+6. Return exact evaluator, evaluator-version, cohort-version, and agent-scope IDs plus exact parameters and configuration hashes when available. For a null-scoped parent, also record the evidence that established deliberate global portability.
+7. Report the evidence as facts:
 
 ```text
 Implementation checks: passed
 Kitaru load/signature check: passed
+Evaluator scope: exact agent ID, or global
 Reviewed fixtures: 3, including Pass and Fail
 Human agreement: not measured
 Held-out evaluation: not run
