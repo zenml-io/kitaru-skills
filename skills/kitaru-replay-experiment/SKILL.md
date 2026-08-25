@@ -35,7 +35,7 @@ Resolve:
 1. the accepted behavior and intended use: exploration, known-case regression, or an exact user-defined gate;
 2. the exact cohort-version ID and ordered case count;
 3. one exact candidate agent-version ID and the current public run spec and capabilities;
-4. exact evaluator-version IDs, parameters, and factual evidence about their checks and limitations;
+4. exact evaluator-version IDs, parent agent scopes, parameters, and factual evidence about their checks and limitations;
 5. one proposed replay override and its expected effect;
 6. the adapter and construction path;
 7. every tool the candidate may invoke and one explicit policy covering all of them.
@@ -43,6 +43,8 @@ Resolve:
 Route to `kitaru-investigation` when no behavior or cohort has been accepted. Use its evaluator route when no suitable evaluator exists or when the current evaluator is too weak for the intended claim. Offer a claim downgrade instead of forcing validation ceremony when the user only needs an exploratory result.
 
 If an experiment or run already exists, re-read it and resume supervision or interpretation. Experiment configuration freezes after it has runs, so create a new experiment for a materially changed candidate, evaluator set, override, or tool policy.
+
+Re-read every evaluator parent before approval. A scoped evaluator is eligible only when its `agent_id` matches the experiment's agent. A null `agent_id` is only a candidate global scope because deleting a scoped evaluator's agent also clears the field. Use a null-scoped parent only when a trusted creation record or known default-catalog identity establishes deliberate global scope, or after revalidating its criterion, implementation, and intended reuse for the experiment's agent. Reject a mismatched or unverified scope before experiment creation rather than relying on the server error, and carry the verified scope and any global-portability evidence in the resumable technical record.
 
 ## Preflight capability and safety
 
