@@ -1,6 +1,6 @@
 ---
 name: kitaru-investigation
-description: Guide users from their own agent code or recorded traces through Kitaru setup, session import or recording, human review, an accepted behavior, a versioned cohort, and evaluator selection, then hand one bounded change to the replay-experiment skill. Use when a user wants to connect or inspect an existing agent, import real traces, investigate a known bad or surprising session, discover recurring failure modes, learn the evidence-led review flow, resume an investigation, create a cohort from reviewed evidence, or author an evaluator for an accepted behavior. When a first-time user has no agent or evidence and wants a fast demonstration with the public returns-agent template, use the `kitaru-guided-tour` skill instead.
+description: Guide users from their own agent code or recorded traces through Kitaru setup, session import or recording, human review, an accepted behavior, a versioned cohort, and evaluator selection, then hand one bounded change to the replay-experiment skill. Use when a user wants to connect or inspect an existing agent, import real traces, investigate a known bad or surprising session, discover recurring failure modes, learn the evidence-led review flow, resume an investigation, create a cohort from reviewed evidence, or author an evaluator for an accepted behavior. When a first-time user has no agent or evidence and wants a fast demonstration with the PydanticAI returns agent example, use the `kitaru-guided-tour` skill instead.
 ---
 
 # Kitaru investigation
@@ -71,7 +71,7 @@ Installation, agent registration, recording, and trace import are setup for
 next action after the orientation rather than repeating the whole map.
 
 When a first-time user has no agent or traces and wants to see why Kitaru is
-useful through the public template, continue with the `kitaru-guided-tour`
+useful through the PydanticAI returns agent example, continue with the `kitaru-guided-tour`
 skill. For a generic first run with the user's own evidence, ask one user-facing
 question before choosing the review size:
 
@@ -96,7 +96,7 @@ choosing a review path until the source is available.
   schemas when they differ from the reference.
 - Read [references/starter-template.md](references/starter-template.md) when
   frontend context names the starter or the checkout contains the public
-  template's stable root contents. Use its guarded, README-led demo route
+  example's stable root contents. Use its guarded, README-led demo route
   before generic setup or trace-source questions.
 - Read
   [references/deterministic-evaluators.md](references/deterministic-evaluators.md)
@@ -117,7 +117,7 @@ Begin with read-only inspection.
    origin URL. Route to the starter-template reference when the root contains
    `pyproject.toml`, `returns_agent/`, and
    `traces/langfuse-traces.jsonl`; renamed clones and forks can still be the
-   public template. If no checkout is reachable, report the incomplete handoff
+   quickstart example. If no example directory is reachable, report the incomplete handoff
    and stop before readiness checks, registration, or investigation. For
    already imported sessions or an explicit trace-only investigation, continue
    without source code and mark repository context as unresolved in every
@@ -198,7 +198,7 @@ starter handoff is incomplete and stop before registration or investigation.
 When the stable starter contents are present, follow the starter-template
 reference. Do not ask the user to choose a framework or trace provider, obtain
 live Langfuse credentials, export a time window, regenerate traces, or run the
-included agent through a paid model. Leave that demo route when its canonical
+   included agent through a paid model. Leave that demo route when its quickstart
 agent or checked-in trace input was customized, and continue through this
 skill's generic investigation path instead.
 

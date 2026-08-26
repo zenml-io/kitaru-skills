@@ -1,6 +1,6 @@
 # Guided tour method
 
-Use this method to create a small prepared lesson from the canonical returns-agent traces. Optimize for a concrete insight, not for a representative audit.
+Use this method to create a small prepared lesson from the PydanticAI returns agent traces. Optimize for a concrete insight, not for a representative audit.
 
 ## Select three teaching moments
 
@@ -18,7 +18,7 @@ Do not use ticket identifiers, fixture implementation, test-only expected outcom
 
 For each session, write one or two concise ordinary annotations. Anchor each note to the smallest useful node, JSON field, or text span. Use the complete session only when no narrower selector carries the meaning.
 
-Write for a newcomer who has not read the template code and does not know its internal field names. Translate each field into its practical meaning. For example, say “the order was marked for human review” instead of “the account-review flag was set.” If an internal term is necessary, define it in the same sentence.
+Write for a newcomer who has not read the example code and does not know its internal field names. Translate each field into its practical meaning. For example, say “the order was marked for human review” instead of “the account-review flag was set.” If an internal term is necessary, define it in the same sentence.
 
 Start every durable note with `Agent observation:`. State what the evidence shows and why it matters without pretending the user has already agreed. Prefer:
 
@@ -76,7 +76,7 @@ After the user accepts the behavior and every proposed cohort member has a human
 
 1. Include exact problematic examples plus at least one acceptable counterexample in an immutable cohort version.
 2. Check the installed evaluator catalog first. Use a configured deterministic evaluator when it directly expresses the accepted behavior.
-3. Otherwise scaffold one narrow evaluator from observable recorded evidence. Do not map ticket or session identifiers to answers or import the template's test-only oracle.
+3. Otherwise scaffold one narrow evaluator from observable recorded evidence. Do not map ticket or session identifiers to answers or import the example's test-only oracle.
 4. Test the evaluator locally, register an immutable version, and run it across the complete `returns-baseline` population.
 5. Compare its results with the three human verdicts. Fix an evident evaluator bug; otherwise report disagreement rather than changing the human judgment to make the check pass.
 
