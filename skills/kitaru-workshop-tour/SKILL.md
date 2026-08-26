@@ -66,9 +66,11 @@ reusable evaluator, to one bounded experiment result.
   preferring additional suspected problems when complete traces support them.
   Inspect as many complete traces as needed, up to the full 30-session
   population.
-- Ask the human to confirm the resource-budget parameter object before running
-  that evaluator. Require one human verdict for each of the five sessions;
-  written answers and notes are optional.
+- Ask the human to confirm an operating-guardrail parameter object, then offer
+  a separate fast-path triage target for the recorded population. Only the
+  operating guardrail is required for the main route and reused in replay.
+  Require one human verdict for each of the five sessions; written answers and
+  notes are optional.
 - Reach a useful evaluator result without regenerating traces or making a paid
   model call. Continue into one bounded replay, but briefly explain the proposed
   run and ask before creating the experiment or starting paid or live execution.
@@ -144,7 +146,8 @@ Begin read-only.
    current task context, and do not claim that the current task can discover the
    new tools. Before the restart, give the user a compact copy-back resume block
    containing the template path, selected server, exact agent-version and import
-   job IDs, any investigation ID, and the frozen resource-budget parameters.
+   job IDs, any investigation ID, the frozen operating-guardrail parameters,
+   and any confirmed fast-path target.
    This in-chat handoff is not an external checkpoint artifact.
 3. Inspect Kitaru Cloud connectivity through the known-good environment and
    command forms in `kitaru-operations.md`. Then inspect the exact registered
@@ -168,9 +171,10 @@ deterministic survey until they do.
 ## Prepare one expanded review
 
 Follow `tour-method.md` to run the 90-pair descriptive survey, obtain human
-confirmation for the separately configured 30-pair resource-budget survey,
-account for all results, explain what the evaluators measure and found, and
-inspect complete traces until a meaningful five-case selection is supported.
+confirmation for the separately configured operating-budget survey and, when
+accepted, the fast-path resource survey. Account for all results, explain what
+the evaluators measure and found, and inspect complete traces until a meaningful
+five-case selection is supported.
 Before writing, show a compact preview of what happened in each selected session, why
 it matters, and the evidence that will be highlighted. Treat the first role as
 a suspected problem until the human judges it. Avoid an exhaustive
@@ -262,7 +266,7 @@ After the user returns from the cohort and evaluator pages:
 3. Continue with the unchanged `kitaru-replay-experiment`, carrying the exact
    source-matched `returns-resolver` agent-version ID; five-session cohort;
    behavior evaluator; `kitaru/tool-health@1`;
-   `kitaru/resource-budget@1` with its frozen parameters;
+   `kitaru/resource-budget@1` with its frozen operating-guardrail parameters;
    `openai:gpt-5-nano` as the fixed returns model;
    proposed system-prompt override; `evaluate_baselines=true`; and an explicit
    tool policy. Use default history from `baseline` with `on_miss=fail`, then
@@ -291,8 +295,10 @@ cost or tool-efficiency improvement as an optional next step. Begin it only if
 the user opts in. Do not automatically start a second loop or imply that the
 behavior fix was insufficient.
 
-1. Select five recorded sessions with the clearest resource-budget evidence,
-   preferring costly or tool-heavy cases that still have complete evidence.
+1. Select five recorded sessions with the clearest fast-path triage evidence,
+   preferring runs that missed the target while still having complete evidence.
+   If no fast-path target was run or it found no candidates, use the clearest
+   resource-heavy sessions instead.
    Preview the selection and obtain confirmation before freezing it in a
    separate cohort. This is an objective resource sample, not a substitute for
    human semantic review.
@@ -304,9 +310,11 @@ behavior fix was insufficient.
    rather than editing the checked-in agent or deploying a change.
    Wait for the user to inspect and discuss this proposal before creating the
    experiment configuration.
-4. Carry the existing behavior evaluator and tool health as guardrails, and use
-   the frozen resource-budget parameters as the optimization measure. Let
-   `kitaru-replay-experiment` obtain explicit approval before the paid replay.
+4. Carry the existing behavior evaluator, tool health, and operating guardrail
+   into replay. Compare the candidate's recorded cost, duration, and tool calls
+   directly with the same baseline cases; the fast-path target selected the
+   cases but is not an experiment gate. Let `kitaru-replay-experiment` obtain
+   explicit approval before the paid replay.
 5. Report the resource change and every behavior or tool trade-off together.
    Do not claim an optimization succeeded when cost fell by breaking the
    behavior evaluator or increasing unresolved evidence.

@@ -85,14 +85,16 @@ If both `kitaru status` and `kitaru doctor` fail before returning a structured s
 
 Resolve all 30 session IDs before starting evaluation. Pass `kitaru/session-diagnostics@1`, `kitaru/trajectory-signals@1`, and `kitaru/tool-health@1` in one request over those IDs. This is exactly 90 session/evaluator pairs. The workflow does not auto-batch an oversized request, so do not add resource budget to that job.
 
-Run `kitaru/resource-budget@1` separately over the same 30 IDs after the human confirms its parameters. The current supported keys are `max_duration_seconds`, `max_cost`, `max_total_tokens`, `max_nodes`, `max_llm_calls`, and `max_tool_calls`, and at least one is required. With the CLI, bind the exact version and object using this form after verifying the installed flags:
+Run `kitaru/resource-budget@1` in separate 30-pair jobs over the same IDs after the human confirms each exact parameter object. The first job is the operating guardrail and the second, optional job is the fast-path triage target. The current supported keys are `max_duration_seconds`, `max_cost`, `max_total_tokens`, `max_nodes`, `max_llm_calls`, and `max_tool_calls`, and at least one is required. With the CLI, bind the exact version and object using this form after verifying the installed flags:
 
 ```text
 --evaluator-params 'kitaru/resource-budget@1={...}'
 ```
 
-Retain the exact object for replay. For both jobs, retain the exact job ID, read
-that terminal workflow, and page through results belonging to that job. Do not
+Retain only `operating_guardrail_params` for replay. Retain
+`fast_path_triage_params` with its job and selection evidence only. For every
+submitted job, retain the exact job ID, read that terminal workflow, and page
+through results belonging to that job. Do not
 list and aggregate every evaluation previously stored in the workspace. Derive
 expected pairs from the 30 source session IDs and exact evaluator-version IDs,
 then classify every expected pair as completed, failed, pending, or missing. A
@@ -186,7 +188,7 @@ At each visit, lead with one or two direct links, briefly explain what now exist
 
 ## Run the final experiment safely
 
-Use the unchanged `kitaru-replay-experiment` skill for the final candidate comparison. Carry the accepted behavior, exact source-matched `returns-resolver` agent-version ID, exact five-session cohort, exact behavior evaluator, `kitaru/tool-health@1`, `kitaru/resource-budget@1` with its frozen parameters, one system-prompt clarification, the fixed `openai:gpt-5-nano` returns model, and `evaluate_baselines=true`.
+Use the unchanged `kitaru-replay-experiment` skill for the final candidate comparison. Carry the accepted behavior, exact source-matched `returns-resolver` agent-version ID, exact five-session cohort, exact behavior evaluator, `kitaru/tool-health@1`, `kitaru/resource-budget@1` with its frozen operating-guardrail parameters, one system-prompt clarification, the fixed `openai:gpt-5-nano` returns model, and `evaluate_baselines=true`.
 
 Carry an explicit tool policy with a restrictive default of history from `baseline` and `on_miss=fail`, plus exact `passthrough` entries for `lookup_order`, `get_return_policy`, `check_shipping`, `issue_refund`, `create_replacement`, and `escalate_to_human`. Do not use default passthrough because it would also allow an unexpected tool. The replay skill owns adapter checks, explanation, approval, execution, cancellation, configuration-drift checks, and result accounting. Do not create or start the experiment before that approval.
 

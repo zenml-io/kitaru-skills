@@ -14,7 +14,7 @@ Run these exact installed evaluators together across all 30 sessions in one 90-p
 
 Do not rely on automatic batching or split this descriptive survey. Read the terminal job and all paginated results. For each evaluator version, account for 30 expected pairs as completed, failed, or missing. A failed terminal task still belongs in accounting. Do not treat a missing or failed result as a clean score.
 
-Configure `kitaru/resource-budget@1` separately because adding it to the descriptive survey would exceed the 100-pair request cap. From the historical evidence, propose at least one meaningful ceiling for the resource condition being measured and ask the human to confirm it. Use only supported fields:
+Configure `kitaru/resource-budget@1` separately because adding it to the descriptive survey would exceed the 100-pair request cap. Use it for two different, clearly named purposes. Both use only supported fields:
 
 - `max_duration_seconds`
 - `max_cost`
@@ -23,18 +23,16 @@ Configure `kitaru/resource-budget@1` separately because adding it to the descrip
 - `max_llm_calls`
 - `max_tool_calls`
 
-At least one field is required. Include `max_cost` when cost is part of the condition. After confirmation, freeze the exact parameter object in the current task context and run one separate 30-pair resource-budget job. Account for its completed, failed, and missing results independently. Reuse the identical evaluator version and parameter object in replay.
+At least one field is required. Include `max_cost` when cost is part of the condition.
 
-Show the proposed parameter object and explain each ceiling in one compact
-table. Do not call it confirmed or start the resource-budget job until the human
-explicitly accepts that exact object. An approval for registration, import, or
-other setup does not confirm the budget.
+1. **Operating guardrail:** propose a broad, credible ceiling for genuinely excessive cost, latency, or tool use. This is the quality guardrail. After confirmation, store its exact parameter object as `operating_guardrail_params` in the current task context, run one 30-pair job, and reuse its identical evaluator version and parameters in replay. An all-pass result is expected when the recorded population is inside the operating envelope and needs no optimization follow-up by itself.
+2. **Fast-path triage target:** offer a stricter object that identifies the relatively costly, slow, or tool-heavy tail of this 30-session population. Before asking, calculate its expected result from the stored metrics without submitting an evaluation: for every complete session, compare each configured ceiling, flag the session once when any value exceeds a ceiling, and keep sessions with missing or invalid metrics unresolved. State the resulting number of distinct flagged sessions. Aim for three to six candidates so the frontend table stays readable, but do not silently keep tightening thresholds when tied values prevent that range. This is a transparent diagnostic selection lens, not a universal service limit and not a claim that a flagged agent behavior is wrong. If the human confirms it, store its object as `fast_path_triage_params` and run a second 30-pair job. Never reuse these parameters in replay.
 
-If the human declines to confirm a resource ceiling, stop successfully before selection and replay. Preserve the descriptive survey result, but do not silently substitute an agent-authored budget or claim that the four-evaluator population survey completed.
+Show the operating guardrail and offered fast-path target in one compact table with columns for purpose, each ceiling, expected flagged sessions, and whether it carries into replay. Do not call either object confirmed or start its job until the human explicitly accepts that exact object. An approval for registration, import, or other setup does not confirm either resource condition.
 
-Show a compact table with one row per evaluator version and columns for
-expected, completed, failed, and missing. Then show the audience-facing
-findings summary and small session matrix defined in
+If the human declines the operating guardrail, stop successfully before selection and replay. Preserve the descriptive survey result, but do not silently substitute an agent-authored budget or claim that the resource survey completed. If they confirm the operating guardrail but decline the fast-path target, run the operating job and continue without fast-path evidence; the later resource coda may still select resource-heavy sessions directly.
+
+Show a compact table with one row per evaluator version and purpose, with columns for expected, completed, failed, and missing. Explain that an operating-guardrail failure is an operational concern, while a fast-path failure is a review candidate. Then show the audience-facing findings summary and small session matrix defined in
 `functional-explanations.md`. Selection begins only after both the denominator
 and the useful findings are visible.
 
@@ -54,10 +52,10 @@ or state and a later action or outcome. Also retain nearby cases that may show
 where the apparent problem stops.
 
 Use a stable reading order: sort first by the number of named descriptive
-signals, then place resource-budget failures before passes and unresolved
-results, and use the Kitaru session ID only as a final tie-breaker. This order
-only decides which complete trace to read next; it does not assign a review
-role or establish that a behavior is problematic.
+signals, then operating-guardrail failures, then fast-path target failures,
+then unresolved results, and use the Kitaru session ID only as a final
+tie-breaker. This order only decides which complete trace to read next; it does
+not assign a review role or establish that a behavior is problematic.
 
 Read complete node payloads for promising cases in small batches. Continue
 until the evidence supports a five-case selection or all 30 sessions have been
@@ -177,7 +175,7 @@ After the user returns, hand execution to the unchanged `kitaru-replay-experimen
 - the exact source-matched `returns-resolver` agent-version ID;
 - the exact behavior evaluator version and parameters;
 - `kitaru/tool-health@1`;
-- `kitaru/resource-budget@1` with the frozen human-confirmed parameter object;
+- `kitaru/resource-budget@1` with `operating_guardrail_params`;
 - one system-prompt clarification that directly addresses the confirmed relationship without embedding expected answers;
 - the fixed `openai:gpt-5-nano` returns-agent model;
 - `evaluate_baselines=true`; and
@@ -185,4 +183,4 @@ After the user returns, hand execution to the unchanged `kitaru-replay-experimen
 
 The restrictive default prevents an unexpected seventh tool from executing. The six named passthrough tools call deterministic local functions against a fresh in-memory store for each task. Keep cohort, model, candidate condition, evaluator versions, evaluator parameters, tool policy, and baseline comparison fixed unless the human explicitly changes the question and re-approves the run.
 
-Let the replay skill verify adapter support, provider and worker readiness, configuration drift, approval, execution, cancellation, and exact result accounting. Resume through exact experiment and run IDs. Interpret the behavior evaluator, tool health, resource budget, completeness, and uncertainty together. Report `improved`, `regressed`, `trade-off`, or `inconclusive` for these reviewed cases only. Do not make a production, deployment, prevalence, or winner claim.
+Let the replay skill verify adapter support, provider and worker readiness, configuration drift, approval, execution, cancellation, and exact result accounting. Resume through exact experiment and run IDs. Interpret the behavior evaluator, tool health, operating guardrail, completeness, and uncertainty together. Report `improved`, `regressed`, `trade-off`, or `inconclusive` for these reviewed cases only. Do not make a production, deployment, prevalence, or winner claim.

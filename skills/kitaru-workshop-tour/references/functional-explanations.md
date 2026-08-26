@@ -90,14 +90,17 @@ Show this compact orientation table before running them:
 | Session diagnostics | Is the recorded trace complete and structurally trustworthy? |
 | Trajectory signals | Did the agent repeat tools, retry a failure, or enter a short cycle? |
 | Tool health | Did a tool fail, return no useful result, or contradict its recorded status? |
-| Resource budget | Did the run stay within the ceilings the human chose? |
+| Operating guardrail | Did the run stay within the accepted service ceiling? |
+| Fast-path target (optional) | Which otherwise valid runs are relatively slow, costly, or tool-heavy? |
 
 Explain that the first three are descriptive signals. They help choose what to
 inspect but do not decide whether a refund, replacement, or escalation was
-correct. Resource budget is a configured rule and can return pass, fail, or
-unresolved. The three descriptive evaluators fit in one 90-pair job. Resource
-budget runs separately so the human can confirm the exact ceiling and the
-comparison can reuse it later.
+correct. Each resource configuration is a rule and can return pass, fail, or
+unresolved. The three descriptive evaluators fit in one 90-pair job. The
+operating guardrail runs separately so the human can confirm the exact ceiling
+that a later comparison reuses. If the human accepts the optional fast-path
+target, it runs in its own job to highlight the relative resource tail; it does
+not carry into replay.
 
 After the survey, first show expected, completed, failed, and missing pair
 counts. Then show a findings table that makes the results useful without
@@ -109,14 +112,18 @@ inventing one aggregate verdict for the descriptive evaluators:
 For session diagnostics, trajectory signals, and tool health, report the named
 signals the evaluator actually returned and how many sessions exposed each
 one. Do not translate their absence into a synthetic `clean` verdict. Report
-resource-budget results separately as pass, fail, or unresolved using the
-evaluator's own top-level result. If an output has mixed ceiling details but no
-top-level result, keep it unresolved and describe the mixed details rather than
-choosing a label. Summarize the findings in ordinary language, then show a
-small session matrix containing the customer request, final action, notable
-signals, resource result, and reason a session may deserve inspection. Do not
-dump every stored evaluation row. Missing or failed evaluations remain
-unresolved evidence rather than quietly disappearing from the population.
+the operating guardrail and, when run, the fast-path target separately as pass,
+fail, or unresolved using each evaluator's own top-level result. If the target
+was declined, say that it was not run. Explain that an operating failure exceeds
+the accepted service envelope, while a fast-path failure identifies a relatively
+resource-heavy run for inspection and does not make its behavior wrong. If an
+output has mixed ceiling details but no top-level result, keep it unresolved and
+describe the mixed details rather than choosing a label. Summarize the findings
+in ordinary language, then show a small session matrix containing the customer
+request, final action, notable signals, available resource results, and reason a
+session may deserve inspection. Do not dump every stored evaluation row. Missing
+or failed evaluations remain unresolved evidence rather than quietly
+disappearing from the population.
 
 Before adding observations and highlights, explain that the coding agent has read the complete traces and will point to evidence worth noticing. An annotation records the observation; a highlight places it beside the exact tool result, message, or field that supports it. These are prepared suggestions, not the user's verdict.
 
@@ -153,7 +160,7 @@ changed instruction, then show this compact flow in ordinary language:
 
 ```text
 Recorded ticket -> same agent with the visible override -> fresh replay
-                -> behavior evaluator + tool health + resource budget
+                -> behavior evaluator + tool health + operating guardrail
 ```
 
 Explain that Kitaru stores the candidate separately as an experiment override;
