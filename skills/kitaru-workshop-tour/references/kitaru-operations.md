@@ -109,11 +109,13 @@ Run `kitaru/resource-budget@1` in separate 30-pair jobs over the same IDs after 
 Retain only `operating_guardrail_params` for replay. Retain
 `fast_path_triage_params` with its job and selection evidence only. For every
 submitted job, retain the exact job ID, read that terminal workflow, and page
-through results belonging to that job. Do not
-list and aggregate every evaluation previously stored in the workspace. Derive
-expected pairs from the 30 source session IDs and exact evaluator-version IDs,
-then classify every expected pair as completed, failed, pending, or missing. A
-pair is pending only while its exact job remains non-terminal. Do not infer
+through results belonging to that job. Do not list and aggregate every
+evaluation previously stored in the workspace. In particular, never substitute
+a broad `kitaru evaluation list --size ...` read and local filtering for the
+job-scoped result route. Derive expected pairs from the 30 source session IDs
+and exact evaluator-version IDs, then classify every expected pair as completed,
+failed, pending, or missing. A pair is pending only while its exact job remains
+non-terminal. Do not infer
 completeness from the job's terminal state or the first result page.
 
 ## Keep agent notes separate from human records

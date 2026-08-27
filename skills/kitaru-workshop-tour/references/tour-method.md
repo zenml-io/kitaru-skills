@@ -155,11 +155,11 @@ After all five verdicts are present, at least one target is Problematic, the sel
 
 1. Freeze exactly the five reviewed source sessions in one immutable cohort version.
 2. Define exactly one narrow deterministic behavior evaluator that compares observable policy or state evidence with a later action or outcome. A tool-presence check alone is insufficient.
-3. Check the installed catalog first. If no configured evaluator expresses the relationship, scaffold local code without reading template tests or canonical labels.
+3. Check the installed catalog first. If no configured evaluator expresses the relationship, author its readable repository-local source at `returns_agent/evaluators/<rule_name>.py`. Do not place the evaluator or its focused test harness in `/tmp`: the source is a useful artifact to inspect alongside the registered Kitaru version. Keep it separate from the returns agent implementation, and do not read template tests or canonical labels.
 4. Make the evaluator return an honest pass, fail, acceptable boundary, or unresolved outcome for missing or malformed evidence. Never map ticket or session IDs to answers.
 5. Test pass, fail, and acceptable-boundary behavior against the five reviewed sessions. Test missing and malformed behavior with locally constructed degraded inputs, or an incomplete survey session when available. Preserve human/evaluator disagreement rather than changing the human records.
-6. Register one immutable evaluator version through the supported parent-then-version operation.
-7. Run that exact version across all 30 baseline sessions and account for expected, completed, failed, and missing results. Keep failed and missing results in the population denominator and outside any pass-rate denominator.
+6. Register one immutable evaluator version through the supported parent-then-version operation from that repository-local source.
+7. Run that exact version across all 30 baseline sessions and account for expected, completed, failed, and missing results from the exact submitted job. Keep failed and missing results in the population denominator and outside any pass-rate denominator.
 
 Before interpreting the population, inspect at most six evaluator outputs: up to two predicted passes, two predicted failures, and two unresolved results, chosen by the same canonical evidence digest. If a category has fewer than two results, inspect what exists and report the gap. If the spot-check exposes a rule mismatch, revise and register a new evaluator version, rerun that version across all 30 sessions, replace the reported accounting, and repeat the bounded spot check; otherwise narrow the conclusion without changing versions. The evaluator version handed to replay must be the version that produced the reported population accounting. Do not call the table human-validated.
 

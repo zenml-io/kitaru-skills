@@ -250,8 +250,10 @@ When the user returns:
    fail, and acceptable-boundary behavior against the reviewed sessions. Test
    missing and malformed evidence with locally constructed degraded inputs, or
    with an incomplete survey session when one exists. Register an immutable
-   version only after these cases behave honestly, then run it across all 30
-   baseline sessions.
+   version only after these cases behave honestly. When custom code is needed,
+   keep its readable source in the template at
+   `returns_agent/evaluators/<rule_name>.py`, not in `/tmp`, then run it across
+   all 30 baseline sessions.
 6. Account for expected, completed, failed, and missing results, then inspect
    the bounded pass/fail/unresolved sample from `tour-method.md` before making a
    population interpretation.
