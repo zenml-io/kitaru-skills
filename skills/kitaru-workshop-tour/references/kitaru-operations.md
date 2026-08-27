@@ -79,6 +79,21 @@ Use the known-good forms in this reference and the verified template README.
 Inspect exact argument names only after a version mismatch or rejected command.
 Prefer exact IDs and versions over display names.
 
+For the normal fresh-workspace route, read cloud status and resolve the
+`returns-resolver` parent once the frozen environment is ready. Only an absent
+parent is fresh: do not list jobs, evaluations, or prior imports, and do not use
+CLI help to discover those forms. Report the fresh state once and ask for one
+combined approval for a frozen environment sync when needed, the cloud and
+parent read, worker start, agent registration, and import of the checked-in
+traces. When the sync was needed, that approval remains valid for the
+conditional parent-absent path and does not need to be repeated after the read.
+After import reports 30 created and no failures, verify only one filtered
+listing: 30 distinct sessions for the registered version. Defer node-payload
+inspection until trace selection; the later diagnostics evaluator accounts for
+population integrity. If the parent exists but its source-matched version does
+not, inspect its durable state and reconcile the needed version before creating
+anything; do not treat it as a blank workspace.
+
 If both `kitaru status` and `kitaru doctor` fail before returning a structured selected-server result, do not inspect credential files or guess at server state. First use a discovered working MCP connection when it identifies a reachable server. Otherwise verify the installed CLI version, request or confirm the intended Kitaru Cloud URL, and use the normal cloud login flow from the template README. Re-run `status` before registration or import. If the cloud selection still cannot be read, stop with that precise blocker instead of offering a local server.
 
 ## Run and account for the population survey

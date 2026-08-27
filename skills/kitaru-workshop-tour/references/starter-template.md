@@ -12,37 +12,38 @@ official installation link from the template README; do not invent a
 package-manager command. Keep this readiness check compact and silent unless it
 fails. Do not turn it into a narrated source audit.
 
-Require these paths at one project root:
+On the normal prepared-template route, check only these sentinels at one
+project root:
 
 - `pyproject.toml`
 - `uv.lock`
 - `returns_agent/agent.py`
-- `returns_agent/fixtures.py`
-- `returns_agent/generate_traces.py`
-- `returns_agent/store.py`
 - `generate.sh`
 - `traces/langfuse-traces.jsonl`
 
-Verify in one bounded pass that the checkout contains:
+In one bounded read-only pass, verify that the trace file contains exactly 30
+records and the two source sentinels carry the fixed companion-template
+signatures: the `returns-resolver` registration and the checked-in
+`returns_agent.generate_traces` path. This is a silent identity check, not an
+agent-code review. Read the root `README.md` only for the frozen setup and
+import commands that are needed. Do not inspect fixture counts, tool names,
+model selection, generator wiring beyond its fixed entrypoint, import tags, or
+node payload shapes on the normal route. Those are source-contract diagnostics,
+not workshop evidence.
 
-- the PydanticAI returns resolver;
-- the `returns-resolver` registered agent;
-- the `python -m returns_agent.agent` runtime entrypoint;
-- the fixed `openai:gpt-5-nano` returns model;
-- 30 public fixture inputs and 30 checked-in trace documents;
-- the checked-in `generate.sh` to `returns_agent.generate_traces` generator path and the root README's checked-in trace import path;
-- all six tools, named `lookup_order`, `get_return_policy`, `check_shipping`, `issue_refund`, `create_replacement`, and `escalate_to_human`;
-- the `returns-baseline` import tag; and
-- synthetic customers, orders, and action tools that use a fresh `MockCommerceStore` and cannot contact external commerce systems.
+Enter the deeper compatibility diagnosis only when a sentinel fails, a required
+command is rejected, or the user says the template was customized. Then inspect
+the missing surface and report the exact incompatibility; do not turn a healthy
+prepared checkout into a narrated source audit.
 
-Read the root `README.md`. After the compact content check passes, treat it as
-the authority for exact frozen environment, cloud authentication, registration,
-worker, import, population verification, and branch-local skill installation.
+After the compact preflight passes, treat the root `README.md` as the authority
+for exact frozen environment, cloud authentication, registration, worker,
+import, population verification, and branch-local skill installation.
 This expanded route requires Kitaru Cloud. Do not run or offer the README's
 optional local login. Do not copy those commands into this skill or pin a
 template commit.
 
-If any content check fails, name each incompatibility and stop this route. Continue with `kitaru-investigation` only when the user wants to investigate the actual customized code and evidence.
+If any sentinel fails, name the failed prerequisite and stop this route. Continue with `kitaru-investigation` only when the user wants to investigate the actual customized code and evidence.
 
 ## Install and verify the project environment
 
@@ -54,13 +55,14 @@ content contract instead of repairing the project with ad hoc dependency
 additions.
 
 When the environment is absent or stale, follow the verified README's frozen
-sync command after approval. Do not run separate `uv add` or `pip install`
-commands: the lockfile owns the complete compatible dependency set. Treat the
-prepared template and its checked-in 30-trace corpus as the workshop starting
-point. Confirm that the installed Kitaru CLI and worker imports resolve from
-the same frozen environment, but do not run the repository test suite merely
-to re-prove the prepared example. Use focused tests only to diagnose an actual
-setup discrepancy or a failed workshop operation.
+sync command after the combined fresh-setup approval. Do not run separate `uv
+add` or `pip install` commands: the lockfile owns the complete compatible
+dependency set. Treat the prepared template and its checked-in 30-trace corpus
+as the workshop starting point. Only after that sync, confirm that the
+installed Kitaru CLI and worker imports resolve from the same frozen
+environment. Do not run the repository test suite merely to re-prove the
+prepared example. Use focused tests only to diagnose an actual setup discrepancy
+or a failed workshop operation.
 
 If the bounded verification fails, inspect that failure and the frozen sync
 result before diagnosing the Kitaru server.
@@ -83,7 +85,11 @@ Do not use recorded history for the six expected tools merely because baseline t
 
 ## Resume before creating
 
-Re-read durable Kitaru state before every setup write or retry:
+Once the `returns-resolver` parent exists, re-read durable Kitaru state before
+every setup write or retry, including when its source-matched version is not yet
+registered. The confirmed parent-absent fresh route is an exception: do not
+list historical import jobs before its combined setup approval. Once its import
+starts, retain and re-read that exact job ID before any retry:
 
 1. Resolve the exact `returns-resolver` parent and version whose entrypoint and source identity match the checkout.
 2. Inspect relevant active and completed import jobs.

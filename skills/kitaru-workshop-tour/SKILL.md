@@ -32,6 +32,9 @@ reusable evaluator, to one bounded experiment result.
   such as “Here is what the experiment will do” over “replay run card.”
 - Lead with what the user is about to discover, not installation or evaluation
   terminology.
+- Make the opening and its visible task outline the first assistant
+  text. Read a required reference silently if needed, but do not inspect the
+  checkout, emit setup status, or explain reference loading before that opening.
 - Introduce only the Kitaru concept needed for the current action.
 - When the coding-agent harness provides a native task, todo, or plan view,
   create a short visible outline before any readiness checks. Use four to six
@@ -51,6 +54,12 @@ reusable evaluator, to one bounded experiment result.
   review write, after a frontend handoff, and before paid or live execution.
   Do not label these as pauses or turn them into timing instructions for a
   presenter.
+- During normal fresh-workspace setup, use only three visible messages:
+  the opening and task outline, one readiness result with a combined approval
+  when state is missing, and the imported-population result with its sessions
+  link. Resolve routine checks, registration, worker start, import, and count
+  verification quietly. Add one concise status only when a single operation
+  fails or runs longer than 30 seconds.
 - Prepare concise observations and exact evidence anchors for the reviewer.
   Tell them once that these are agent-prepared reading aids. Do not emphasize
   their annotations or treat an optional written note as proof of a behavior;
@@ -98,14 +107,16 @@ reusable evaluator, to one bounded experiment result.
 ## Load the tour references
 
 - Read [references/functional-explanations.md](references/functional-explanations.md)
-  before the first user-facing explanation and apply its functional explanation
-  rules throughout setup, review, evaluation, and replay.
+  silently before the first user-facing explanation and apply its functional
+  explanation rules throughout setup, review, evaluation, and replay.
 - Read [references/starter-template.md](references/starter-template.md) before
   setup or when deciding whether the checkout satisfies the companion contract.
 - Read [references/tour-method.md](references/tour-method.md) before selecting
   sessions, writing observations, creating the review, or interpreting results.
 - Read [references/kitaru-operations.md](references/kitaru-operations.md) before
   any Kitaru CLI or MCP operation. Treat installed schemas as authoritative.
+- Do not load every reference at startup. Read each later reference only at its
+  stage and never announce the read.
 
 ## Orient the audience
 
@@ -123,15 +134,17 @@ Before any readiness inspection or Kitaru operation, give a concise opening:
    server, imported population, or worker is already available before checking.
 
 Create the harness-native task outline described above, then continue directly
-into the readiness checks. End the opening with the first useful thing the tour
-will establish, not with an internal setup description or a request to proceed.
+into the readiness checks. This is the first visible assistant text. End the
+opening with the first useful thing the tour will establish, not with an
+internal setup description or a request to proceed.
 
 ## Establish the template route
 
 Begin read-only.
 
-1. Look for a candidate expanded-template checkout and verify its compact
-   readiness contract through `starter-template.md` before trusting its README.
+1. Look for a candidate expanded-template checkout and verify its bounded
+   prepared-template preflight through `starter-template.md` before trusting
+   its README.
    Do not infer compatibility from its directory, remote, or branch. If none
    exists, report the missing companion checkout; do not substitute another
    template or fabricated outputs. If that checkout cannot be obtained, offer
@@ -149,13 +162,20 @@ Begin read-only.
    job IDs, any investigation ID, the frozen operating-guardrail parameters,
    and any confirmed fast-path target.
    This in-chat handoff is not an external checkpoint artifact.
-3. Inspect Kitaru Cloud connectivity through the known-good environment and
-   command forms in `kitaru-operations.md`. Then inspect the exact registered
-   `returns-resolver` agent version, relevant import jobs, and the complete
-   30-session imported population carrying the `returns-baseline` tag.
-4. Resume matching durable state. Perform only missing setup steps from the
-   verified template README, with one clear explanation and approval before
-   environment changes, service starts, registration, or import.
+   When the frozen environment is absent, the one fresh-setup approval may cover
+   that sync, the subsequent cloud and agent read, and the conditional
+   agent-absent path. Do not ask a second time solely because the lookup then
+   confirms that the workspace has no matching agent.
+3. Inspect Kitaru Cloud connectivity, then the `returns-resolver` parent and
+   exact source-matched version through the known-good environment and command
+   forms in `kitaru-operations.md`. Only an absent parent is the expected
+   fresh-workspace route: do not inspect historical import jobs or discover
+   commands, and present the combined setup approval. If the parent exists but
+   its source-matched version does not, use the durable-state route instead.
+4. Resume matching durable state when the parent exists, even if a new version
+   must be registered. Otherwise perform the missing frozen environment sync
+   when needed, worker start, registration, and import from the verified
+   template README after one clear approval.
 5. Stop and route to `kitaru-investigation` when the template was materially
    customized, the user supplies their own agent or evidence, or the requested
    conclusion needs a defensible open-ended investigation.
@@ -163,7 +183,7 @@ Begin read-only.
 Do not ask a first-time user to choose a framework, trace provider, review
 method, or sampling strategy on the compatible route.
 
-After a successful import and provenance check, resolve the agent sessions URL
+After a successful import and bounded provenance check, resolve the agent sessions URL
 through `kitaru-operations.md`, explain that it is the population before any
 judgment has been made, and wait for the user to return. Do not begin the
 deterministic survey until they do.
