@@ -64,6 +64,10 @@ reusable evaluator, to one bounded experiment result.
   Tell them once that these are agent-prepared reading aids. Do not emphasize
   their annotations or treat an optional written note as proof of a behavior;
   the five verdicts carry the required human judgments.
+- Make every investigation question decision-ready: include the governing rule,
+  the trace facts that matter, the recorded action or outcome, and the exact
+  verdict requested. The reviewer must not need to remember the policy or hunt
+  through the trace to understand the question.
 - Use the Kitaru frontend four times: after import to view the sessions, then
   for the investigation review, the cohort and evaluator results, and the
   completed experiment run.
@@ -203,8 +207,8 @@ investigation plan or internal selection machinery.
 Ask once to:
 
 - add the five sessions' agent observations as ordinary Kitaru annotations;
-- create one fixed investigation with the evidence-grounded questions and
-  highlights;
+- create one fixed investigation with self-contained, evidence-grounded
+  questions and highlights;
 - open the resulting frontend review.
 
 After approval, create or resume the annotations and investigation through the
@@ -216,10 +220,12 @@ Never write the user's answer or verdict for them.
 
 Lead with the direct review action. Provide the resolved review link, distinguish
 the agent-prepared observations from the human records, and ask the user to
-record one verdict for each session. Explain that written notes are optional
-and useful only when the reviewer wants to record reasoning that the verdict
-does not capture. Tell them how to complete the frontend review and return to
-the task.
+record one verdict for each session. Explain that each question already states
+the relevant rule, trace facts, recorded outcome, and judgment to make; the
+highlight is supporting evidence, not required detective work. Written notes
+are optional and useful only when the reviewer wants to record reasoning that
+the verdict does not capture. Tell them how to complete the frontend review and
+return to the task.
 
 Pause. Do not duplicate the review in chat while the frontend route works.
 

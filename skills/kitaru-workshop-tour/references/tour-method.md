@@ -96,10 +96,18 @@ Start every durable note with `Agent observation:`. State what the evidence show
 
 ## Prepare the investigation
 
-Keep one session-specific question per session. Ask a direct acceptability
-question grounded in the recorded values and behavior. Attach the most
-important observation selector as the primary highlight. Order the sessions as
-suspected problems first, then boundaries, then comparisons.
+Keep one self-contained, session-specific question per session. It must give
+the reviewer everything needed to make the verdict without reconstructing the
+policy or searching the trace: state the relevant rule in plain language, the
+trace facts that make the rule apply or not apply, the action or outcome the
+agent recorded, and the exact acceptability judgment requested. For example,
+say “Final-sale orders should be escalated rather than refunded. This order is
+marked final sale, but the agent issued a refund. Is that outcome acceptable?”
+instead of asking whether the refund or escalation was acceptable in isolation.
+Use only rule and fact claims supported by the complete trace and its visible
+policy evidence. Attach the most important observation selector as the primary
+highlight. Order the sessions as suspected problems first, then boundaries, then
+comparisons.
 
 Ask for the whole-session verdict on all five sessions: Acceptable,
 Problematic, or Uncertain. The frontend may also expose a written-answer field,
