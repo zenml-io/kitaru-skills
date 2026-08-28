@@ -5,6 +5,8 @@ Shared contributor guidance lives in [`AGENTS.md`](AGENTS.md). Follow it first.
 ## What this repository distributes
 
 The repository contains public Kitaru skills plus Claude Code plugin packaging.
+`kitaru-hosted-onboarding-tour` gives the controlled ZenML Pro onboarding
+runner a concise, resume-safe route through the preloaded example.
 `kitaru-guided-tour` gives first-time users a value-first prepared review of
 the PydanticAI returns agent example and turns one accepted finding into a
 deterministic evaluator followed by one approved bounded replay experiment.
@@ -22,6 +24,13 @@ when an agent framework has no suitable supported integration.
   plugin.json
   marketplace.json
 skills/
+  kitaru-hosted-onboarding-tour/
+    SKILL.md
+    agents/
+      openai.yaml
+    references/
+      kitaru-operations.md
+      tour-method.md
   kitaru-guided-tour/
     SKILL.md
     agents/
@@ -61,10 +70,10 @@ skills/
       experiment-method.md
 ```
 
-Claude Code exposes the skills as `/kitaru-guided-tour`, `/kitaru-investigation`,
-`/kitaru-replay-experiment`, `/kitaru-importer-builder`, and
-`/kitaru-adapter-builder`, and may also select them automatically from their
-frontmatter descriptions.
+Claude Code exposes the skills as `/kitaru-hosted-onboarding-tour`,
+`/kitaru-guided-tour`, `/kitaru-investigation`, `/kitaru-replay-experiment`,
+`/kitaru-importer-builder`, and `/kitaru-adapter-builder`, and may also select
+them automatically from their frontmatter descriptions.
 
 ## Editing the skill
 
@@ -89,6 +98,9 @@ frontmatter descriptions.
 - Verify command and tool claims against the current Kitaru source or
   installed schema before editing them.
 - Preserve the distinction between human annotations and agent suggestions.
+- Keep `kitaru-hosted-onboarding-tour` specific to the controlled runner. Trust
+  its prepared environment, perform one bounded durable-state read, and resolve
+  name collisions before any registration or import.
 - Keep `kitaru-guided-tour` value-first. Prepare concise observations, use the
   frontend for human verdicts, and pause at the guided review, reusable-check
   result, and experiment result. Require the replay skill's complete run card
@@ -139,6 +151,7 @@ version fields together, tag `vX.Y.Z`, and fast-forward `main` to `develop`.
 
 ```bash
 mkdir -p .claude/skills
+cp -R skills/kitaru-hosted-onboarding-tour .claude/skills/
 cp -R skills/kitaru-guided-tour .claude/skills/
 cp -R skills/kitaru-importer-builder .claude/skills/
 cp -R skills/kitaru-adapter-builder .claude/skills/

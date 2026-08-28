@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kitaru Hosted Onboarding Tour"
+  short_description: "Resume-safe hosted Kitaru onboarding"
+  default_prompt: "Welcome this ZenML Pro user into Kitaru and teach the Observe, Judge, Define, Compare loop through the returns-agent example, resuming durable workspace state when possible."

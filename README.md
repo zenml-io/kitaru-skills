@@ -26,6 +26,7 @@ improvement, and compare the result.
 
 | Skill | Purpose |
 |---|---|
+| [`kitaru-hosted-onboarding-tour`](skills/kitaru-hosted-onboarding-tour/SKILL.md) | Guide the controlled ZenML Pro onboarding runner through a concise, resume-safe tour that reuses exact durable state and handles pre-existing agent names without overwriting them. |
 | [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | Give a first-time user a prepared three-session frontend review of the PydanticAI returns agent example, collect human verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. |
 | [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Act as Kitaru's front door: verify setup, record or import sessions, guide human review, define one accepted behavior and cohort, select an evaluator, and offer a bounded replay experiment. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
@@ -40,6 +41,7 @@ product handoff rather than recreating the review UI in chat.
 
 ## Example prompts
 
+- "Resume the hosted Kitaru onboarding tour from what already exists in this workspace."
 - "I do not have an agent yet. Show me why Kitaru is useful."
 - "Give me a guided tour of Kitaru with the public returns agent example."
 - "Investigate why this Kitaru session gave a bad support answer."
@@ -123,6 +125,10 @@ When the installer asks, select the host you actually use. Include
 agents and traces. Your agent can select a skill from context, or you can ask
 for it by name. Exact invocation syntax varies by host.
 
+`kitaru-hosted-onboarding-tour` is intended for the controlled ZenML Pro
+onboarding runner, whose image installs all skills and supplies the prepared
+template and workspace connection.
+
 Configure Kitaru MCP separately according to your host and the official Kitaru
 MCP server guide. Restart or reload the coding-agent host process or IDE after
 adding or changing MCP configuration. An already-open task cannot discover the
@@ -140,7 +146,8 @@ as a plugin:
 ```
 
 You can then invoke
-`/kitaru-guided-tour`, `/kitaru-investigation`, `/kitaru-replay-experiment`,
+`/kitaru-hosted-onboarding-tour`, `/kitaru-guided-tour`,
+`/kitaru-investigation`, `/kitaru-replay-experiment`,
 `/kitaru-importer-builder`, or `/kitaru-adapter-builder` explicitly.
 
 ### Manual installation

@@ -14,6 +14,10 @@ metadata. It is not a Python package.
 - `skills/kitaru-guided-tour/references/` contains the starter contract, tour
   method, friendly tutorial narration, and the bounded operations needed for
   that experience.
+- `skills/kitaru-hosted-onboarding-tour/SKILL.md` is the compact, resume-safe
+  tour used by the controlled ZenML Pro hosted onboarding runner.
+- `skills/kitaru-hosted-onboarding-tour/references/` contains its bounded state,
+  operation, review, evaluator, and replay method.
 - `skills/kitaru-investigation/references/` contains method, transport, public
   starter, and evaluator details loaded only when needed.
 - `skills/kitaru-replay-experiment/SKILL.md` guides one safe, bounded candidate
@@ -77,6 +81,9 @@ host environment.
   human supply verdicts in the frontend, and pause only at the guided review,
   reusable-check result, and experiment result. Teach Kitaru concepts through
   those concrete checkpoints rather than a methodology lecture.
+- Keep hosted onboarding runner assumptions inside
+  `kitaru-hosted-onboarding-tour`. Reuse durable state by source identity, IDs,
+  and relationships; treat a same-name agent without that proof as a collision.
 - Align first-time orientation with Kitaru's Observe, Judge, Define, Replay,
   and Compare method. Treat registration, recording, and import as setup for
   Observe rather than extra method stages.
