@@ -26,7 +26,7 @@ For CLI calls, request structured JSON and non-interactive behavior only when th
 |---|---|---|
 | Selected server and worker | `kitaru status` | bounded registry/activity read |
 | Agent and version | `kitaru agent get`; `kitaru agent version get` | `kitaru_registry_read` |
-| Sessions and nodes | `kitaru session list`; `kitaru session get`; `kitaru session nodes --include-payloads` | `kitaru_activity_read` |
+| Sessions and nodes | `kitaru session list`; `kitaru session get`; `kitaru session nodes SESSION_ID --include-payloads` | `kitaru_activity_read` |
 | Annotations and investigation | `kitaru annotation`; `kitaru investigation` | `kitaru_review_read`; `kitaru_review_manage` |
 | Cohort and evaluator | `kitaru cohort`; `kitaru evaluator`; `kitaru session evaluate` | cohort, registry, and workflow tools |
 | Experiment | `kitaru experiment`; `kitaru experiment run` | experiment and workflow tools |
@@ -40,7 +40,13 @@ Run these from `/opt/kitaru/examples/python/pydantic_ai_ticket_resolver`. The ru
 ```text
 kitaru status
 kitaru agent get returns-resolver
-kitaru session list --agent returns-resolver --tag returns-baseline --origin imported --size 20 --include-payloads
+kitaru session list --agent returns-resolver --tag returns-baseline --origin imported --size 20 -o json
+```
+
+Kitaru 0.23.0 does not expose `--include-payloads` on `session list`. Select the three candidate session IDs from that bounded JSON listing, then request payloads only for their nodes:
+
+```text
+kitaru session nodes SESSION_ID --include-payloads -o json
 ```
 
 For an absent template agent, the one approved setup write is the documented registration followed by this import:
