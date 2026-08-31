@@ -95,7 +95,7 @@ Follow [references/tour-method.md](references/tour-method.md):
 3. Prepare a three-session evidence review and ask once before its annotations and investigation are written.
 4. Open the review in Kitaru and wait for the user's verdicts.
 5. Turn one human-confirmed relationship into one cohort and one deterministic evaluator.
-6. Open the evaluator page immediately after its tested first version is created. Explain that the cohort freezes the reviewed examples and the evaluator stores the versioned rule. Wait for the user to inspect it, then run that version across the baseline population.
+6. Run the evaluator's tested first version across the baseline population, then open its page with the results. Explain that the cohort freezes the reviewed examples and the evaluator stores the versioned rule. Account for the full population and wait for the user to inspect the check before proposing replay.
 7. Propose one small prompt change and hand the exact state to `kitaru-replay-experiment`.
 8. Ask before experiment creation or paid/live replay. Open the completed run and wait for the user to inspect it.
 

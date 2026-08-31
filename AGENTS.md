@@ -77,7 +77,7 @@ host environment.
 - Distinguish shipped Kitaru operations, planned frontend behavior, and
   unresolved product contracts.
 - Preserve the human-review boundary. Agent suggestions are not human labels.
-- Keep the guided tour light: identify prepared observations once, let the
+- Keep the public guided tour light: identify prepared observations once, let the
   human supply verdicts in the frontend, and pause only at the guided review,
   reusable-check result, and experiment result. Teach Kitaru concepts through
   those concrete checkpoints rather than a methodology lecture.

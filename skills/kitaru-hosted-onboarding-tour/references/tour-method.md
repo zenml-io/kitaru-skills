@@ -50,9 +50,13 @@ Each investigation session gets one self-contained teaching question with four p
 3. **Expected reading:** State which verdict follows from the supplied rule and evidence, with one sentence of reasoning.
 4. **Decision:** Ask the user to confirm **Acceptable**, **Problematic**, or **Uncertain**. The written answer is optional.
 
-For example:
+For the verified unchanged population, these compact questions retain all four parts and fit the hosted CLI budget:
 
-> Returns of unused accessories are supported for 14 days. This tote was delivered 20 days ago, but the agent issued a $48 refund rather than escalating the out-of-policy request. That makes the recorded action Problematic under the supplied policy. Do you agree, or is there context that makes it Acceptable or Uncertain?
+- **ticket-003:** Unused accessories have a 14-day return window. This tote arrived 20 days ago; the agent refunded $48 instead of escalating. Expected: Problematic, outside policy. Agree, or mark Acceptable/Uncertain?
+- **ticket-009:** Apparel returns allow 30 days and at most the amount paid. Within that window, the customer asked for $120; the agent refunded the $80 paid. Expected: Acceptable, correct cap. Agree, or mark Problematic/Uncertain?
+- **ticket-008:** Never refund twice. The order was already refunded; the agent escalated the missing-payment complaint without another refund. Expected: Acceptable, no duplicate. Agree, or mark Problematic/Uncertain?
+
+Keep the three questions self-contained even when shortening them. The operations reference defines the command-size budget; the ordinary evidence annotations can carry further context.
 
 The question is not a test of whether the user can reconstruct the policy. Never ask a bare question such as “Was the refund the right call?”, “Should the refund have been $120?”, or “Does this comply with policy?” Never require the user to inspect source code or discover a hidden expected answer. The trace remains available so they can see where the supplied facts came from and disagree when appropriate.
 
@@ -76,7 +80,7 @@ After confirmation:
 4. run it across the complete same-agent baseline population; and
 5. account for completed, failed, missing, matching, and non-matching results.
 
-Lead with what the user found. Name one limitation. Then explain that the reviewed examples are the cohort and the versioned rule is the evaluator. Open the evaluator page as soon as its tested first version exists and wait. When the user returns, run it across the baseline population, lead with what the check found, and account for the full denominator. Do not try to open both the cohort and evaluator pages in one response.
+Run the tested first evaluator version across the baseline population before the evaluator-page handoff. Lead with what the check found, account for the full denominator, and name one limitation. Explain that the reviewed examples are the cohort and the versioned rule is the evaluator. Open the evaluator page with its baseline results and wait before proposing replay. Do not try to open both the cohort and evaluator pages in one response.
 
 If the user rejects the prepared concern or no confirmed problematic example remains, do not create a cohort or evaluator for it. Offer one more bounded selection only if the user wants it.
 
