@@ -19,6 +19,8 @@ Guide a first-time user through one complete Kitaru loop in the controlled ZenML
 - At every handoff, briefly reconnect the current page to the whole loop: **Observe → Judge → Define → Compare**. Say which phase the user is entering without reciting all four labels every time.
 - At a meaningful transition, say what the user will learn next and why it matters. After the work, lead with the evidence or Kitaru object that now exists, not the command that produced it. Never let the final stages collapse into a sequence of cohorts, evaluators, jobs, and experiments without explaining the question each object answers.
 - Give at most one progress update during a long operation, and only after 45 seconds.
+- Budget tool calls around the next required handoff. Use the verified command forms in the operations reference, retain receipts and resolved IDs, and do not spend the turn rereading known state, requesting help preemptively, or probing equivalent commands.
+- Once the user has approved a bounded phase, finish its safe reads and writes in that turn unless a real blocker or required product-page handoff stops it. This does not bypass setup, review-write, evaluator, or replay approval, and it does not replace human verdicts.
 - Treat blank assistant text as a failure. Every user-visible turn must either teach the current concept, report a result, or ask for a decision.
 - Never end with a promise to inspect or run something. Perform safe reads in the same turn.
 - Do not end a visible message with “Let me…”, “I’ll…”, or another promise of routine work. Either perform that work in the current turn or end at an explicit human decision or product-page handoff.
@@ -91,7 +93,7 @@ After each durable stage, retain a compact checkpoint containing only the agent-
 Follow [references/tour-method.md](references/tour-method.md):
 
 1. Reuse or import the checked-in recorded population.
-2. Open the imported agent's sessions page, explain that it is the recorded population rather than a verdict, and wait for the user to inspect it.
+2. Once the imported or reused population is established, open the agent's sessions page, explain that it is recorded evidence rather than a verdict, and end the turn. Do not select the three teaching sessions, read session payloads or nodes, or prepare review material until the user returns.
 3. Prepare a three-session evidence review and ask once before its annotations and investigation are written.
 4. Open the review in Kitaru and wait for the user's verdicts.
 5. Turn one human-confirmed relationship into one cohort and one deterministic evaluator.

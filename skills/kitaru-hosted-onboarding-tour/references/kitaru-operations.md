@@ -47,7 +47,7 @@ kitaru agent get PARENT_NAME
 kitaru session list --agent AGENT_ID --tag returns-baseline --origin imported --size 20 -o json
 ```
 
-Kitaru 0.23.0 does not expose `--include-payloads` on `session list`. Select the three candidate session IDs from that bounded JSON listing, then request payloads only for their nodes:
+Kitaru 0.23.0 does not expose `--include-payloads` on `session list`. After the user returns from the required sessions-page handoff, select the three candidate session IDs from the retained bounded JSON listing, then request payloads only for their nodes:
 
 ```text
 kitaru session nodes SESSION_ID --include-payloads -o json
@@ -61,7 +61,7 @@ kitaru agent register PARENT_NAME --command "/app/.venv/bin/python -m returns_ag
 kitaru session import traces/langfuse-traces.jsonl --importer kitaru/langfuse@latest --agent AGENT_VERSION_REF --tag returns-baseline --params '{"source_instance":"kitaru-quickstart-example"}' --media-type application/x-ndjson --wait
 ```
 
-Read the registration receipt before constructing the import command. After the import receipt reports ten created sessions and no failures, do exactly one filtered session listing. The `--agent` filter is parent-scoped: keep only sessions belonging to the retained agent-version UUID and matching import provenance. Do not inspect every node or fixture. Select candidates from session metadata first, then read full nodes and payloads only for the three chosen sessions.
+Read the registration receipt before constructing the import command. After the import receipt reports ten created sessions and no failures, do exactly one filtered session listing. The `--agent` filter is parent-scoped: keep only sessions belonging to the retained agent-version UUID and matching import provenance. Do not inspect any nodes or fixtures in this turn. Navigate to the sessions page and end the turn. Apply the same boundary when the first durable-state read establishes a reusable population. Only after the user returns may you select candidates from the retained session metadata and read full nodes and payloads for the three chosen sessions; do not repeat the population listing.
 
 For ordinary agent observations, `--value` and `--selector` are JSON values. JSON-encode the text and selector rather than hand-escaping an inline shell command:
 
@@ -128,7 +128,7 @@ DASHBOARD_URL/experiments/EXPERIMENT_ID?run=RUN_NUMBER
 
 Pass the workspace-relative suffix to `navigateKitaruUi`; do not expose the dashboard host or construct a different workspace URL in chat.
 
-Use product navigation only at these checkpoints: imported sessions, investigation review, evaluator with baseline results, and completed experiment run. One navigation call is one handoff, followed by a wait for the user to return. Keep the hosted sessions-page handoff: navigation is applied after the assistant turn finishes, so navigating again to review in the same turn would skip the recorded-population lesson.
+Use product navigation only at these checkpoints: imported or reused sessions, investigation review, evaluator with baseline results, and completed experiment run. One navigation call is one handoff, followed by a wait for the user to return. The sessions-page navigation must end its turn: navigation is applied after the assistant turn finishes, and selecting evidence, reading payloads, preparing review material, or navigating again before the user returns would skip the recorded-population lesson.
 
 ## Replay boundary
 

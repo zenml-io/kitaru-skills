@@ -17,7 +17,7 @@ Before every phase, give the user a reason to care before performing work. After
 
 Use these transition goals, adapting the words to the evidence:
 
-- **Into sessions:** “The agent is registered and its ten past runs are now sessions. This page answers our first question: what did it actually do?” Explain one representative ticket before opening the page and tell the user to notice the input, tool evidence, action, and reply.
+- **Into sessions:** “The agent is registered and its ten past runs are now sessions. This page answers our first question: what did it actually do?” Tell the user to open one representative ticket and notice its input, tool evidence, action, and reply. Open the page and end the turn before selecting the later review cases or reading their payloads.
 - **Into review:** “A session tells us what happened, but not whether it was right. We will compare a suspected problem, a trace-dependent case, and a nearby acceptable case so your judgment defines the boundary.” Preview the three cases before writing or opening the review.
 - **Into the evaluator:** Lead with the relationship the user confirmed. Explain the cohort and evaluator as two parts of preserving that decision, then state what the evaluator will count across the ten-session baseline. Do not introduce them as resources that merely need to be created.
 - **Into replay:** Lead with the baseline finding and its limitation. Explain the one prompt instruction being changed and why holding everything else fixed makes the comparison meaningful.
