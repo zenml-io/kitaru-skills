@@ -7,7 +7,7 @@
   },
   "metadata": {
     "description": "Experience Kitaru through hosted onboarding or a public tour, build integrations, investigate sessions, and run bounded replay experiments",
-    "version": "0.15.0",
+    "version": "0.15.1",
     "homepage": "https://kitaru.ai",
     "repository": "https://github.com/zenml-io/kitaru-skills"
   },
@@ -16,7 +16,7 @@
       "name": "kitaru",
       "source": "./",
       "description": "Claude Code package for hosted onboarding, a guided Kitaru tour, integrations, human-reviewed investigations, evaluator authoring, and safe bounded replay experiments.",
-      "version": "0.15.0",
+      "version": "0.15.1",
       "author": {
         "name": "ZenML",
         "url": "https://kitaru.ai"
