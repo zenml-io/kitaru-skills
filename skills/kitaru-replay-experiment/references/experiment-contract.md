@@ -42,6 +42,22 @@ An evaluator parent gets its agent scope at creation, and evaluator updates or v
 
 Current replay override fields are `model`, `system_prompt`, `prompt`, and `model_params`.
 
+The agent version's run spec declares `runtime_capabilities`. `overrides` and
+`tool_policies` both default to `true`. Before creating a replay or experiment,
+read the declaration and compare it with the requested configuration:
+
+| Declaration | Allowed configuration |
+|---|---|
+| `overrides: false` | No replay override |
+| `tool_policies: false` | Explicit `passthrough` for the default and every named tool |
+
+The server rejects an incompatible replay or experiment configuration with 422.
+An importer-backed adapter declares both fields `false`, because it imports the
+provider trace after the agent runs and cannot intercept model or tool calls.
+It can only perform an unchanged fresh run with live tools. Do not treat an
+`on_miss` setting as a workaround: history and static policies themselves are
+not allowed.
+
 A tool policy has a required `default` configuration and optional per-tool overrides. Current configurations are:
 
 - `passthrough`: execute the live tool;
@@ -60,6 +76,9 @@ Resolve the installed adapter, exact version, and construction path. Current exa
 - OpenAI Agents supports passthrough and restricted static substitution. It rejects history, LLM, hosted, MCP, approval-bearing, and agent-as-tool substitutions.
 - LangGraph support differs between a direct compiled-graph wrapper and a supported factory path. The factory path can install model and tool middleware; direct wrappers reject unsupported overrides instead of guessing.
 - PydanticAI instance-held message history does not survive a new process or replay unless the application makes that state explicit.
+- Importer-backed adapters for Langfuse, Braintrust, LangSmith, Logfire, and
+  Arize Phoenix import a completed provider trace. Their run specs disable
+  overrides and non-passthrough tool policies.
 
 Unsupported capability is a blocker. The user cannot approve past it.
 

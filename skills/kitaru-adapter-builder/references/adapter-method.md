@@ -46,13 +46,23 @@ Search in this order:
 
 1. a framework-native Kitaru adapter already installed or documented;
 2. a project-local adapter already wrapping the real entrypoint;
-3. a supported Kitaru importer for traces the framework already exports;
-4. an existing OpenTelemetry export path and its actual event coverage.
+3. an importer-backed adapter for a supported provider that already instruments
+   the live Python entrypoint;
+4. a supported Kitaru importer for traces the framework already exports;
+5. an existing OpenTelemetry export path and its actual event coverage.
 
 Compare the existing path with the user's goal. An importer can be enough when
 the user needs post-hoc recording and its source contains the required evidence.
 An in-process adapter may still be necessary for runtime overrides, tool-policy
 enforcement, precise application failures, or framework-native replay boundaries.
+
+An importer-backed adapter wraps an already instrumented entrypoint, waits for
+the provider trace, and imports it as a Kitaru session. It is a supported
+recording route for Langfuse, Braintrust, LangSmith, Logfire, and Arize Phoenix,
+not a standalone adapter distribution or an in-process interception mechanism.
+It cannot apply overrides or non-passthrough tool policies. Read [the Python
+adapter reference](python-adapters.md) for the package, import, version, and
+registration requirements before proposing it.
 
 If existing ingestion is insufficient, record the concrete gap. Do not dismiss
 it merely because it is not an adapter. OpenTelemetry GenAI conventions are a

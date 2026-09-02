@@ -40,6 +40,14 @@ Confirm the installed parser import path in the active Python environment. Recor
 
 Stop only when a capability required by the requested outcome is absent. Parser types are required to author against the installed contract. Missing scaffold or local-test helpers may use explicit file creation and project-native isolated tests when those paths still exercise the installed parser contract. Missing registration or session-import capabilities limit remote actions; they do not prevent completing a locally validated importer. Do not upgrade Kitaru or substitute draft syntax without the user's separate direction.
 
+Before authoring a parser, distinguish a static export from a live provider
+entrypoint. Langfuse, Braintrust, LangSmith, Logfire, and Arize Phoenix ship
+importer-backed adapters in their importer packages behind an `adapter` extra
+for Kitaru 0.24 or newer. They wrap an already instrumented Python entrypoint
+and use the provider trace after its run; they are neither parser entrypoints
+nor standalone adapter distributions. Route that request to
+`kitaru-adapter-builder` before scaffolding a custom importer.
+
 ## Parser contract
 
 The reference parser shape is:

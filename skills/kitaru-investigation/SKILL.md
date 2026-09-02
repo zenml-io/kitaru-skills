@@ -206,6 +206,12 @@ Route a missing integration only when it blocks usable sessions. Resolve the
 installed importer catalog before treating a provider or export shape as
 unsupported.
 
+- Continue with `kitaru-adapter-builder` when a live Python entrypoint is
+  already instrumented with Langfuse, Braintrust, LangSmith, Logfire, or Arize
+  Phoenix. It verifies the provider importer package's `[adapter]` extra and
+  Kitaru 0.24 or newer before wrapping the entrypoint, rather than building a
+  custom adapter. Carry the provider, entrypoint, installed versions, target
+  agent and version, requested evidence, and any registration or replay need.
 - Continue with the `kitaru-importer-builder` skill when existing traces use an
   provider or export shape that the installed catalog does not support. Carry
   the provider, export shape, target agent and version, current import state,

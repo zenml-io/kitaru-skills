@@ -22,6 +22,7 @@
     "trace-import",
     "custom-importers",
     "agent-adapters",
+    "importer-backed-adapters",
     "custom-adapters",
     "agent-replay",
     "framework-integration",

@@ -74,6 +74,30 @@ published independently from Kitaru core, so inspect PyPI and the project's
 lockfile for the current version. This inventory describes the checked source
 tree, not what is installed in the user's project.
 
+### Importer-backed adapters
+
+For an already instrumented Python entrypoint, these provider importer packages
+also ship an adapter behind their `adapter` extra. They require Kitaru 0.24 or
+newer. They are not standalone adapter distributions.
+
+| Provider | Install | Import |
+|---|---|---|
+| Langfuse | `kitaru-langfuse-importer[adapter]` | `from kitaru_langfuse_importer.adapter import LangfuseAdapter` |
+| Braintrust | `kitaru-braintrust-importer[adapter]` | `from kitaru_braintrust_importer.adapter import BraintrustAdapter` |
+| LangSmith | `kitaru-langsmith-importer[adapter]` | `from kitaru_langsmith_importer.adapter import LangSmithAdapter` |
+| Logfire | `kitaru-logfire-importer[adapter]` | `from kitaru_logfire_importer.adapter import LogfireAdapter` |
+| Arize Phoenix | `kitaru-phoenix-importer[adapter]` | `from kitaru_phoenix_importer.adapter import PhoenixAdapter` |
+
+Use this route only inside a Kitaru worker task, which supplies the task-scoped
+connection and target agent identity, and when the provider credentials or
+client are already available. Check the installed provider documentation rather
+than copying credentials into project files or commands. `adapter.run(...)` or
+`await adapter.run_async(...)` wraps the public entrypoint, then fetches and
+imports the provider trace. It does not intercept model or tool calls. Register
+its run spec with
+`runtime_capabilities.overrides: false` and `tool_policies: false`; the default
+`true` values remain appropriate for native recording adapters.
+
 Check the project's installed distributions and current Kitaru documentation
 before designing a custom adapter. When one of these packages supports the
 installed framework version and requested invocation mode, use it instead of
