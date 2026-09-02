@@ -91,7 +91,7 @@ After approval:
 1. Create one experiment with the exact agent parent, replay override, explicit tool policy, and evaluator versions and parameters.
 2. Re-read it and verify that the server resolved the intended configuration.
 3. Recheck the candidate run-spec and capabilities hashes internally.
-4. Start one run against the exact cohort version and candidate agent version. Set `evaluate_baselines=true` for comparative claims.
+4. Start one run against the exact cohort version and candidate agent version. Use `baseline_evaluation_mode=if_missing` for the normal comparative case, `force` only when the decision requires freshly recomputed baseline measurements, and `none` only when no baseline comparison is intended.
 5. Watch the asynchronous run until it completes, fails, is canceled, reaches an agreed stop condition, or the local wait times out.
 6. Read the run and all paginated replay jobs needed to account for completed, failed, canceled, and missing cases.
 7. Re-read the candidate run spec and capabilities after settlement. Report any observed drift and the residual risk that a transient mutation could not be detected.
@@ -102,9 +102,9 @@ Cancel only when the user asks or an approved stop condition is met. Cancellatio
 
 ## Read exact evidence
 
-For each case, resolve evaluation results tied to the expected evaluator-version ID. Verify evaluator parameters or deterministic configuration hashes where available. Decline a decision-grade parameterized baseline comparison when the parameters of an existing result cannot be established.
+For each case, resolve evaluation results tied to the expected evaluator-version ID and parameters. `if_missing` may adopt an existing baseline result only when its session, evaluator version, and parameters match; the replay link records the exact adopted or newly produced measurement used by the run.
 
-Do not use the current UI aggregate as a decision-grade source. Read exact per-session evidence and show raw counts, denominators, failed, canceled, and missing cases beside every rate. Failed, canceled, and missing results remain outside the quality denominator.
+Use the run aggregate as a pinned summary: it reads only replay-linked measurements, is not changed by later evaluations of the same sessions, and groups by evaluator version as well as result name and data type. Confirm the experiment's evaluator parameters, then read exact per-session evidence for paired changes, failures, canceled cases, and missingness. Show raw counts and denominators beside every rate. Failed, canceled, and missing results remain outside the quality denominator.
 
 Check candidate prompts, evaluator prompts, examples, tool fixtures, history scopes, and related trace families for leakage. Warn for exploration. Require resolution or narrow the claim only when the intended use is consequential.
 
