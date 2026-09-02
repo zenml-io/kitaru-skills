@@ -116,17 +116,15 @@ Do not create an investigation answer for the reviewer. The user supplies the wh
 
 ## Open product pages
 
-Prefer links returned by Kitaru. Otherwise use the verified dashboard URL with exact IDs and these compatibility routes:
+Use product-owned links only when Kitaru returns them. Otherwise pass a semantic target, its exact resource IDs, and a concise handoff `message` to `navigateKitaruUi`:
 
-```text
-DASHBOARD_URL/agents/AGENT_ID/sessions
-DASHBOARD_URL/agents/AGENT_ID/investigations/INVESTIGATION_ID/review
-DASHBOARD_URL/agents/AGENT_ID/cohorts/COHORT_ID/sessions
-DASHBOARD_URL/evaluators/EVALUATOR_ID
-DASHBOARD_URL/experiments/EXPERIMENT_ID?run=RUN_NUMBER
-```
+- `agent_sessions` with `agentId`;
+- `investigation_review` with `agentId` and `investigationId`;
+- `cohort_sessions` with `agentId` and `cohortId`;
+- `evaluator` with `evaluatorId`;
+- `experiment` with `experimentId` and `runNumber`.
 
-Pass the workspace-relative suffix to `navigateKitaruUi`; do not expose the dashboard host or construct a different workspace URL in chat.
+Do not pass a dashboard host, workspace ID, URL, or path. The tool constructs the route for the selected workspace.
 
 Use product navigation only at these checkpoints: imported or reused sessions, investigation review, evaluator with baseline results, and completed experiment run. One navigation call is one handoff, followed by a wait for the user to return. The sessions-page navigation must end its turn: navigation is applied after the assistant turn finishes, and selecting evidence, reading payloads, preparing review material, or navigating again before the user returns would skip the recorded-population lesson.
 
