@@ -29,8 +29,9 @@ metadata. It is not a Python package.
 - `skills/kitaru-importer-builder/SKILL.md` guides custom importer development.
 - `skills/kitaru-importer-builder/references/` contains parser, normalization,
   validation, and recovery details loaded only when needed.
-- `skills/kitaru-adapter-builder/SKILL.md` guides project-local adapter
-  development for unsupported Python and TypeScript frameworks.
+- `skills/kitaru-adapter-builder/SKILL.md` selects a supported provider-backed
+  adapter or guides project-local development for unsupported Python and
+  TypeScript frameworks.
 - `skills/kitaru-adapter-builder/references/` separates the shared method,
   Python and TypeScript SDK contracts, and validation and reporting rules.
 - `.claude-plugin/plugin.json` defines the Claude Code plugin.

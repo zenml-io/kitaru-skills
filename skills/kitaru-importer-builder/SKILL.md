@@ -56,7 +56,19 @@ If importer scaffolding, local testing, registration, exact-version import, or t
 
 If `kitaru-investigation` routed the user here, retain the agent and investigation context. Return to the investigation only after relevant sessions are actually usable.
 
-If the source exists only behind a live framework entrypoint and no usable static export can meet the user's goal, continue with `kitaru-adapter-builder`. Carry forward the repository and revision, public entrypoint, language, installed framework and Kitaru versions, requested evidence, target agent and version, and investigation goal. Choose this route once; do not bounce back merely because the adapter mentions importers as an alternative.
+If the source exists behind a live Langfuse, Braintrust, LangSmith, Logfire, or
+Arize Phoenix Python entrypoint, first check the provider importer package's
+`[adapter]` extra with `kitaru-adapter-builder`. This supported route records
+the provider trace after each run; it is not a custom parser. Carry forward the
+repository and revision, provider, public entrypoint, installed Kitaru version,
+target agent and version, and requested evidence.
+
+If no usable static export or importer-backed adapter can meet the user's goal,
+continue with `kitaru-adapter-builder`. Carry forward the repository and
+revision, public entrypoint, language, installed framework and Kitaru versions,
+requested evidence, target agent and version, and investigation goal. Choose
+this route once; do not bounce back merely because the adapter mentions
+importers as an alternative.
 
 ## Acquire a safe representative sample
 

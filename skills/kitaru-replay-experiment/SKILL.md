@@ -50,6 +50,15 @@ Re-read every evaluator parent before approval. A scoped evaluator is eligible o
 
 Reject unsupported adapter conditions before approval or paid execution. Return the exact blocker and smallest supported alternative. Do not let a user approve past an unresolved adapter or construction path.
 
+Read `runtime_capabilities` from the candidate version's run spec before
+proposing a configuration. Both fields default to `true`. When `overrides` is
+`false`, stop if the proposed replay has an override. When `tool_policies` is
+`false`, stop unless every policy entry is explicit passthrough. Importer-backed
+adapter versions declare both `false`: they can only run the agent again without
+an override and with live passthrough tools. Name that live-effect risk and
+obtain the required approval; do not offer history, static, or LLM tool results
+as an alternative.
+
 Resolve the model provider and credentials required by the candidate process. Verify credential availability to the worker without reading, displaying, or fingerprinting secret values when the environment exposes a safe readiness signal. A credential visible to the coding agent or stored in a project file does not prove that an already-running worker inherited it. If worker readiness is unavailable or cannot be verified, ask the user to configure the credential and restart or provision the worker, then stop before experiment creation or run start.
 
 For tool-using agents:

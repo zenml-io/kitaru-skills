@@ -1,13 +1,15 @@
 ---
 name: kitaru-adapter-builder
-description: Build a project-local Kitaru adapter for an unsupported Python or TypeScript agent framework. Use when a user wants to record or replay framework-native agent runs in Kitaru, needs a custom adapter, has no supported Kitaru integration for their framework, or needs to assess whether public framework hooks and the installed Kitaru SDK can support an adapter.
+description: Select a supported Kitaru adapter or build a project-local one for an unsupported Python or TypeScript agent framework. Use when a user wants to record or replay framework-native agent runs in Kitaru, needs a custom adapter, has no supported Kitaru integration for their framework, or needs to assess whether public framework hooks and the installed Kitaru SDK can support an adapter.
 ---
 
 # Kitaru adapter builder
 
-Build the smallest honest adapter inside the user's project. Preserve the
-framework's public entrypoint and report exactly what the adapter can observe,
-record, replay, and recover from.
+First select the smallest honest supported integration. Build an adapter inside
+the user's project only when no supported route meets the requested recording
+and replay boundary. Preserve the framework's public entrypoint and report
+exactly what the selected or custom adapter can observe, record, replay, and
+recover from.
 
 Do not assume every framework can support the same fidelity. A useful result is
 either a locally tested adapter or a precise blocker tied to the installed
@@ -18,6 +20,11 @@ versions and public hooks.
 - Start with read-only inspection of the user's project and installed packages.
 - Prefer supported Kitaru adapters, importers, or OTLP export when they meet the
   requested recording and replay needs. Do not create a duplicate integration.
+- For an already instrumented Python agent using Langfuse, Braintrust,
+  LangSmith, Logfire, or Arize Phoenix, check the provider's importer-backed
+  adapter before proposing custom code. Read [the Python adapter
+  reference](references/python-adapters.md) for the package and capability
+  contract.
 - Treat the user's installed SDK and framework as authority. Use Kitaru reference
   adapters as patterns, not as source to copy or as proof of a published API.
 - Use only public framework hooks. Offer a coarser boundary or stop when complete
@@ -64,6 +71,13 @@ Begin in the project that contains the real agent entrypoint.
 In a mixed repository, route from the process that executes the agent. Do not
 load both language references merely because both languages exist somewhere in
 the repository.
+
+If a supported importer-backed adapter fits the provider, public Python
+entrypoint, and requested recording boundary, install it only after approval and
+wrap that entrypoint. It creates a Kitaru session from the provider trace after
+the run; it does not intercept model or tool calls. Do not build a duplicate
+adapter merely to obtain recording. Use a native adapter instead when the
+request needs runtime overrides or a non-passthrough tool policy.
 
 If the framework already exports traces in a format no built-in importer
 supports and that post-hoc evidence meets the user's goal, continue with

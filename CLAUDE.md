@@ -16,8 +16,9 @@ installed or custom evaluator. `kitaru-replay-experiment` safely compares one
 candidate against an exact cohort and evaluator set. `kitaru-importer-builder`
 builds and validates a private or packaged importer when a trace provider has
 no suitable built-in integration.
-`kitaru-adapter-builder` builds a project-local Python or TypeScript adapter
-when an agent framework has no suitable supported integration.
+`kitaru-adapter-builder` selects a supported provider-backed adapter or builds
+a project-local Python or TypeScript adapter when an agent framework has no
+suitable supported integration.
 
 ```text
 .claude-plugin/
@@ -131,7 +132,8 @@ them automatically from their frontmatter descriptions.
   package publication or an upstream contribution.
 - Keep raw trace exports out of version control and require redacted fixtures.
 - Route unsupported in-process framework integration to
-  `kitaru-adapter-builder`. Check supported adapters, importers, and OTLP first.
+  `kitaru-adapter-builder`. Check supported adapters, importer-backed adapters,
+  importers, and OTLP first.
 - Keep adapter routing and approval gates in its `SKILL.md`; keep the shared
   method, language-specific SDK contracts, and validation detail in its four
   references.

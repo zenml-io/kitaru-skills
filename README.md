@@ -31,7 +31,7 @@ improvement, and compare the result.
 | [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Act as Kitaru's front door: verify setup, record or import sessions, guide human review, define one accepted behavior and cohort, select an evaluator, and offer a bounded replay experiment. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
 | [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
-| [`kitaru-adapter-builder`](skills/kitaru-adapter-builder/SKILL.md) | Build a project-local Python or TypeScript adapter for an unsupported agent framework, with explicit recording and replay boundaries, partial-trace handling, side-effect controls, and separately approved upstream contribution. |
+| [`kitaru-adapter-builder`](skills/kitaru-adapter-builder/SKILL.md) | Select a supported provider-backed adapter or build a project-local Python or TypeScript adapter for an unsupported agent framework, with explicit recording and replay boundaries, partial-trace handling, side-effect controls, and separately approved upstream contribution. |
 
 The workflow keeps human observations separate from agent suggestions. It uses
 the Kitaru frontend for human review and consumes the product-owned review link
@@ -90,9 +90,14 @@ to `kitaru-investigation`, which supports one-run review, specific-behavior
 debugging, and bounded recurring-problem discovery. If an
 unsupported provider prevents sessions from entering Kitaru, the
 `kitaru-importer-builder` skill creates and validates the missing integration,
-then hands usable sessions back. If no supported framework integration can
-record the agent, the `kitaru-adapter-builder` skill verifies the installed SDK
-and framework hooks before building a project-local adapter.
+then hands usable sessions back. If a Python agent already reports to Langfuse,
+Braintrust, LangSmith, Logfire, or Arize Phoenix, `kitaru-adapter-builder`
+checks the provider importer package's `[adapter]` extra before proposing custom
+code. Those importer-backed adapters require Kitaru 0.24 or newer and record
+the provider trace after the run; they cannot apply replay overrides or
+non-passthrough tool policies. If no supported framework integration can record
+the agent, the skill verifies the installed SDK and framework hooks before
+building a project-local adapter.
 
 The front-door journey follows Kitaru's five-step method: Observe, Judge,
 Define, Replay, and Compare. After investigation accepts a behavior and cohort,
