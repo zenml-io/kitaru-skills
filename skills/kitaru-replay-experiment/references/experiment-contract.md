@@ -23,16 +23,17 @@ Prefer these current MCP operations:
 The structured CLI equivalents are:
 
 ```text
-kitaru experiment create NAME --agent AGENT --evaluator EVALUATOR@VERSION ...
+kitaru experiment create NAME --agent AGENT --evaluator EVALUATOR@VERSION --evaluator-params 'EVALUATOR@VERSION={"threshold":0.8}' ...
 kitaru experiment get EXPERIMENT
-kitaru experiment run start EXPERIMENT --cohort-version UUID --agent AGENT@VERSION --evaluate-baselines
+kitaru replay create BASELINE_UUID --evaluator EVALUATOR@VERSION --evaluator-params 'EVALUATOR@VERSION={"threshold":0.8}' --baseline-evaluation-mode if_missing
+kitaru experiment run start EXPERIMENT --cohort-version UUID --agent AGENT@VERSION --baseline-evaluation-mode if_missing
 kitaru experiment run get RUN_UUID
 kitaru experiment run jobs RUN_UUID
 kitaru experiment run watch RUN_UUID
 kitaru experiment run cancel RUN_UUID
 ```
 
-Use JSON objects for `--override`, `--tool-policy`, and `--evaluator-params`. Verify `kitaru schema` or installed help before relying on example syntax. Creating an experiment and starting a run are non-idempotent remote writes. Watching is read-only. Cancellation requests settlement but does not wait. Deleting a run immediately removes its replay jobs and tasks and is not a cancellation mechanism.
+Use JSON objects for `--override` and `--tool-policy`. Repeat `--evaluator-params 'EVALUATOR@VERSION=JSON_OBJECT'` for configured evaluators that need parameters; each token must exactly match a selected `--evaluator` token. Verify `kitaru schema` or installed help before relying on example syntax. Creating an experiment and starting a run are non-idempotent remote writes. Watching is read-only. Cancellation requests settlement but does not wait. Deleting a run immediately removes its replay jobs and tasks and is not a cancellation mechanism.
 
 An experiment requires at least one exact evaluator selection. An omitted evaluator version resolves to latest in the API model, but this skill always pins a version. Configuration can be updated only before the experiment has runs; use a new experiment for a changed condition afterward.
 
@@ -88,10 +89,16 @@ An agent version's public run spec and capabilities can currently be updated in 
 
 Experiment runs are asynchronous and report `running`, `canceling`, `completed`, `failed`, or `canceled`. Progress counts pending, evaluating, completed, failed, canceled, and total replays. Page through all backing replay jobs needed for a complete accounting.
 
-## Evaluation provenance limits
+## Baseline evaluation and provenance
 
-Set `evaluate_baselines=true` for a comparative claim. Baseline scheduling currently skips an evaluator-version ID that already completed on a session without comparing parameters. Therefore, verify prior parameters or deterministic configuration hashes before using parameterized baseline scores for a decision-grade comparison.
+Replay creation and experiment-run start use `baseline_evaluation_mode`, which defaults to `if_missing`:
 
-The current UI aggregate groups by evaluation name and data type and retains recent paired values. It is exploratory, not a full exact-version-and-parameters comparison contract. Read exact per-session evidence and report raw counts and missingness.
+- `none` does not score the baseline session;
+- `if_missing` adopts the latest existing baseline evaluation only when the session, evaluator version, and parameters all match, and otherwise schedules a fresh one; and
+- `force` always schedules a fresh baseline evaluation.
+
+Use `if_missing` for the normal comparison. Use `force` only when the hypothesis or evaluator behavior requires measurements recomputed in the current run, because it adds evaluator work and cost. The deprecated REST-only `evaluate_baselines` boolean maps false to `none` and true to `if_missing`; do not use it in current CLI or SDK instructions and never send both fields.
+
+Each replay links the exact baseline and result measurements used for its comparison. Experiment-run aggregates read only those links, so later evaluations of either session cannot change the run's statistics. They group by evaluator version, evaluation name, and data type; manual evaluations are excluded. Each group exposes evaluator identity and aggregate score-scale values. `min_score`, `max_score`, or `target_score` is null for one side when its linked rows do not all share that field and value. The aggregate retains paired values for the 50 most recent replays; read exact per-session evidence and all replay jobs for complete paired changes, failures, canceled cases, and missingness.
 
 No public CLI or MCP operation currently computes a winner, release policy, statistical significance judgment, or CI verdict.

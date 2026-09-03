@@ -81,7 +81,7 @@ Keep the complete command within `runOnboardingCommand`'s 2,000-character bound,
 
 Before a cohort or evaluator write, read the exact investigation and verify complete verdict coverage. The user’s verdicts establish the behavior; optional written answers do not substitute for verdicts.
 
-For a custom evaluator, use the installed result contract. Every return must contain a stable `name` and either `score` or `value`; `details` is not a valid field. Write the complete source once with `writeOnboardingEvaluator`. Never inline evaluator source in `runOnboardingCommand`, use a shell heredoc, or append it in chunks. This avoids the command tool's deliberate 2,000-character input bound.
+For a custom evaluator, use the installed result contract. Every return must contain a stable `name` and either `score` or `value`; `details` is not a valid field. Float results may also carry `min_score`, `max_score`, and `target_score` when the tour needs to display a meaningful scale, but those fields are invalid on boolean, string, or categorical results. Write the complete source once with `writeOnboardingEvaluator`. Never inline evaluator source in `runOnboardingCommand`, use a shell heredoc, or append it in chunks. This avoids the command tool's deliberate 2,000-character input bound.
 
 ```python
 from kitaru.task.evaluator import EvaluationResult

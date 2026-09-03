@@ -60,6 +60,21 @@ return EvaluationResult(
 )
 ```
 
+For a float result, set `min_score`, `max_score`, and `target_score` when they define a meaningful display scale or decision target:
+
+```python
+return EvaluationResult(
+    name="tool_call_coverage",
+    score=3.0,
+    min_score=0.0,
+    max_score=5.0,
+    target_score=5.0,
+    explanation="Three of five required calls were observed.",
+)
+```
+
+Scale fields are valid only when the result's data type is float; do not attach them to boolean, string, or categorical results. Keep one scale definition stable within an evaluator result name when its values will be aggregated.
+
 If a judge emits an internal object such as `{reason, verdict}`, validate it and translate it into `EvaluationResult`. Do not return the judge object directly.
 
 Missing evidence, invalid judge output, timeouts, credential errors, and evaluator crashes remain unresolved or infrastructure outcomes. They are not automatic agent failures.
@@ -84,7 +99,7 @@ After the checks pass:
 3. Tell the user whether registration will create a new parent or add a version to an existing parent, name the exact parent and chosen scope, explain the remote write, and obtain approval once for that complete registration.
 4. Register one immutable evaluator version through the path resolved above. For a new scoped parent and local script, use `kitaru evaluator register NAME --agent-id AGENT_ID --script PATH --entrypoint NAME`. For an existing compatible parent, use `kitaru evaluator version register EVALUATOR --script PATH --entrypoint NAME` without an agent-scope option. Use MCP only when the implementation already exists as a server blob or exact package pin and, for a new scoped parent, the installed create schema exposes `agent_id`; otherwise use the CLI or stop with the exact transport limitation.
 5. Re-read the evaluator and registered version, and verify the returned `agent_id` before evaluating sessions.
-6. Return exact evaluator, evaluator-version, cohort-version, and agent-scope IDs plus exact parameters and configuration hashes when available. For a null-scoped parent, also record the evidence that established deliberate global portability.
+6. Return exact evaluator, evaluator-version, cohort-version, and agent-scope IDs plus exact parameters. Evaluator-produced rows store the parameters they ran with, and later `if_missing` baseline selection reuses a row only when its session, evaluator version, and parameters all match. For a null-scoped parent, also record the evidence that established deliberate global portability.
 7. Report the evidence as facts:
 
 ```text

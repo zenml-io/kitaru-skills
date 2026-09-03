@@ -28,7 +28,9 @@ Check whether an evaluator returned by the installed catalog directly expresses 
 | `kitaru/model-policy@1` | Required or forbidden model use |
 | `kitaru/workflow-conformance@1` | Contractual workflow steps or ordering |
 
-Pin the exact evaluator version and parameters. Preserve the deterministic input and configuration hashes when the evaluator exposes them. Reuse relevant cost, timing, resource, model, and tool-policy results as replay protections instead of recreating them.
+Pin the exact evaluator version and parameters. Evaluator-produced rows preserve both, and replay `if_missing` reuse requires the session, version, and parameters to match. The builtin deterministic evaluator scale contract does not emit input or configuration SHA result rows. Reuse relevant cost, timing, resource, model, and tool-policy results as replay protections instead of recreating them.
+
+Interpret each builtin float result according to its named metric. Coverage metrics count available observations; finding and policy metrics count detected problems; resource budgets report observed use against the configured ceiling. The score is a literal per-session numerator with `min_score=0` and `max_score` as the honest opportunity total when one exists. Higher is better for coverage, while lower is better for failures, violations, and other findings; `passed` remains a separate verdict. Do not invent a maximum for an unbounded count, and keep genuinely multidimensional evidence as a string or categorical value instead of forcing it into one score. Session-specific maxima may differ, in which case a run aggregate keeps its raw-score statistics but returns a null aggregate `max_score`.
 
 Do not force a configured evaluator to stand in for an interpretive outcome. Exact tool order is appropriate when the order is contractual, not merely because one successful trace used it.
 
@@ -38,7 +40,7 @@ For an installed match, run it and return:
 
 - accepted behavior and exact cohort-version ID;
 - exact evaluator and evaluator-version IDs plus the evaluator parent's agent scope and, for a null scope, the evidence that established deliberate global portability;
-- exact parameters and configuration hash when available;
+- exact parameters;
 - descriptive evidence used to choose it;
 - missing evidence and infrastructure failures;
 - intended use and claim limit.
