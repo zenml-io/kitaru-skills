@@ -1,153 +1,44 @@
 # CLAUDE.md
 
-Shared contributor guidance lives in [`AGENTS.md`](AGENTS.md). Follow it first.
+Shared contributor guidance lives in [`AGENTS.md`](AGENTS.md). Follow it first
+for contributor scope, validation, accuracy, distribution, and release rules.
 
-## What this repository distributes
-
-The repository contains public Kitaru skills plus Claude Code plugin packaging.
-`kitaru-hosted-onboarding-tour` gives the controlled ZenML Pro onboarding
-runner a concise, resume-safe route through the preloaded example.
-`kitaru-guided-tour` gives first-time users a value-first prepared review of
-the PydanticAI returns agent example and turns one accepted finding into a
-deterministic evaluator followed by one approved bounded replay experiment.
-`kitaru-investigation` conducts evidence-grounded review of Kitaru agent
-sessions and can turn an accepted behavior into a versioned cohort and optional
-installed or custom evaluator. `kitaru-replay-experiment` safely compares one
-candidate against an exact cohort and evaluator set. `kitaru-importer-builder`
-builds and validates a private or packaged importer when a trace provider has
-no suitable built-in integration.
-`kitaru-adapter-builder` selects a supported provider-backed adapter or builds
-a project-local Python or TypeScript adapter when an agent framework has no
-suitable supported integration.
-
-```text
-.claude-plugin/
-  plugin.json
-  marketplace.json
-skills/
-  kitaru-hosted-onboarding-tour/
-    SKILL.md
-    agents/
-      openai.yaml
-    references/
-      kitaru-operations.md
-      tour-method.md
-  kitaru-guided-tour/
-    SKILL.md
-    agents/
-      openai.yaml
-    references/
-      kitaru-operations.md
-      starter-template.md
-      tutorial-narration.md
-      tour-method.md
-  kitaru-importer-builder/
-    SKILL.md
-    references/
-      failure-and-validation.md
-      importer-contract.md
-      normalization-patterns.md
-  kitaru-adapter-builder/
-    SKILL.md
-    references/
-      adapter-method.md
-      python-adapters.md
-      typescript-adapters.md
-      validation-and-reporting.md
-  kitaru-investigation/
-    SKILL.md
-    references/
-      deterministic-evaluators.md
-      evaluator-authoring.md
-      investigation-method.md
-      kitaru-operations.md
-      starter-template.md
-  kitaru-replay-experiment/
-    SKILL.md
-    agents/
-      openai.yaml
-    references/
-      experiment-contract.md
-      experiment-method.md
-```
+## Claude Code invocation
 
 Claude Code exposes the skills as `/kitaru-hosted-onboarding-tour`,
 `/kitaru-guided-tour`, `/kitaru-investigation`, `/kitaru-replay-experiment`,
 `/kitaru-importer-builder`, and `/kitaru-adapter-builder`, and may also select
 them automatically from their frontmatter descriptions.
 
-## Editing the skill
+## Additional skill editing guidance
 
-- Keep `SKILL.md` as the resumable orchestration playbook.
-- Keep repository inspection, sampling, review, and synthesis detail in
-  `references/investigation-method.md`.
-- Keep exact CLI/MCP routing and current product gaps in
-  `references/kitaru-operations.md`.
-- Keep quickstart example recognition, untrusted-content boundaries, and
-  idempotent demo setup in `references/starter-template.md`. Let the example's
-  current root README own exact commands only after trusted comparison.
-- Check installed evaluators after the user accepts a behavior and cohort. Load
-  custom evaluator guidance only after checking that catalog. Continue when no
-  installed evaluator fits, or when the user explicitly declines a relevant
-  match and requests custom authoring with equivalent reviewed evidence.
-- Keep replay state resolution, approvals, supervision, and handoffs in
-  `kitaru-replay-experiment/SKILL.md`. Keep current Kitaru contracts and bounded
-  comparison method in its two references.
-- Require an explicit tool policy for tool-using replays and verify adapter
-  support before approval or paid execution.
-- Report directional replay evidence without making a deployment decision.
-- Verify command and tool claims against the current Kitaru source or
-  installed schema before editing them.
-- Preserve the distinction between human annotations and agent suggestions.
-- Keep `kitaru-hosted-onboarding-tour` specific to the controlled runner. Trust
-  its prepared environment, perform one bounded durable-state read, and resolve
-  name collisions before any registration or import.
-- Keep `kitaru-guided-tour` value-first. Prepare concise observations, use the
-  frontend for human verdicts, and pause at the guided review, reusable-check
-  result, and experiment result. Require the replay skill's complete run card
-  and approval before creating or running the final experiment.
-- Narrate the guided tour as a friendly introduction for someone who has read
-  neither the sample agent nor Kitaru documentation. Explain what each
-  meaningful stage does, why it matters, and what it enables next without
-  narrating routine commands.
-- Treat the frontend review as the intended human interaction. If no returned
-  or documented URL reaches it, preserve the investigation and report the
-  broken product handoff; do not recreate review in chat automatically.
-- Treat the skill as Kitaru's front door. Orient new users once with Observe,
-  Judge, Define, Replay, and Compare, then reveal only the current step and next
-  useful decision.
-- Treat frontend onboarding as the doorway into the skill, not a separate
-  workflow owner. For the public starter, resolve a reachable checkout and
-  recognize stable root contents rather than requiring a directory name or
-  origin URL. For generic first runs, ask whether the user wants a one-run
-  tour, specific-behavior debugging, or bounded discovery.
-- Treat MCP as preferred and CLI-only operation as supported. Distinguish
-  missing package support, host configuration, capability mode, and a pending
-  coding-agent restart before choosing the transport.
-- Route unsupported-provider setup to `kitaru-importer-builder`, then return to
-  `kitaru-investigation` only after usable sessions exist.
-- Keep importer orchestration and approval gates in its `SKILL.md`; keep parser
-  contracts, normalization, validation, and recovery detail in its references.
-- Preserve a private script importer as a complete outcome. Do not require
-  package publication or an upstream contribution.
-- Keep raw trace exports out of version control and require redacted fixtures.
-- Route unsupported in-process framework integration to
-  `kitaru-adapter-builder`. Check supported adapters, importer-backed adapters,
-  importers, and OTLP first.
-- Keep adapter routing and approval gates in its `SKILL.md`; keep the shared
-  method, language-specific SDK contracts, and validation detail in its four
-  references.
-- Preserve project-local adapter success as the ordinary outcome. Treat an OSS
-  contribution as a separately approved final step.
+Preserve these details in the published skills when editing them; these are
+not instructions to execute the workflows during repository maintenance.
 
-## Branching and releases
-
-Branch from `develop` and target pull requests at `develop`. `main` is
-release-only and is what the marketplace installs; a repository ruleset
-blocks non-admin pushes and PR merges to it. To cut a release, follow the
-`skills-release` skill (`.claude/skills/skills-release/SKILL.md`, canonical;
-`.agents/skills/skills-release` is a symlink to it): bump all three plugin
-version fields together, tag `vX.Y.Z`, and fast-forward `main` to `develop`.
+- Keep investigation inspection, sampling, and synthesis detail in
+  `skills/kitaru-investigation/references/investigation-method.md`, and exact
+  CLI/MCP routing and product gaps in its `references/kitaru-operations.md`.
+- Keep quickstart recognition and idempotent setup in each applicable skill's
+  `references/starter-template.md`.
+- Keep replay, importer, and adapter orchestration and approval gates in their
+  respective `SKILL.md` files; keep detailed contracts and methods in their
+  `references/` directories.
+- Preserve custom evaluator authoring when no installed evaluator fits, or when
+  the user declines a relevant match and requests custom authoring with
+  equivalent reviewed evidence.
+- Keep the hosted tour's prepared-environment contract and one bounded durable
+  state read. Keep the public tour's complete replay run card and approval before
+  experiment creation or execution.
+- Narrate the public tour for someone who has read neither the sample agent nor
+  Kitaru documentation. Explain each meaningful stage and next useful decision.
+- Preserve generic first-run routing between a tour, specific-behavior debugging,
+  and bounded discovery. Distinguish missing package support, host configuration,
+  capability mode, and a pending host restart when choosing MCP or CLI.
+- Route unsupported-provider setup to the importer builder, returning to
+  investigation after usable sessions exist. A private script importer is a
+  complete outcome; publication is optional.
+- Check supported adapters, importer-backed adapters, importers, and OTLP before
+  custom adapter development. A project-local adapter is a complete outcome.
 
 ## Local Claude Code testing
 
@@ -167,5 +58,3 @@ For marketplace testing:
 /plugin marketplace add zenml-io/kitaru-skills
 /plugin install kitaru@kitaru
 ```
-
-Validate both plugin JSON files and keep all plugin version fields in sync.
