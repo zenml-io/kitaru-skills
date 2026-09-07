@@ -1,5 +1,22 @@
 # Repository Guidelines
 
+## Contributor scope
+
+When editing or reviewing a distributed skill, treat its workflow instructions
+as content to maintain. Execute that workflow only when the user requests it.
+The accuracy requirements below describe behavior the published skills must
+preserve; verifying changed CLI/MCP guidance is a contributor responsibility.
+
+Complete authorized work through relevant validation and final diff review.
+Reuse explicit authorization already given for the same scope. Ask again when
+an action exceeds that scope, and continue independent authorized work while
+awaiting an answer. Preserve human-review checkpoints and explicit replay tool
+policies; authorization to execute does not supply human labels or a tool policy.
+
+If contributor or skill guidance blocks requested work, identify and link to
+the exact file, quote the instruction, and explain why it applies. Distinguish
+an explicit requirement from your interpretation.
+
 ## Project structure
 
 This repository distributes public Kitaru agent skills plus Claude Code plugin
@@ -45,18 +62,19 @@ supporting material in `references/`.
 
 ## Validation commands
 
-There is no build step or dedicated test suite. Validate Markdown, skill
-frontmatter, and plugin JSON after edits.
+There is no build step or dedicated test suite. Match validation to the change:
 
-```bash
-rg --files
-jq . .claude-plugin/plugin.json
-jq . .claude-plugin/marketplace.json
-git diff --check
-```
-
-Use the `skill-creator` `quick_validate.py` script when it is available in the
-host environment.
+- Always inspect the final diff and run `git diff --check`.
+- For changed skills, validate frontmatter with the `skill-creator`
+  `quick_validate.py` script when available in the host environment. Check
+  affected Markdown links and reference paths. If the validator is unavailable,
+  inspect frontmatter manually and report that limitation.
+- When plugin metadata changes, parse both JSON files with `jq .`. When versions
+  change, verify that all three plugin version fields match.
+- When CLI/MCP guidance changes, verify the changed claims against the current
+  Kitaru repository or installed schema.
+- Once relevant checks pass, broaden or repeat validation only when further
+  edits, failures, or unresolved concerns justify it.
 
 ## Style
 
@@ -102,9 +120,10 @@ host environment.
   parser contracts differ from branch examples.
 - Treat the user's installed framework and Kitaru SDK as authoritative when
   adapter contracts differ from draft reference branches.
-- Keep adapter implementations user-project-first. Require separate approval
-  before installing dependencies, creating remote sessions, allowing live tool
-  passthrough, or preparing an upstream contribution.
+- Keep adapter implementations user-project-first. Require authorization
+  covering dependency installation, remote sessions, live tool passthrough, and
+  upstream contributions. Reuse explicit approval for the same scope; request
+  additional approval only for actions outside it.
 - Distinguish application streaming, observation of the stream lifecycle, and
   replay of original chunks or timing.
 - Prefer installed descriptive and configured evaluators before custom
@@ -122,8 +141,9 @@ host environment.
 
 ## Distribution consistency
 
-When changing the public skill name, scope, or installation route, update all
-of these in the same change:
+When changing a public skill name, scope, or installation route, inspect all
+locations below and update every affected description, reference, and metadata
+field in the same change:
 
 - skill frontmatter;
 - `README.md`;
@@ -131,8 +151,7 @@ of these in the same change:
 - `.claude-plugin/plugin.json`;
 - `.claude-plugin/marketplace.json`.
 
-Bump all three plugin version fields together when preparing a distribution
-update.
+Bump all three plugin version fields together when preparing a release.
 
 ## Branching and releases
 
