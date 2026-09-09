@@ -28,9 +28,9 @@ improvement, and compare the result.
 |---|---|
 | [`kitaru-hosted-onboarding-tour`](skills/kitaru-hosted-onboarding-tour/SKILL.md) | Guide the controlled ZenML Pro onboarding runner through a concise, resume-safe tour that reuses exact durable state and handles pre-existing agent names without overwriting them. |
 | [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | Give a first-time user a prepared three-session frontend review of the PydanticAI returns agent example, collect human verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. |
-| [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Act as Kitaru's front door: verify setup, record or import sessions, guide human review, define one accepted behavior and cohort, select an evaluator, and offer a bounded replay experiment. |
+| [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Act as Kitaru's front door: verify setup, record sessions or import files or provider API traces, follow up on insight cards, guide human review, define one accepted behavior and cohort, select an evaluator, and offer a bounded replay experiment. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
-| [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
+| [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with optional API fetching, conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
 | [`kitaru-adapter-builder`](skills/kitaru-adapter-builder/SKILL.md) | Select a supported provider-backed adapter or build a project-local Python or TypeScript adapter for an unsupported agent framework, with explicit recording and replay boundaries, partial-trace handling, side-effect controls, and separately approved upstream contribution. |
 
 The workflow keeps human observations separate from agent suggestions. It uses
@@ -44,6 +44,8 @@ product handoff rather than recreating the review UI in chat.
 - "Resume the hosted Kitaru onboarding tour from what already exists in this workspace."
 - "I do not have an agent yet. Show me why Kitaru is useful."
 - "Give me a guided tour of Kitaru with the public returns agent example."
+- "Import last week's Langfuse traces using my existing connection and generate insights."
+- "Follow up on this Kitaru insight and check its supporting sessions."
 - "Investigate why this Kitaru session gave a bad support answer."
 - "I am new to Kitaru. Help me review one run before we investigate more."
 - "Help me discover recurring failure modes in last week's agent sessions."
@@ -67,6 +69,10 @@ Kitaru 0.22 or newer:
 ```bash
 uv add "kitaru[cli,mcp,worker]>=0.22"
 ```
+
+Provider API imports, provider connections, post-import analyzers, and insight
+handoffs require Kitaru 0.26 or newer. Existing file-based tour and investigation
+paths remain available on their earlier supported versions.
 
 Each skill verifies the installed version and public schema before it acts, and
 stops when the required contract is unavailable.
