@@ -23,8 +23,8 @@ This repository distributes public Kitaru agent skills plus Claude Code plugin
 metadata. It is not a Python package.
 
 - `skills/kitaru-investigation/SKILL.md` is Kitaru's public front-door
-  playbook, from setup and session evidence through reviewed behavior,
-  evaluator selection, and replay handoff.
+  playbook, from setup, provider imports, and insight evidence through reviewed
+  behavior, evaluator selection, and replay handoff.
 - `skills/kitaru-guided-tour/SKILL.md` gives first-time users a value-first
   quickstart example tour with prepared observations, frontend verdicts, and one
   deterministic evaluator followed by an approved bounded replay experiment.
@@ -43,7 +43,8 @@ metadata. It is not a Python package.
   contracts from the comparison and interpretation method.
 - `skills/kitaru-replay-experiment/agents/openai.yaml` contains host-facing
   display metadata for the replay skill.
-- `skills/kitaru-importer-builder/SKILL.md` guides custom importer development.
+- `skills/kitaru-importer-builder/SKILL.md` guides custom parser and optional
+  API fetcher development.
 - `skills/kitaru-importer-builder/references/` contains parser, normalization,
   validation, and recovery details loaded only when needed.
 - `skills/kitaru-adapter-builder/SKILL.md` selects a supported provider-backed

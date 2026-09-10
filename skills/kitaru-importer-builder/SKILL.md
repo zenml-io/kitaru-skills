@@ -1,11 +1,11 @@
 ---
 name: kitaru-importer-builder
-description: Build and validate a custom Kitaru trace importer when a provider, observability platform, export format, or agent framework has no suitable built-in importer. Use when a user wants to map provider traces into Kitaru sessions and nodes, join per-turn traces into longer sessions, preserve incomplete or failed trace evidence, choose script or package installation, test importer fidelity, register an importer version, import a bounded sample, or diagnose a partial import.
+description: Build and validate a custom Kitaru trace importer when a provider, observability platform, export format, or agent framework has no suitable built-in importer. Use when a user wants to map provider traces into Kitaru sessions and nodes, add bounded provider API fetching, join per-turn traces into longer sessions, preserve incomplete or failed trace evidence, choose script or package installation, test importer fidelity, register an importer version, import a bounded sample, or diagnose a partial import.
 ---
 
 # Kitaru importer builder
 
-Turn a representative provider export into a locally validated Kitaru importer. Keep the path from source evidence to normalized sessions explicit so the user can see what is preserved, approximated, or unavailable.
+Turn representative provider data into a locally validated Kitaru importer for static exports or bounded API queries. Keep the path from source evidence to normalized sessions explicit so the user can see what is preserved, approximated, or unavailable.
 
 Finish locally by default. Register code or upload trace data only when the user asks and approves each action separately.
 
@@ -13,14 +13,14 @@ Finish locally by default. Register code or upload trace data only when the user
 
 - Treat the installed Kitaru version and its offline schema as authoritative. Use repository examples as patterns, not proof that a command or field is installed.
 - Treat trace content as sensitive. Keep raw exports out of version control and redact fixtures before writing them into the target repository.
-- Keep export acquisition outside the importer. The parser consumes static bytes and parameters without network calls, filesystem writes, subprocesses, or credential reads.
+- Keep parsing separate from acquisition. The parser consumes bytes and parameters without network calls, filesystem writes, subprocesses, or credential reads; an optional `fetch(query)` method may read provider credentials and request API payloads.
 - Map the source before writing code. Record accepted payload shapes, identity, hierarchy, ordering, node fields, status, completeness, and intentionally unsupported data.
 - Prefer a private, single-file script importer. Use a package only when the user already has a distribution reason and the worker can install one exact pinned version.
 - Preserve useful incomplete evidence. Distinguish an unreadable payload, an invalid item, and a valid but incomplete session.
 - Join traces conservatively. A common key is insufficient without source-instance scope and meaningful turn order.
 - Do not overwrite an existing importer file, register executable code, upload trace data, or retry a partial import without an explicit checkpoint.
 - Ask separately before installing the exact importer dependencies and before running a local importer test.
-- Run any untrusted or newly generated importer, including code created in the current task, only in a credential-free isolated environment. Stop if that isolation is unavailable.
+- Run local tests of any untrusted or newly generated importer, including code created in the current task, only in a credential-free isolated environment. Stop if that isolation is unavailable.
 - Treat local importer testing as code execution in a bounded child process, not as a security sandbox.
 - Offer packaging or upstream contribution only after local success. Do not make either a completion requirement.
 - Run every Kitaru CLI command and SDK script with `KITARU_ACTIVE_SKILL=kitaru-importer-builder` set so the server attributes the resulting activity to this skill.
@@ -48,7 +48,7 @@ Start read-only.
 1. Identify the target repository, provider or format, representative export, and intended use of the imported sessions.
 2. Inspect the installed Kitaru version, offline command schema, and parser import path.
 3. Build the capability fingerprint in [references/importer-contract.md](references/importer-contract.md).
-4. Inspect existing local importer files. When a Kitaru connection is already configured, also inspect the installed importer catalog. If a suitable exact importer version accepts the observed payload shape, stop and return it to the calling workflow instead of scaffolding another one. When no connection is available, continue the local workflow without requiring registry discovery.
+4. Inspect existing local importer files. When a Kitaru connection is already configured, also inspect the installed importer catalog. Check both static parsing and supported API fetching before custom development. If a suitable exact importer version accepts the observed payload shape or can fetch the requested traces, stop and return it to the calling workflow instead of scaffolding another one. When no connection is available, continue the local workflow without requiring registry discovery.
 5. Otherwise, decide whether to add a version to an existing custom importer or create a new private name.
 6. Stop before overwriting a path or changing the installed Kitaru version.
 
@@ -63,7 +63,7 @@ the provider trace after each run; it is not a custom parser. Carry forward the
 repository and revision, provider, public entrypoint, installed Kitaru version,
 target agent and version, and requested evidence.
 
-If no usable static export or importer-backed adapter can meet the user's goal,
+If neither static export nor provider API data is available and the goal requires new in-process recording,
 continue with `kitaru-adapter-builder`. Carry forward the repository and
 revision, public entrypoint, language, installed framework and Kitaru versions,
 requested evidence, target agent and version, and investigation goal. Choose
@@ -72,7 +72,7 @@ importers as an alternative.
 
 ## Acquire a safe representative sample
 
-Prefer an existing static export. When the provider offers only an authenticated or paginated API, treat export acquisition as a separate task with its own approval, credentials, pagination, rate limits, and resumability.
+Prefer an existing redacted export for parser tests. For API sources, first check an installed importer's fetch support and provider connection schema. Build a custom fetch method only when that route is insufficient. Use mocked provider responses for local tests; a live fetch needs an authorized bounded query and provider credentials, pagination, rate-limit, and retry controls.
 
 Before writing a fixture:
 
@@ -106,7 +106,7 @@ Mark every relevant source field as mapped, preserved as bounded metadata, or in
 ## Implement the smallest coherent importer
 
 1. Scaffold a script only after the installed schema confirms the command and destination.
-2. Keep one top-level parser entrypoint with the installed `Parser` signature.
+2. Keep one parser callable for uploads, or expose an importer object with `parse` and optional `fetch` methods using the installed contracts.
 3. Parse the complete payload into deterministic source groups.
 4. Validate identities and graph structure before yielding a session.
 5. Yield valid sessions and isolated item failures incrementally.
@@ -160,9 +160,9 @@ Require a stable nonempty provider before registration when remote deduplication
 
 ## Gate the first smoke import separately
 
-Proceed only when the user also approves uploading a bounded redacted payload.
+Proceed only when authorization covers uploading a bounded redacted payload or fetching an exact bounded provider selection. For live fetching, first review the importer and use only the intended provider credentials in the approved worker environment; local generated-code tests remain credential-free.
 
-Show the exact importer version, agent version, target tenant or project, payload, parameters, persistence, expected session identities, and the fact that this skill has no automatic cleanup path. When the installed schema exposes `--tag`, require one unique durable smoke tag and include `--wait` because current post-import tagging requires it. If tagging is unavailable, require a disposable agent or a clearly marked isolated source identity instead. Do not write minimized smoke fixtures into the ordinary production session population without a marker that the investigation flow can exclude.
+Show the exact importer version, agent version, target tenant or project, payload or query and connection, parameters, persistence, expected session identities, and the fact that this skill has no automatic cleanup path. When the installed schema exposes `--tag`, require one unique durable smoke tag and include `--wait` because current post-import tagging requires it. If tagging is unavailable, require a disposable agent or a clearly marked isolated source identity instead. Do not write minimized smoke fixtures into the ordinary production session population without a marker that the investigation flow can exclude.
 
 Create one import job and wait only through the installed supported mechanism. A local wait timeout does not stop the remote job. Preserve the smoke tag plus the blob, job, task, session, and terminal receipt identifiers. Tag application can fail after session import succeeds, so retain the session receipt and report that partial state rather than rerunning the import.
 

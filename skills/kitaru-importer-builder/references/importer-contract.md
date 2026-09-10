@@ -6,6 +6,7 @@ Use this reference to inspect the installed importer surface, implement the pars
 
 - [Authority and capability fingerprint](#authority-and-capability-fingerprint)
 - [Parser contract](#parser-contract)
+- [Optional API fetching](#optional-api-fetching)
 - [Identity and deduplication](#identity-and-deduplication)
 - [Local scaffold and test](#local-scaffold-and-test)
 - [Installation modes](#installation-modes)
@@ -14,7 +15,7 @@ Use this reference to inspect the installed importer surface, implement the pars
 
 ## Authority and capability fingerprint
 
-Treat the installed Kitaru version and offline schema as authoritative. This reference design was checked against Kitaru commit `3675d90e02a690f2bd9a3ff43eba576f0a813515` on `develop`; re-check the current installed schema before relying on it.
+Treat the installed Kitaru version and offline schema as authoritative. Re-check the current installed schema before relying on these parser, API-fetch, and connection contracts.
 
 Inspect read-only before emitting exact commands:
 
@@ -25,13 +26,15 @@ kitaru schema importer test
 kitaru schema importer register
 kitaru schema importer version register
 kitaru schema session import
+kitaru schema connection create
 ```
 
 Confirm the installed parser import path in the active Python environment. Record this fingerprint:
 
 | Capability | Evidence to record |
 |---|---|
-| Parser types | `Parser`, `ImportedSession`, `ImportedNode`, and `ImportFailure` import successfully |
+| Parser types | `Parser`, `ImportedSession`, `ImportedNode`, and `ImportFailure` import successfully; `Importer` and `FetchingImporter` when an object entrypoint is needed |
+| API fetching | Installed provider support, accepted query fields, fetch entrypoint, connection schema, and bounded provider selection |
 | Scaffold | Exact destination and overwrite behavior, or that manual file creation is required |
 | Local test | Entrypoint, payload, params, timeout, and code-execution warning, or the project-native isolated test path |
 | Registration | Script/package choice, entrypoint, provider, and version behavior when remote registration is requested |
@@ -78,6 +81,7 @@ The worker passes the complete payload as `bytes` and one JSON-compatible parame
 | `status` | Installed `SessionStatus` value |
 | `name` | Useful source-derived label or `None` |
 | `inputs`, `outputs` | JSON-compatible session-level content |
+| `input_text_selector`, `output_text_selector` | Optional pointers to session text |
 | `error` | Root/session failure, not every failed descendant |
 | `started_at`, `ended_at` | Aware timestamps when available |
 | `metadata` | Bounded source and fidelity metadata |
@@ -105,6 +109,34 @@ Use exactly one of the two current topology forms:
 - a flat list in which every node has an explicit `index`, with `parent_index` and `secondary_parent_indexes` set where applicable.
 
 Explicitly indexed nodes cannot have `children`, and every primary or secondary parent index must precede the child index. Preserve source DAG edges with `secondary_parent_indexes` when the installed contract exposes them. Record a topology limitation in metadata only when the source relation cannot be represented by the installed model.
+
+## Optional API fetching
+
+Keep a parser-only callable for uploads when that meets the goal. Parsers may return either `Iterator[ImportedSession | ImportFailure]` or `AsyncIterator[ImportedSession | ImportFailure]`. For API imports, register an object exposing both `parse(payload, params)` and `fetch(query)`. The fetch method returns a sync or async iterator of `bytes`; Kitaru passes each yielded payload to the parser. Register the object attribute, not its class or only its `parse` method.
+
+The runtime protocols are `Importer` and `FetchingImporter` from `kitaru.task.importer`. The `Fetcher` callable accepts one `dict[str, Any]` query. Keep credentials out of query and parser parameters. Use the resolved connection values made available to the task environment. Read credentials during fetching rather than module import so offline parser tests need none.
+
+Before implementing fetching, inspect the installed provider package and exact registered entrypoint. A known provider name alone does not prove that an older installed version supports API imports. Reuse existing support when it meets the selection and fidelity requirements.
+
+The shared query accepts `trace_ids`, timezone-aware `since` and `until`, positive `concurrency`, and importer-specific fields. Without `trace_ids`, `since` is required; `until` cannot precede `since`. Freeze both time bounds for a reproducible window, or prefer a small exact trace-ID selection. Validate provider-specific fields and impose numeric request, page, payload, concurrency, and retry limits. Do not promise a durable pagination cursor unless the implementation actually persists one.
+
+Declare the provider's JSON connection schema on importer registration with `--connection-schema` when supported. This is parent metadata, not a parser argument or a version-specific credential store. Describe ordinary configuration and secret fields according to the installed schema conventions. Reuse a matching provider connection; create one through `kitaru connection create NAME --importer IMPORTER` when authorized. Connection creation takes the bare importer parent name or ID, without an `@VERSION` suffix. Inspect its schema for secure input options; never place literal credentials in example commands, source, or fixtures.
+
+For a packaged fetching importer, declare fetch dependencies under the `api` extra in `pyproject.toml`. The worker installs the package with `[api]` for API imports and the bare package for uploads. Script importers declare dependencies inline; those dependencies are installed for both source types.
+
+For an object exported as `importer`, use `--entrypoint importer` in script registration or `--entrypoint package.module:importer` in package registration. A bounded API import then has this form:
+
+```text
+kitaru session import \
+  --importer IMPORTER@VERSION \
+  --agent AGENT@VERSION \
+  --connection CONNECTION \
+  --trace-id TRACE_ID \
+  --tag 'kitaru-importer-smoke:provider-unique-id' \
+  --wait
+```
+
+API import has no FILE argument. FILE cannot be combined with query flags or `--connection`. An omitted API connection resolves the provider default; select an explicit connection when source identity matters. Import creates persistent sessions from fetched data, so obtain authorization for that provider selection before execution. Keep query, connection ID, import and job IDs in the receipt without copying secrets.
 
 ## Identity and deduplication
 
@@ -229,7 +261,7 @@ For an eligible per-turn export, add the dedicated join option only when the ins
 
 The CLI `--join-on` value is an RFC 6901 JSON Pointer. Dotted paths, when a particular parser supports them, belong in that parser's documented `--params` instead of this dedicated option.
 
-Use exact importer and agent versions. Import uploads the payload, creates a job, and may create persistent sessions. A local timeout ends waiting, not the remote job. Tags may be applied after import and can fail separately; preserve the session and job receipt before attempting follow-on mutations.
+Use exact importer and agent versions. File import uploads the payload; API import fetches it in the task. Both create a job and may create persistent sessions. A local timeout ends waiting, not the remote job. Tags may be applied after import and can fail separately; preserve the session and job receipt before attempting follow-on mutations.
 
 Before each action, confirm the active principal, tenant or project, least-privilege permissions, exact source or payload, and expected persistence. Never reuse an earlier approval for the second action.
 

@@ -8,6 +8,7 @@ Use this reference to preserve valid incomplete traces, isolate invalid items, t
 - [Treat incomplete traces as evidence](#treat-incomplete-traces-as-evidence)
 - [Apply input and execution safety](#apply-input-and-execution-safety)
 - [Build a minimum fixture matrix](#build-a-minimum-fixture-matrix)
+- [Validate optional API fetching](#validate-optional-api-fetching)
 - [Assert semantics, not only types](#assert-semantics-not-only-types)
 - [Run local Kitaru validation](#run-local-kitaru-validation)
 - [Inspect and recover remote state](#inspect-and-recover-remote-state)
@@ -88,7 +89,7 @@ Before testing any untrusted importer or importer newly generated in the current
 6. show the exact test command, importer, fixture, and parameters, then obtain separate explicit approval before executing it;
 7. stop if suitable isolation is unavailable; do not run the importer in the normal project shell.
 
-The parser itself must not perform network calls, filesystem writes, subprocess execution, or credential reads. Put authenticated or paginated export acquisition in a separate tool and provide the importer with static bytes.
+The parser itself must not perform network calls, filesystem writes, subprocess execution, or credential reads. Put authenticated or paginated acquisition in the optional `fetch(query)` method or a separate acquisition tool. Feed the parser bytes in either case.
 
 ## Build a minimum fixture matrix
 
@@ -117,6 +118,14 @@ Add these when applicable:
 - alternate supported provider export variants.
 
 Expected outputs must come from provider documentation or an independently reviewed mapping. Avoid generating a fixture and its expected result from the same implementation logic.
+
+## Validate optional API fetching
+
+Test fetch behavior with a mocked provider transport and no real credentials. Cover exact trace-ID selection, frozen time-window boundaries, empty results, multiple pages, repeated cursors, bounded concurrency, request timeouts, rate-limit retries and exhaustion, authentication failures, malformed responses, and oversized payloads. Assert request counts and selection parameters as well as the yielded bytes. Verify the same parser accepts those bytes and equivalent static fixtures.
+
+A fetcher exception while starting or advancing the iterator fails the task, and yielding anything other than bytes is an error. Test a failure after one yielded payload: earlier sessions may already persist. Do not convert that exception into a successful empty import or blindly restart an unbounded query.
+
+The local `kitaru importer test` payload route exercises parsing, not live API fetching. Use project-native isolated tests for the fetch method; do not invent a local `--query` test option. Report mocked fetching and live verification separately. A live smoke import requires reviewed code, an authorized exact provider selection, and only the intended credentials in the worker environment.
 
 ## Assert semantics, not only types
 
