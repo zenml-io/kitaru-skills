@@ -136,7 +136,7 @@ For every parsed session, assert the applicable fields:
 - original trace IDs and deterministic turn order;
 - exact root order, primary child topology, and secondary parents;
 - node types, identities, statuses, errors, inputs, and outputs;
-- text and system-prompt selectors plus visible reasoning when the source exposes them;
+- text, system-prompt, and reasoning selectors when the source exposes them;
 - requested and served model, `model_provider`, usage, cost, tool, and subagent fields;
 - bounded provider metadata and intentionally unsupported fields;
 - completeness and ordered normalization warnings;

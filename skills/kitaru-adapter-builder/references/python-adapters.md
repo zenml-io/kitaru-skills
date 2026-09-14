@@ -114,8 +114,8 @@ extract only these design lessons:
 - create fresh run state and a client for each invocation;
 - record one in-progress session and root before agent work;
 - buffer child nodes while preserving stable indexes;
-- record input, output, and system-prompt JSON Pointer selectors plus visible
-  reasoning only when the framework exposes them;
+- record input, output, system-prompt, and reasoning JSON Pointer selectors
+  only when the framework exposes them, keeping reasoning text in `outputs`;
 - replace the root and then update the session at the terminal state;
 - preserve the original agent exception when recording failure follows it;
 - close the per-run client on setup, success, and failure;
