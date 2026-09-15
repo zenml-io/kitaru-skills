@@ -18,10 +18,6 @@ Quickstart, then uses `kitaru-guided-tour` on the PydanticAI returns agent examp
 to review recorded sessions, define an evaluator and cohort, replay one
 improvement, and compare the result.
 
-<p align="center">
-  <a href="https://youtu.be/aYLfzXEr2Rk"><img src="assets/kitaru-guided-tour.webp" alt="Watch the Kitaru guided tour on YouTube"></a>
-</p>
-
 ## Skills
 
 | Skill | Purpose |
