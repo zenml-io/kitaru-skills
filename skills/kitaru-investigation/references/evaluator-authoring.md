@@ -132,3 +132,7 @@ When a subjective evaluator will support consequential automation or a user-defi
 Do not use Cohen's kappa as a readiness threshold. Do not require multiple annotators when one trusted domain expert defines correctness. Do not apply population corrections or confidence intervals to a deliberately curated regression cohort. If label isolation is unavailable, state that limitation instead of awarding a validation label.
 
 Finish at the exact evaluator-version checkpoint. Do not deploy the evaluator or change the agent automatically. If the user wants to test one candidate, hand the exact cohort, evaluator version, parameters, evidence facts, and limitations to `kitaru-replay-experiment`.
+
+## Optional guided validation
+
+Offer `kitaru-validate-evaluator` when the user wants to measure agreement with human judgments before relying on this evaluator. If available, carry the exact criterion, evidence policy, evaluator version, result name, full params, reviewed session and investigation IDs, and any cases already used for tuning into that skill. It guides criterion-specific investigation verdicts, visual disagreement review, and an untouched final comparison. TypeSafe is optional; the same workflow supports other binary judges. Do not assume an existing overall-quality verdict labels this criterion. If the skill is unavailable, preserve the validation guidance here and offer its installation without making it a setup prerequisite.

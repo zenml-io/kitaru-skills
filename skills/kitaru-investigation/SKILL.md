@@ -86,6 +86,12 @@ An incomplete starter handoff takes precedence over this question. Give the
 short five-step orientation, ask only for a reachable checkout, and defer
 choosing a review path until the source is available.
 
+When the user wants to check a judge against human decisions, offer the optional
+`kitaru-validate-evaluator` skill. Carry the criterion, exact evaluator settings,
+review IDs, and known data exposure forward. Do not relabel general session
+verdicts as criterion-specific labels. If that skill is not installed, retain
+the bounded validation guidance in the evaluator reference.
+
 ## Load references only when needed
 
 - Read [references/investigation-method.md](references/investigation-method.md)

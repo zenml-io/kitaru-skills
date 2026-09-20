@@ -4,7 +4,7 @@ Use this configuration route for one accepted semantic criterion that determinis
 
 ## Check availability and execution first
 
-Inspect the installed catalog and use a suitable evaluator scoped to the cohort's agent or deliberately global. The package is `kitaru-typesafe-evaluator`, with entrypoint `kitaru_typesafe_evaluator.judge:judge`. It is not installed or registered by default. Verify a released package exists and is reachable from the worker before recommending an installation; a source branch or guide containing a version number is not proof of publication. If unavailable, report that limitation and use an available mechanism unless the user requests development setup.
+Inspect the installed catalog and use a suitable evaluator scoped to the cohort's agent or deliberately global. The package is `kitaru-typesafe-evaluator`, with entrypoint `kitaru_typesafe_evaluator.judge:judge`. It is not installed or registered by default. Check the installed package and worker availability against the version-matched setup guide. If support is missing, give installation or upgrade guidance and verify the worker can import the package before creating a job.
 
 Use the version-matched [Judge evaluations guide](https://docs.zenml.io/kitaru/guides/judge-evaluations) for full setup and the installed package schema as the authority. Verify the following before creating a job:
 
@@ -62,3 +62,7 @@ Carry the exact cohort version, evaluator version and parent scope, package/mode
 
 - [Hamel Husain and Shreya Shankar's public guidance on binary evaluations](https://hamel.dev/blog/posts/evals-faq/why-do-you-recommend-binary-passfail-evaluations-instead-of-1-5-ratings-likert-scales.html) explains why narrow Pass/Fail definitions help expose ambiguous criteria.
 - [TypeSafe Noul documentation](https://docs.typesafe.ai/primitives/noul), [models](https://docs.typesafe.ai/models), and [confidence](https://docs.typesafe.ai/confidence) explain provider semantics. Refresh relevant provider docs before changing model or API guidance; translate them into the installed Kitaru params contract rather than copying request bodies.
+
+## Optional guided validation
+
+Offer `kitaru-validate-evaluator` when the user wants to measure agreement with human judgments before relying on this evaluator. If available, carry the exact criterion, evidence policy, evaluator version, result name, full params, reviewed session and investigation IDs, and any cases already used for tuning into that skill. It guides criterion-specific investigation verdicts, visual disagreement review, and an untouched final comparison. TypeSafe is optional; the same workflow supports other binary judges. Do not assume an existing overall-quality verdict labels this criterion. If the skill is unavailable, preserve the validation guidance here and offer its installation without making it a setup prerequisite.

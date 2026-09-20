@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kitaru Evaluator Validation"
+  short_description: "Align an evaluator with human judgments"
+  default_prompt: "Use $kitaru-validate-evaluator to compare my judge with human decisions and explain the disagreements visually."
