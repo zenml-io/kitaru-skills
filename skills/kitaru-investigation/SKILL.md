@@ -102,6 +102,10 @@ choosing a review path until the source is available.
   [references/deterministic-evaluators.md](references/deterministic-evaluators.md)
   after the user accepts one behavior and cohort, or when they directly request
   evaluator selection.
+- Read [references/typesafe-evaluator.md](references/typesafe-evaluator.md)
+  when a narrow accepted criterion needs interpretation and the user chooses
+  the optional TypeSafe judge, including configuring a suitable installed
+  evaluator before writing custom code.
 - Read [references/evaluator-authoring.md](references/evaluator-authoring.md)
   only after checking the installed catalog. Continue there when no installed
   evaluator expresses the accepted criterion, or when the user declines a
@@ -427,7 +431,9 @@ If repeatable measurement is useful, continue with
 [references/deterministic-evaluators.md](references/deterministic-evaluators.md).
 Run relevant descriptive evaluators first, then prefer an installed configured
 evaluator that directly expresses the accepted criterion and is verified as
-deliberately global or scoped to the cohort's agent. Only continue to
+deliberately global or scoped to the cohort's agent. For an interpretive
+criterion, consider the optional
+[TypeSafe configuration route](references/typesafe-evaluator.md). Only continue to
 [references/evaluator-authoring.md](references/evaluator-authoring.md) when the
 installed catalog cannot express it.
 

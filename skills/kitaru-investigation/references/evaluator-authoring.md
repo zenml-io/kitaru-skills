@@ -19,6 +19,8 @@ Reject or revise the criterion when the agent could pass without exercising the 
 
 Use deterministic executable code for objective structure, content, limits, models, tools, or workflow rules. Use an LLM judge only when the accepted criterion genuinely requires interpretation. A small hybrid may use deterministic checks for hard protections and a judge for the interpretive outcome.
 
+Before writing judge code, check whether the optional [TypeSafe evaluator](typesafe-evaluator.md) can express the accepted narrow semantic criterion through configuration. Prefer a suitable installed version; if none exists, verify package availability and authorization before registration. Its typed answers do not supply model reasoning, and its Noul decision policy includes an undecided band. Use custom code when the required computation or decision policy does not fit.
+
 Do not explain this taxonomy unless it helps the user decide. State the selected mechanism, the evidence it reads, and what it can establish.
 
 ## Show one rubric checksum
