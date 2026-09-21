@@ -4,7 +4,7 @@ This repository contains agent skills for experiencing, connecting, and using
 [Kitaru](https://kitaru.ai). They support a value-first tour of the public
 returns agent example, custom adapter and importer development, evidence-led
 investigations, durable annotations, versioned cohorts, evaluator selection,
-and bounded replay experiments.
+evaluator validation, and bounded replay experiments.
 
 Kitaru records agent runs as evidence-rich sessions. Model and tool activity is
 recorded when the integration exposes it, and the skills make observability gaps
@@ -29,6 +29,7 @@ improvement, and compare the result.
 | [`kitaru-hosted-onboarding-tour`](skills/kitaru-hosted-onboarding-tour/SKILL.md) | Guide the controlled ZenML Pro onboarding runner through a concise, resume-safe tour that reuses exact durable state and handles pre-existing agent names without overwriting them. |
 | [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | Give a first-time user a prepared three-session frontend review of the PydanticAI returns agent example, collect human verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. |
 | [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Act as Kitaru's front door: verify setup, record sessions or import files or provider API traces, follow up on insight cards, guide human review, define one accepted behavior and cohort, select an evaluator, and offer a bounded replay experiment. |
+| [`kitaru-validate-evaluator`](skills/kitaru-validate-evaluator/SKILL.md) | Check a judge against criterion-specific human verdicts, inspect disagreements with visual summaries, and assess untouched cases without confusing abstentions or errors with quality. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
 | [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with optional API fetching, conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
 | [`kitaru-adapter-builder`](skills/kitaru-adapter-builder/SKILL.md) | Select a supported provider-backed adapter or build a project-local Python or TypeScript adapter for an unsupported agent framework, with explicit recording and replay boundaries, partial-trace handling, side-effect controls, and separately approved upstream contribution. |
@@ -51,6 +52,8 @@ product handoff rather than recreating the review UI in chat.
 - "Help me discover recurring failure modes in last week's agent sessions."
 - "Resume investigation `INVESTIGATION_ID` and show me what remains."
 - "Turn this accepted behavior and cohort into a narrow evaluator."
+- "Help me validate this TypeSafe judge against my judgments, showing disagreements before the statistics."
+- "Check whether this evaluator is reliable enough for our regression checks."
 - "Replay this cohort with the new prompt and tell me whether it helped."
 - "Run a safe experiment with history-backed tools and no live passthrough."
 - "Build a private Kitaru importer for this provider's JSONL trace export."
@@ -73,6 +76,8 @@ uv add "kitaru[cli,mcp,worker]>=0.22"
 Provider API imports, provider connections, post-import analyzers, and insight
 handoffs require Kitaru 0.26 or newer. Existing file-based tour and investigation
 paths remain available on their earlier supported versions.
+
+Evaluator validation uses existing investigation verdicts and exact evaluation runs. TypeSafe is optional and requires the `kitaru-typesafe-evaluator` package on the worker; the skill checks its installed schema and setup. Human agreement validation does not certify the model's probabilities or deploy an automatic gate.
 
 Each skill verifies the installed version and public schema before it acts, and
 stops when the required contract is unavailable.
@@ -108,7 +113,7 @@ building a project-local adapter.
 The front-door journey follows Kitaru's five-step method: Observe, Judge,
 Define, Replay, and Compare. After investigation accepts a behavior and cohort,
 it checks the installed evaluator catalog before proposing custom evaluator
-code. It then offers to continue with the `kitaru-replay-experiment` skill,
+code. For a model judge, optionally use `kitaru-validate-evaluator` to compare its decisions with human labels before relying on it. It then offers to continue with the `kitaru-replay-experiment` skill,
 carrying the exact accepted evidence forward without making the user copy IDs.
 
 MCP is preferred, not required. For the most direct agent experience, configure
@@ -158,7 +163,7 @@ as a plugin:
 
 You can then invoke
 `/kitaru-hosted-onboarding-tour`, `/kitaru-guided-tour`,
-`/kitaru-investigation`, `/kitaru-replay-experiment`,
+`/kitaru-investigation`, `/kitaru-validate-evaluator`, `/kitaru-replay-experiment`,
 `/kitaru-importer-builder`, or `/kitaru-adapter-builder` explicitly.
 
 ### Manual installation

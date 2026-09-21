@@ -6,7 +6,8 @@ for contributor scope, validation, accuracy, distribution, and release rules.
 ## Claude Code invocation
 
 Claude Code exposes the skills as `/kitaru-hosted-onboarding-tour`,
-`/kitaru-guided-tour`, `/kitaru-investigation`, `/kitaru-replay-experiment`,
+`/kitaru-guided-tour`, `/kitaru-investigation`, `/kitaru-validate-evaluator`,
+`/kitaru-replay-experiment`,
 `/kitaru-importer-builder`, and `/kitaru-adapter-builder`, and may also select
 them automatically from their frontmatter descriptions.
 
@@ -49,6 +50,7 @@ cp -R skills/kitaru-guided-tour .claude/skills/
 cp -R skills/kitaru-importer-builder .claude/skills/
 cp -R skills/kitaru-adapter-builder .claude/skills/
 cp -R skills/kitaru-investigation .claude/skills/
+cp -R skills/kitaru-validate-evaluator .claude/skills/
 cp -R skills/kitaru-replay-experiment .claude/skills/
 ```
 

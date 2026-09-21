@@ -32,7 +32,9 @@ Pin the exact evaluator version and parameters. Evaluator-produced rows preserve
 
 Interpret each builtin float result according to its named metric. Coverage metrics count available observations; finding and policy metrics count detected problems; resource budgets report observed use against the configured ceiling. The score is a literal per-session numerator with `min_score=0` and `max_score` as the honest opportunity total when one exists. Higher is better for coverage, while lower is better for failures, violations, and other findings; `passed` remains a separate verdict. Do not invent a maximum for an unbounded count, and keep genuinely multidimensional evidence as a string or categorical value instead of forcing it into one score. Session-specific maxima may differ, in which case a run aggregate keeps its raw-score statistics but returns a null aggregate `max_score`.
 
-Do not force a configured evaluator to stand in for an interpretive outcome. Exact tool order is appropriate when the order is contractual, not merely because one successful trace used it.
+For an interpretive criterion, check for a suitable registered [TypeSafe judge](typesafe-evaluator.md) before proposing custom code. It is an optional provider-backed package, not a default evaluator or a deterministic rule. Verify its scope, package version, params contract, credentials, and permission to send the required evidence before using it.
+
+Do not force a deterministic configured evaluator to stand in for an interpretive outcome. Exact tool order is appropriate when the order is contractual, not merely because one successful trace used it.
 
 ## Return a compact checkpoint
 

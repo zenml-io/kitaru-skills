@@ -37,6 +37,9 @@ metadata. It is not a Python package.
   operation, review, evaluator, and replay method.
 - `skills/kitaru-investigation/references/` contains method, transport, public
   starter, and evaluator details loaded only when needed.
+- `skills/kitaru-validate-evaluator/` guides criterion-specific human labeling,
+  exact-run comparisons, and development/test separation. Its reporting helper
+  computes counts from local normalized snapshots, not new Kitaru product state.
 - `skills/kitaru-replay-experiment/SKILL.md` guides one safe, bounded candidate
   comparison against an accepted cohort and exact evaluator set.
 - `skills/kitaru-replay-experiment/references/` separates current Kitaru replay
@@ -63,7 +66,10 @@ supporting material in `references/`.
 
 ## Validation commands
 
-There is no build step or dedicated test suite. Match validation to the change:
+There is no build step. Match validation to the change:
+
+- Run `python3 -m unittest discover -s tests` when changing the validation
+  reporting helper. Its fixtures are synthetic; it does not call Kitaru.
 
 - Always inspect the final diff and run `git diff --check`.
 - For changed skills, validate frontmatter with the `skill-creator`
