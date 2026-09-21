@@ -95,7 +95,7 @@ Map the installed model rather than copying this list blindly. The reference inc
 - optional `index`, `parent_index`, and `secondary_parent_indexes` for an explicitly indexed flat list;
 - `external_id`, `trace_id`, `node_type`, `name`, and `status`;
 - `error`, `started_at`, and `ended_at`;
-- `input_text_selector`, `output_text_selector`, `system_prompt_selector`, and visible `reasoning`;
+- `input_text_selector`, `output_text_selector`, `system_prompt_selector`, and `reasoning_selectors`, JSON Pointers into `outputs` that select visible reasoning;
 - `inputs`, `outputs`, `attributes`, and bounded `metadata`;
 - `requested_model`, served `model`, `model_provider`, and `model_params`;
 - `tokens`, `cost`, `tool_name`, and `subagent_id`;
