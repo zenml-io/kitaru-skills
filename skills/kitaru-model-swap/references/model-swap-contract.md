@@ -78,6 +78,12 @@ kitaru connection update model-swap-keys \
   --set-secret OPENROUTER_API_KEY="$OPENROUTER_API_KEY"
 ```
 
+A judge's key goes into the same connection the same way: `TYPESAFE_API_KEY`
+for Jev, `CLOUDFLARE_API_TOKEN` for Clef, and usually the existing
+`OPENAI_API_KEY` for OpenAI Decisions. Add it with `update`, passing every key
+the connection already holds alongside it. A missing judge key fails the whole
+analysis at the start.
+
 ## Parameters
 
 ```json
@@ -122,7 +128,7 @@ kitaru connection update model-swap-keys \
 | `use_recorded_tools` | `true` | Use definitions recorded on the call. |
 | `infer_missing_schemas` | `false` | Loose schemas from recorded arguments; reported separately. |
 | `sessions_per_month` | derived | Needed for monthly cost when the import spans less than a day. |
-| `judge` | none | Rules whether differing answers are equivalent and orders the review. A decision model: `{"kind": "jev"}` (TypeSafe, key `TYPESAFE_API_KEY`), `{"kind": "clef", "base_url": "https://api.cloudflare.com/client/v4/accounts/ACCOUNT_ID/ai/run/@cf/cloudflare/clef"}` (key `CLOUDFLARE_API_TOKEN`, model `clef` or `clef-flash`), or `{"kind": "openai_decisions"}` (key `OPENAI_API_KEY`, model `gpt-6-luna`); optional `equivalent_at` (default 0.8), `model`, `api_key_env`, `price`, `timeout_seconds`. Or a candidate-shaped chat model without `kind`. |
+| `judge` | none | Rules on `same_tool_different_args` and `different_text` disagreements only, never on a different tool choice, and orders the review. A decision model: `{"kind": "jev"}` (TypeSafe, key `TYPESAFE_API_KEY`, default model `jev-latest`; may require early access), `{"kind": "clef", "base_url": "https://api.cloudflare.com/client/v4/accounts/ACCOUNT_ID/ai/run/@cf/cloudflare/clef", "api_key_env": "CLOUDFLARE_API_TOKEN"}` (no default key variable, so always pass `api_key_env`; model `clef` (default) or `clef-flash`), or `{"kind": "openai_decisions"}` (key `OPENAI_API_KEY`, default model `gpt-6-luna`). Clef and OpenAI Decisions require a model; an explicit `"model": null` is rejected. Optional `equivalent_at` (above 0.5, up to 1; default 0.8), `model`, `api_key_env`, `base_url`, `price`, `timeout_seconds`. When `base_url` is overridden, `api_key_env` must be given explicitly; no default key is sent to a custom URL. Or a candidate-shaped chat model without `kind`. Judge spend counts against `max_spend_usd` and its time against `time_budget_seconds`; the dry-run estimate leaves judge spend out. |
 | `concurrency` | `4` | Up to 32. |
 | `time_budget_seconds` | `600` | Up to 840; the task times out at 900 seconds. |
 | `max_disagreements` | `200` | Kept in the report. |
@@ -151,7 +157,8 @@ known; the rendered dry run then shows "unknown price"), `open_weights`,
 `answered` (calls with a comparable reply, excluding calls with inferred tool
 schemas), `agreement` (counts per category over `answered`), `agreement_rate`
 (exact), `tool_choice_rate`, `judged_equivalent`, `judged_different`,
-`judged_unsure`, `failures`, `failure_examples`
+`judged_unsure`, `judge_failures` (failure category to count, for judge calls
+that did not return a ruling), `failures`, `failure_examples`
 (one detail per category, such as `HTTP 404`) and `failure_rate`, `by_tool`
 (agreement and per-argument agreement), `latency_seconds`, `tokens_per_call`,
 `retries`, `cost` (`per_call_usd`, `per_session_usd`, `per_month_usd`),
@@ -170,10 +177,12 @@ Each disagreement: `candidate`, `session_id`, `node_id`, `node_name`, `group`,
 `agreement`, `schema_source` (`recorded`, `supplied`, `inferred`, or `none`),
 `recorded`, `candidate_answer` (both truncated excerpts), `judge_equivalent`
 (true, false, or null when unsure or not judged), `judge_probability` (decision
-judges only). Within each group, disagreements the judge found different come
-first, then unsure, then equivalent.
-The list includes calls with inferred schemas, which `answered` and `agreement`
-leave out.
+judges only), `judge_failure` (the failure category when the judge call failed,
+otherwise null). Which disagreements the report keeps is chosen independently
+of the judge, first by group and then by candidate; within each group they are
+then ordered different, then unsure or not judged, then equivalent. The list
+includes calls with inferred schemas, which `answered` and `agreement` leave
+out.
 
 Run-level: `disagreements` (at most `max_disagreements` entries),
 `disagreements_total` (all disagreements across candidates before truncation,

@@ -72,8 +72,10 @@ The `reference` candidate is scored exactly like any other candidate: its
 disagreements with its own recording are run-to-run variation, reviewed the same
 way. Use its score as the noise floor for the others.
 
-Never use `judge_equivalent` as a verdict or to fill in unreviewed
-disagreements.
+Never use `judge_equivalent` or `judge_probability` as a verdict or to fill
+in unreviewed disagreements. The user may agree explicitly to skip
+disagreements the judge found likely equivalent; those stay unreviewed, are
+reported as unreviewed, and never count as equivalent or as a verdict.
 
 ## How to show it
 

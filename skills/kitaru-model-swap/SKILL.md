@@ -93,19 +93,24 @@ fields. Estimate the review load before the paid run (roughly the sampled calls
 per candidate times the share of such calls) and tell the user that 10 to 20
 reviewed disagreements per finalist give an early read.
 
-When the review load is large, offer a decision-model judge to order it: TypeSafe
-Jev (`"judge": {"kind": "jev"}`), Cloudflare Clef on Workers AI (`"kind":
-"clef"` with the account's run URL), or OpenAI's Decisions API (`"kind":
-"openai_decisions"`). It rules whether each candidate answer is equivalent to
-the recorded one and returns a probability, so review can start with the
-answers most likely to differ. Explain that it is fast and cheap but can be
-swayed by text inside a recorded answer, that its key goes into the same
-connection as the candidates' keys, and that its ruling only orders the review;
-the user's verdicts still decide quality. A judge needs a `price` when
-`max_spend_usd` is set.
+When the review load is large, offer a decision-model judge to order it:
+TypeSafe Jev (`"judge": {"kind": "jev"}`, key `TYPESAFE_API_KEY`; Jev may
+require early access from TypeSafe), Cloudflare Clef on Workers AI (`"kind":
+"clef"` with the account's run URL, which contains the account ID, and
+`"api_key_env": "CLOUDFLARE_API_TOKEN"` passed explicitly), or OpenAI's
+Decisions API (`"kind": "openai_decisions"`, which usually reuses
+`OPENAI_API_KEY`). It rules only on disagreements where a candidate called the
+same tool with different arguments or gave different text, never on a different
+tool choice, and returns a probability that the two answers are equivalent, so
+review can start with the answers most likely to differ. Explain that it is
+fast and cheap but can be swayed by text inside a recorded answer, that its key
+goes into the same connection as the candidates' keys, and that its ruling only
+orders the review; the user's verdicts still decide quality. A judge needs a
+`price` when `max_spend_usd` is set, its spend counts against that cap, and a
+missing judge key fails the whole analysis at the start.
 
-For each paid candidate, find which environment variable will hold its key. Then
-set up keys with the commands in the contract reference, which the user runs
+For each paid candidate and the judge, find which environment variable will
+hold its key. Then set up keys with the commands in the contract reference, which the user runs
 themselves:
 
 - **No connection yet:** the user exports the key in their own shell
@@ -116,7 +121,8 @@ themselves:
 - **A connection lacks a needed key:** the user runs
   `kitaru connection update CONNECTION --set-secret ...` the same way. An update
   replaces the whole secret map, so the user passes every key the connection
-  should keep, not only the new one.
+  should keep, not only the new one. Adding a judge key such as
+  `TYPESAFE_API_KEY` or `CLOUDFLARE_API_TOKEN` follows this flow.
 
 Confirm the connection lists the expected `secret_keys` without reading values.
 
@@ -128,7 +134,9 @@ tool-call parser needs `tool_call_format: "hermes"`; reasoning models may need
 
 1. Run the analyzer with `"dry_run": true`, render the report, and show the
    user: calls per candidate, estimated spend per candidate and in total, and
-   coverage (replayable versus skipped calls).
+   coverage (replayable versus skipped calls). The estimate excludes judge
+   spend; when a judge is set, say so and add its likely cost from the `price`
+   in the parameters you passed, because the report does not carry it.
 2. If coverage shows `missing_tool_schema`, follow
    [references/tool-schemas.md](references/tool-schemas.md) before going on.
 3. Check each candidate's `price` in the dry-run report. A candidate with
@@ -136,9 +144,13 @@ tool-call parser needs `tool_call_format: "hermes"`; reasoning models may need
    capped run: the analyzer refuses `max_spend_usd` until every candidate, and
    the judge if one is set, has a known price. Ask the user for that model's
    input and output price per million tokens and set an explicit `price` on the
-   candidate, or drop it.
-4. Ask for approval of the spend and a cap. Run again without `dry_run`, with
-   `max_spend_usd`, an `--idempotency-key`, and `--wait --timeout 900`.
+   candidate, or drop it. Check the judge's `price` in the parameters, not the
+   report.
+4. Ask for approval of the spend and a cap. With a judge, leave headroom in
+   `max_spend_usd` above the dry-run estimate, because judge spend and time
+   count against `max_spend_usd` and `time_budget_seconds`. Run again without
+   `dry_run`, with `max_spend_usd`, an `--idempotency-key`, and
+   `--wait --timeout 900`.
 5. If the wait times out, the analysis keeps running on the worker. Take the
    `job_id` from the timeout error, follow it with `kitaru job watch JOB_ID` or
    check it with `kitaru job get JOB_ID`, and consider another run only after
@@ -161,7 +173,9 @@ what the user said matters, then summarize each candidate in plain words:
   retries);
 - median and tail latency;
 - whether it is open-weight;
-- failures by category and what to change in provider settings.
+- failures by category and what to change in provider settings;
+- with a judge, its `judged_equivalent`, `judged_different`, and
+  `judged_unsure` counts and any `judge_failures`, reported as setup problems.
 
 Say plainly that these are similarities to today's model, and that the next step
 decides which answers are right.
@@ -175,20 +189,23 @@ conversation.
 
 Walk through the disagreements in small batches of three to five, grouped by
 what the recorded model did, starting with the candidates the user is most
-interested in. When a judge ran, the report already orders each group by its
-ruling: answers it found different come first, then unsure ones, then likely
-equivalent ones. Follow that order, and say before the first batch that the
-likely equivalent ones can be reviewed last or skipped if the user agrees. Skip disagreements whose `schema_source` is `inferred`. For each,
-show both answers in one or two lines and ask: "Today's model did X; this
-candidate did Y. Which is right?" Offer: recorded correct, candidate correct,
-both acceptable, both wrong, unsure.
+interested in. When a judge ran, the report orders each group by its ruling:
+different, then unsure or not judged, then equivalent, within each group. The
+judge does not choose which disagreements the report keeps. Follow that order,
+and suggest before the first batch that the likely equivalent ones be reviewed
+last. Skip them only if the user explicitly agrees; skipped disagreements stay
+unreviewed, are reported as unreviewed, and never count as equivalent or as a
+verdict. Skip disagreements whose `schema_source` is `inferred`. For each, show
+both answers in one or two lines and ask: "Today's model did X; this candidate
+did Y. Which is right?" Offer: recorded correct, candidate correct, both
+acceptable, both wrong, unsure.
 
 Store only the user's exact choice, with the command in the contract reference,
 including the run's insight `id` and the candidate's `model`. Never store your
 own opinion as a verdict. Never turn a disagreement's `judge_equivalent` into a
 verdict or a preselected answer, and never skip a disagreement on the judge's
-ruling alone; show its `judge_probability` at most as a hint the user is free to
-ignore.
+ruling without the user's explicit agreement; show its `judge_probability` at
+most as a hint the user is free to ignore.
 
 Stop when the user wants to; then compute and show the verdict-backed quality
 per candidate following
