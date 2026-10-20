@@ -23,7 +23,7 @@ Render the report (no model call):
 kitaru insight report --import-id IMPORT_ID --out model-swap-report.html
 ```
 
-The report renders the most recent model-swap run of the import. The full structured report is in the `metadata["kitaru.model_swap/v1"]` field of the `model-swap-summary` insight: `kitaru insight list --filter '{"field":"import_id","op":"eq","value":"IMPORT_ID"}' --name model-swap-summary`.
+The report renders the most recent model-swap run of the import; session links use the dashboard URL the server reported when the analysis ran. The full structured report is in the `metadata["kitaru.model_swap/v1"]` field of the `model-swap-summary` insight, next to the rendered section under `kitaru.report_section/v1`: `kitaru insight list --filter '{"field":"import_id","op":"eq","value":"IMPORT_ID"}' --name model-swap-summary`.
 
 Keys, created by the user:
 
@@ -82,7 +82,7 @@ Candidate fields: `name`, `base_url`, `model`, `api_key_env` (a variable name, n
 
 ## Report fields
 
-Per candidate: `agreement` (counts per category), `agreement_rate` (exact), `tool_choice_rate`, `judged_equivalent`, `failures` and `failure_rate`, `by_tool` (agreement and per-argument agreement), `latency_seconds`, `tokens_per_call`, `retries`, `cost` (`per_call_usd`, `per_session_usd`, `per_month_usd`), `calls_not_run`, `recommendation`. Dry runs carry `estimate` instead.
+Per candidate: `agreement` (counts per category), `agreement_rate` (exact), `tool_choice_rate`, `judged_equivalent`, `failures`, `failure_examples` (one detail per category, such as `HTTP 404`) and `failure_rate`, `by_tool` (agreement and per-argument agreement), `latency_seconds`, `tokens_per_call`, `retries`, `cost` (`per_call_usd`, `per_session_usd`, `per_month_usd`), `calls_not_run`, `recommendation`. Dry runs carry `estimate` instead.
 
 Agreement categories: `same_tool_same_args`, `same_tool_different_args`, `different_tool`, `text_instead_of_tool`, `same_text`, `different_text`, `tool_instead_of_text`.
 
