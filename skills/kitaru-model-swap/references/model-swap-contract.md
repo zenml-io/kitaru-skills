@@ -78,11 +78,22 @@ kitaru connection update model-swap-keys \
   --set-secret OPENROUTER_API_KEY="$OPENROUTER_API_KEY"
 ```
 
-A judge's key goes into the same connection the same way: `TYPESAFE_API_KEY`
-for Jev, `CLOUDFLARE_API_TOKEN` for Clef, and usually the existing
-`OPENAI_API_KEY` for OpenAI Decisions. Add it with `update`, passing every key
-the connection already holds alongside it. A missing judge key fails the whole
-analysis at the start.
+Every decision model, whether the judge or a decision candidate, needs its key
+in the same connection, added the same way: `TYPESAFE_API_KEY` for Jev and
+`OPENAI_API_KEY` for OpenAI Decisions (these defaults apply only on the default
+URL); Clef always needs the variable named in its `api_key_env`, such as
+`CLOUDFLARE_API_TOKEN`, and so does any decision model with a custom
+`base_url`. Add it with `update`, passing every key the connection already
+holds alongside it:
+
+```bash
+kitaru connection update model-swap-keys \
+  --set-secret OPENAI_API_KEY="$OPENAI_API_KEY" \
+  --set-secret OPENROUTER_API_KEY="$OPENROUTER_API_KEY" \
+  --set-secret TYPESAFE_API_KEY="$TYPESAFE_API_KEY"
+```
+
+A missing judge key fails the whole analysis at the start.
 
 ## Parameters
 
@@ -119,19 +130,19 @@ analysis at the start.
 
 | Parameter | Default | Notes |
 |---|---|---|
-| `candidates` | required | 1 to 8. Unique `name`. At most one `reference`. |
+| `candidates` | `[]` | 0 to 8; give `candidates`, `decision_candidates`, or both; names unique across both lists. At most one `reference`. |
 | `dry_run` | `false` | Estimates only. |
-| `max_spend_usd` | none | Requires a known price for every candidate and the judge; the analyzer refuses the run otherwise. |
+| `max_spend_usd` | none | Requires a known price for every candidate, every decision candidate, and the judge; the analyzer refuses the run otherwise. Decision models have no bundled price, so give each decision candidate and a decision judge an explicit `price`. When a candidate sets `max_tokens`, each call reserves its full `max_tokens` output, and the analyzer refuses to start if one call's reservation alone exceeds the cap. |
 | `max_calls` | `100` | Sample spread across node names and models. |
 | `tool_schemas` | `{}` | Tool name to parameters JSON schema. |
 | `tool_descriptions` | `{}` | Tool name to description. |
 | `use_recorded_tools` | `true` | Use definitions recorded on the call. |
 | `infer_missing_schemas` | `false` | Loose schemas from recorded arguments; reported separately. |
 | `sessions_per_month` | derived | Needed for monthly cost when the import spans less than a day. |
-| `decision_candidates` | `[]` | Up to 4 decision models answering the decision parts of each decision or partial call: `{"name": "jev", "kind": "jev", "price": {...}}`, same fields and defaults as a decision `judge` (without `equivalent_at`). `candidates` may be empty when these are given. |
-| `judge` | none | Rules on `same_tool_different_args` and `different_text` disagreements only, never on a different tool choice, and orders the review. A decision model: `{"kind": "jev"}` (TypeSafe, key `TYPESAFE_API_KEY`, default model `jev-latest`; may require early access), `{"kind": "clef", "base_url": "https://api.cloudflare.com/client/v4/accounts/ACCOUNT_ID/ai/run/@cf/cloudflare/clef", "api_key_env": "CLOUDFLARE_API_TOKEN"}` (no default key variable, so always pass `api_key_env`; model `clef` (default) or `clef-flash`), or `{"kind": "openai_decisions"}` (key `OPENAI_API_KEY`, default model `gpt-6-luna`). Clef and OpenAI Decisions require a model; an explicit `"model": null` is rejected. Optional `equivalent_at` (above 0.5, up to 1; default 0.8), `model`, `api_key_env`, `base_url`, `price`, `timeout_seconds`. When `base_url` is overridden, `api_key_env` must be given explicitly; no default key is sent to a custom URL. Or a candidate-shaped chat model without `kind`. Judge spend counts against `max_spend_usd` and its time against `time_budget_seconds`; the dry-run estimate leaves judge spend out. |
+| `decision_candidates` | `[]` | 0 to 4 decision models answering the decision parts of each decision or partial call: `{"name": "jev", "kind": "jev", "price": {...}}`, same fields, defaults, and key rules as a decision `judge` (without `equivalent_at`), plus a `name` unique across both candidate lists. They run first, before the LLM candidates, sharing `max_spend_usd` and `time_budget_seconds`; the LLM candidates get what is left. Their dry-run estimate is at `decision_candidates[].estimate`. |
+| `judge` | none | Rules on `same_tool_different_args` and `different_text` disagreements only, never on a different tool choice, and orders the review. A decision model: `{"kind": "jev"}` (TypeSafe, key `TYPESAFE_API_KEY`, default model `jev-latest`; may require early access), `{"kind": "clef", "base_url": "https://api.cloudflare.com/client/v4/accounts/ACCOUNT_ID/ai/run/@cf/cloudflare/clef", "api_key_env": "CLOUDFLARE_API_TOKEN"}` (always pass `base_url`, the account's run URL, and `api_key_env`; model `clef` (default) or `clef-flash`), or `{"kind": "openai_decisions"}` (key `OPENAI_API_KEY`, default model `gpt-6-luna`). Every kind has a default model (`jev-latest`, `clef`, `gpt-6-luna`), and an explicit `null` for any field falls back to its default. Optional `equivalent_at` (above 0.5, up to 1; default 0.8), `model`, `api_key_env`, `base_url`, `price`, `timeout_seconds`. When `base_url` is overridden, `api_key_env` must be given explicitly; no default key is sent to a custom URL. Give `price` whenever `max_spend_usd` is set, since decision models have no bundled price. Or a candidate-shaped chat model without `kind`. Judge spend counts against `max_spend_usd` and its time against `time_budget_seconds`; the dry-run estimate leaves judge spend out. |
 | `concurrency` | `4` | Up to 32. |
-| `time_budget_seconds` | `600` | Up to 840; the task times out at 900 seconds. |
+| `time_budget_seconds` | `600` | Up to 840; the task times out at 900 seconds. Shared by decision candidates (first), LLM candidates, and the judge. |
 | `max_disagreements` | `200` | Kept in the report. |
 
 Candidate fields: `name`, `base_url`, `model`, `api_key_env` (a variable name,
@@ -230,17 +241,35 @@ kitaru annotation list \
 - Native-adapter recordings carry no tool definitions; pass `tool_schemas`.
 - The analyzer needs network access from the worker to each endpoint.
 
+## Data sent to decision services
+
+A decision candidate is sent, for each call it answers, the rebuilt
+conversation (including the system prompt and tool results), the tool names and
+descriptions, argument names, and enum values. A judge is sent both answers it
+compares. Recorded trace content therefore leaves the worker for that service
+(TypeSafe, Cloudflare, or OpenAI). Tell the user before they opt in.
+
 ## Decision-model fit
 
 Every report carries `decision_shapes`: `calls`, `decision`, `partial`,
 `generative` counts, `recorded_cost_share` per shape, `reasons` (why calls are
 not fully decisions, such as `free-form arguments: order_id` or `several tool
-calls at once`), and `by_node`.
+calls at once`), and `by_node`. Calls with inferred tool schemas are classified
+generative, because inferred schemas are not trusted for decisions.
 
 Each entry of `decision_candidates` in the report has `name`, `kind`, `model`,
-`calls_asked`, `calls_not_run`, `answered`, `failures`, `tool_choice_rate`,
+`price`, `calls_asked`, `calls_not_run` (calls left unrun when the spend cap or
+time budget ran out), `answered`, `failures`, `tool_choice_rate`,
 `argument_rates` (per enum or boolean argument), `decisions_match_rate` (all
 decisions of a call matched), `decision_calls` and
-`decision_calls_match_rate`, `cost_per_call_usd`, `recorded_cost_per_call_usd`
-(on the same calls), and `latency_p50_seconds`. Dry runs carry `estimate`
-(`calls`, `spend_usd`) instead.
+`decision_calls_match_rate`, `cost_per_call_usd` (over all asked calls,
+decision parts only), `decision_call_cost_usd` and
+`recorded_decision_call_cost_usd` (only calls whose shape is `decision`), and
+`latency_p50_seconds`. Dry runs carry `estimate` (`calls`, `spend_usd`) at
+`decision_candidates[].estimate` instead.
+
+For savings, compare `decision_call_cost_usd` with
+`recorded_decision_call_cost_usd`: a decision model can replace the recorded
+model entirely only on decision-shaped calls. `cost_per_call_usd` covers just
+the decision parts of partial calls, which still need an LLM for the rest, so
+never compare it with a full recorded cost per call.

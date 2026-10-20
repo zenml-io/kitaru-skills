@@ -93,25 +93,37 @@ fields. Estimate the review load before the paid run (roughly the sampled calls
 per candidate times the share of such calls) and tell the user that 10 to 20
 reviewed disagreements per finalist give an early read.
 
+Before offering a judge or decision candidates, tell the user what leaves the
+worker, and let them opt in knowing it: a decision candidate is sent the
+rebuilt conversation of each call it answers (including the system prompt and
+tool results), the tool names and descriptions, argument names, and enum
+values; a judge is sent both answers it compares. Recorded trace content goes
+to that decision service (TypeSafe, Cloudflare, or OpenAI), not only to the
+candidate providers the user already chose.
+
 When the review load is large, offer a decision-model judge to order it:
 TypeSafe Jev (`"judge": {"kind": "jev"}`, key `TYPESAFE_API_KEY`; Jev may
 require early access from TypeSafe), Cloudflare Clef on Workers AI (`"kind":
-"clef"` with the account's run URL, which contains the account ID, and
-`"api_key_env": "CLOUDFLARE_API_TOKEN"` passed explicitly), or OpenAI's
-Decisions API (`"kind": "openai_decisions"`, which usually reuses
+"clef"` with the account's run URL, which contains the account ID, as
+`base_url`, and `"api_key_env": "CLOUDFLARE_API_TOKEN"` passed explicitly), or
+OpenAI's Decisions API (`"kind": "openai_decisions"`, which usually reuses
 `OPENAI_API_KEY`). It rules only on disagreements where a candidate called the
 same tool with different arguments or gave different text, never on a different
 tool choice, and returns a probability that the two answers are equivalent, so
 review can start with the answers most likely to differ. Explain that it is
 fast and cheap but can be swayed by text inside a recorded answer, that its key
 goes into the same connection as the candidates' keys, and that its ruling only
-orders the review; the user's verdicts still decide quality. A judge needs a
-`price` when `max_spend_usd` is set, its spend counts against that cap, and a
-missing judge key fails the whole analysis at the start.
+orders the review; the user's verdicts still decide quality. Decision models
+have no bundled price, so a judge needs a `price` when `max_spend_usd` is set;
+its spend counts against that cap, and a missing judge key fails the whole
+analysis at the start.
 
-For each paid candidate and the judge, find which environment variable will
-hold its key. Then set up keys with the commands in the contract reference, which the user runs
-themselves:
+For each paid candidate, decision candidate, and the judge, find which
+environment variable will hold its key: `TYPESAFE_API_KEY` for Jev and
+`OPENAI_API_KEY` for OpenAI Decisions on their default URLs; for Clef, and for
+any decision model with a custom `base_url`, the variable named in its
+`api_key_env`. Then set up keys with the commands in the contract reference,
+which the user runs themselves:
 
 - **No connection yet:** the user exports the key in their own shell
   (`export NAME=...`, or `read -rs NAME && export NAME` to keep it out of
@@ -121,8 +133,9 @@ themselves:
 - **A connection lacks a needed key:** the user runs
   `kitaru connection update CONNECTION --set-secret ...` the same way. An update
   replaces the whole secret map, so the user passes every key the connection
-  should keep, not only the new one. Adding a judge key such as
-  `TYPESAFE_API_KEY` or `CLOUDFLARE_API_TOKEN` follows this flow.
+  should keep, not only the new one. Adding a key for a judge or a decision
+  candidate, such as `TYPESAFE_API_KEY` or `CLOUDFLARE_API_TOKEN`, follows this
+  flow.
 
 Confirm the connection lists the expected `secret_keys` without reading values.
 
@@ -134,23 +147,33 @@ tool-call parser needs `tool_call_format: "hermes"`; reasoning models may need
 
 1. Run the analyzer with `"dry_run": true`, render the report, and show the
    user: calls per candidate, estimated spend per candidate and in total, and
-   coverage (replayable versus skipped calls). The estimate excludes judge
-   spend; when a judge is set, say so and add its likely cost from the `price`
+   coverage (replayable versus skipped calls). The estimate covers LLM
+   candidates and decision candidates (each decision candidate's is at
+   `decision_candidates[].estimate`, with `calls` and `spend_usd`) but not the
+   judge; when a judge is set, say so and add its likely cost from the `price`
    in the parameters you passed, because the report does not carry it.
 2. If coverage shows `missing_tool_schema`, follow
    [references/tool-schemas.md](references/tool-schemas.md) before going on.
 3. Check each candidate's `price` in the dry-run report. A candidate with
    `price: null` (shown as "unknown price" in the rendered report) blocks a
-   capped run: the analyzer refuses `max_spend_usd` until every candidate, and
-   the judge if one is set, has a known price. Ask the user for that model's
-   input and output price per million tokens and set an explicit `price` on the
-   candidate, or drop it. Check the judge's `price` in the parameters, not the
-   report.
-4. Ask for approval of the spend and a cap. With a judge, leave headroom in
-   `max_spend_usd` above the dry-run estimate, because judge spend and time
-   count against `max_spend_usd` and `time_budget_seconds`. Run again without
-   `dry_run`, with `max_spend_usd`, an `--idempotency-key`, and
-   `--wait --timeout 900`.
+   capped run: the analyzer refuses `max_spend_usd` until every candidate,
+   every decision candidate, and the judge if one is set, has a known price.
+   Ask the user for that model's input and output price per million tokens and
+   set an explicit `price` on the candidate, or drop it. Decision models have
+   no bundled price, so every decision candidate and a decision judge need an
+   explicit `price` in the parameters whenever `max_spend_usd` is set; check
+   the judge's `price` in the parameters, not the report. When a candidate sets
+   `provider_settings.max_tokens`, each call reserves its full `max_tokens`
+   output against the cap, and the analyzer refuses to start if one call's
+   reservation alone exceeds `max_spend_usd`.
+4. Ask for approval of the spend and a cap. Decision candidates run first,
+   before the LLM candidates, and share the same `max_spend_usd` and
+   `time_budget_seconds`; the LLM candidates get what is left. A judge's spend
+   and time count against the same limits. With a judge or decision
+   candidates, leave headroom in `max_spend_usd` and `time_budget_seconds`, or
+   the last LLM candidates may not run (the report shows each candidate's
+   `calls_not_run`). Run again without `dry_run`, with `max_spend_usd`, an
+   `--idempotency-key`, and `--wait --timeout 900`.
 5. If the wait times out, the analysis keeps running on the worker. Take the
    `job_id` from the timeout error, follow it with `kitaru job watch JOB_ID` or
    check it with `kitaru job get JOB_ID`, and consider another run only after
@@ -184,15 +207,24 @@ Then report the decision-model fit, which every report includes at no extra
 cost: how many sampled calls, and what share of recorded cost, are
 **decision** calls (the model only chose a tool and enum or boolean values),
 **partial** calls (the tool choice is a decision, but free-form values or text
-need an LLM), or **generative**, with the main reasons. When decision calls or
-a large partial share exist, offer to try a decision model on them as a
-`decision_candidates` entry (Jev, Clef, or OpenAI Decisions; same `kind`,
-`base_url`, `model`, `api_key_env`, and `price` fields as a decision judge,
-plus a `name`), with the same dry-run and approval steps as any paid run.
-Report its tool-choice agreement, how often all its decisions matched,
-per-argument agreement, failures, and its cost per call next to the recorded
-model's. Explain that moving a partial call means changing the agent to decide
-with the decision model and generate the rest with an LLM.
+need an LLM), or **generative**, with the main reasons. Calls whose tool
+schemas were inferred count as generative, because an inferred schema is not
+trusted for decisions. When decision calls or a large partial share exist,
+offer to try a decision model on them as a `decision_candidates` entry (Jev,
+Clef, or OpenAI Decisions; same `kind`, `base_url`, `model`, `api_key_env`,
+and `price` fields as a decision judge, plus a `name`), after telling the user
+what it is sent (see step 2), with the same key setup, dry-run, price, and
+approval steps as any paid run. A run may hold only decision candidates, with
+`candidates` empty. Report its tool-choice agreement, how often all its
+decisions matched, per-argument agreement, failures, and `calls_not_run`. For
+savings, compare its `decision_call_cost_usd` with
+`recorded_decision_call_cost_usd`: both cover only the calls whose shape is
+**decision**, which a decision model could take over entirely. Do not set its
+`cost_per_call_usd` against the recorded model's full cost per call; that
+figure covers only the decision parts of every asked call, and a partial call
+still needs an LLM for the rest. Explain that moving a partial call means
+changing the agent to decide with the decision model and generate the rest
+with an LLM.
 
 ## 5. Judge the differences
 
@@ -265,6 +297,9 @@ End with a recommendation, not a decision, framed by the user's goals:
 
 - which calls or tools a decision model could take over, from the decision-model
   fit and any decision candidate results, and what the agent change would be;
+  state any savings as `decision_call_cost_usd` against
+  `recorded_decision_call_cost_usd` on fully decision-shaped calls, and say
+  that partial calls keep an LLM for their free-form parts;
 - the best candidate for each goal they named, with the evidence: verdict-backed
   quality and how many verdicts back it, cost per month, latency, openness, and
   replay results when available;
