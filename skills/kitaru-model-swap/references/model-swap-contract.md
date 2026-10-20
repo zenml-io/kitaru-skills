@@ -128,6 +128,7 @@ analysis at the start.
 | `use_recorded_tools` | `true` | Use definitions recorded on the call. |
 | `infer_missing_schemas` | `false` | Loose schemas from recorded arguments; reported separately. |
 | `sessions_per_month` | derived | Needed for monthly cost when the import spans less than a day. |
+| `decision_candidates` | `[]` | Up to 4 decision models answering the decision parts of each decision or partial call: `{"name": "jev", "kind": "jev", "price": {...}}`, same fields and defaults as a decision `judge` (without `equivalent_at`). `candidates` may be empty when these are given. |
 | `judge` | none | Rules on `same_tool_different_args` and `different_text` disagreements only, never on a different tool choice, and orders the review. A decision model: `{"kind": "jev"}` (TypeSafe, key `TYPESAFE_API_KEY`, default model `jev-latest`; may require early access), `{"kind": "clef", "base_url": "https://api.cloudflare.com/client/v4/accounts/ACCOUNT_ID/ai/run/@cf/cloudflare/clef", "api_key_env": "CLOUDFLARE_API_TOKEN"}` (no default key variable, so always pass `api_key_env`; model `clef` (default) or `clef-flash`), or `{"kind": "openai_decisions"}` (key `OPENAI_API_KEY`, default model `gpt-6-luna`). Clef and OpenAI Decisions require a model; an explicit `"model": null` is rejected. Optional `equivalent_at` (above 0.5, up to 1; default 0.8), `model`, `api_key_env`, `base_url`, `price`, `timeout_seconds`. When `base_url` is overridden, `api_key_env` must be given explicitly; no default key is sent to a custom URL. Or a candidate-shaped chat model without `kind`. Judge spend counts against `max_spend_usd` and its time against `time_budget_seconds`; the dry-run estimate leaves judge spend out. |
 | `concurrency` | `4` | Up to 32. |
 | `time_budget_seconds` | `600` | Up to 840; the task times out at 900 seconds. |
@@ -228,3 +229,18 @@ kitaru annotation list \
 - Recorded reasoning parts are not sent to candidates.
 - Native-adapter recordings carry no tool definitions; pass `tool_schemas`.
 - The analyzer needs network access from the worker to each endpoint.
+
+## Decision-model fit
+
+Every report carries `decision_shapes`: `calls`, `decision`, `partial`,
+`generative` counts, `recorded_cost_share` per shape, `reasons` (why calls are
+not fully decisions, such as `free-form arguments: order_id` or `several tool
+calls at once`), and `by_node`.
+
+Each entry of `decision_candidates` in the report has `name`, `kind`, `model`,
+`calls_asked`, `calls_not_run`, `answered`, `failures`, `tool_choice_rate`,
+`argument_rates` (per enum or boolean argument), `decisions_match_rate` (all
+decisions of a call matched), `decision_calls` and
+`decision_calls_match_rate`, `cost_per_call_usd`, `recorded_cost_per_call_usd`
+(on the same calls), and `latency_p50_seconds`. Dry runs carry `estimate`
+(`calls`, `spend_usd`) instead.

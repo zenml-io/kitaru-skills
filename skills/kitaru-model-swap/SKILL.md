@@ -180,6 +180,20 @@ what the user said matters, then summarize each candidate in plain words:
 Say plainly that these are similarities to today's model, and that the next step
 decides which answers are right.
 
+Then report the decision-model fit, which every report includes at no extra
+cost: how many sampled calls, and what share of recorded cost, are
+**decision** calls (the model only chose a tool and enum or boolean values),
+**partial** calls (the tool choice is a decision, but free-form values or text
+need an LLM), or **generative**, with the main reasons. When decision calls or
+a large partial share exist, offer to try a decision model on them as a
+`decision_candidates` entry (Jev, Clef, or OpenAI Decisions; same `kind`,
+`base_url`, `model`, `api_key_env`, and `price` fields as a decision judge,
+plus a `name`), with the same dry-run and approval steps as any paid run.
+Report its tool-choice agreement, how often all its decisions matched,
+per-argument agreement, failures, and its cost per call next to the recorded
+model's. Explain that moving a partial call means changing the agent to decide
+with the decision model and generate the rest with an LLM.
+
 ## 5. Judge the differences
 
 Review happens here in chat because the Kitaru dashboard has no view that
@@ -249,6 +263,8 @@ this; the agent version does.
 
 End with a recommendation, not a decision, framed by the user's goals:
 
+- which calls or tools a decision model could take over, from the decision-model
+  fit and any decision candidate results, and what the agent change would be;
 - the best candidate for each goal they named, with the evidence: verdict-backed
   quality and how many verdicts back it, cost per month, latency, openness, and
   replay results when available;
