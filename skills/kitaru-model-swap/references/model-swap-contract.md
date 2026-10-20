@@ -50,6 +50,13 @@ The analyzer's provider is `model-swap`, so a default connection for that provid
       "reference": true
     },
     {
+      "name": "qwen3-32b",
+      "base_url": "https://openrouter.ai/api/v1",
+      "model": "qwen/qwen3-32b",
+      "api_key_env": "OPENROUTER_API_KEY",
+      "open_weights": true
+    },
+    {
       "name": "qwen3-local",
       "base_url": "http://localhost:11434/v1",
       "model": "qwen3:8b",
@@ -76,13 +83,15 @@ The analyzer's provider is `model-swap`, so a default connection for that provid
 | `time_budget_seconds` | `600` | Up to 840; the task times out at 900 seconds. |
 | `max_disagreements` | `200` | Kept in the report. |
 
-Candidate fields: `name`, `base_url`, `model`, `api_key_env` (a variable name, never a key), `reference`, `price` (`input_per_mtok`, `output_per_mtok`, optional `cached_input_per_mtok`, USD strings), `price_provider` (for example `openai`, for the bundled price lookup), `provider_settings`.
+Candidate fields: `name`, `base_url`, `model`, `api_key_env` (a variable name, never a key), `reference` (today's model), `open_weights` (true for open-weight models), `price` (`input_per_mtok`, `output_per_mtok`, optional `cached_input_per_mtok`, USD strings), `price_provider` (for example `openai`, for the bundled price lookup), `provider_settings`.
 
 `provider_settings`: `tool_call_format` (`native`, `hermes`, `json_content`), `reasoning_effort`, `max_tokens`, `max_tokens_field` (`max_completion_tokens` or `max_tokens`), `temperature`, `extra_body`, `timeout_seconds` (default 120), `max_retries` (default 1).
 
 ## Report fields
 
-Per candidate: `agreement` (counts per category), `agreement_rate` (exact), `tool_choice_rate`, `judged_equivalent`, `failures`, `failure_examples` (one detail per category, such as `HTTP 404`) and `failure_rate`, `by_tool` (agreement and per-argument agreement), `latency_seconds`, `tokens_per_call`, `retries`, `cost` (`per_call_usd`, `per_session_usd`, `per_month_usd`), `calls_not_run`, `recommendation`. Dry runs carry `estimate` instead.
+Run-level: `best_for`, a list of `{goal, candidate, why}` for "Closest to today", "Cheapest", "Fastest" and "Best open model" (cheapest and fastest only among candidates within 10 points of the closest match; candidates failing over 20% of calls are excluded).
+
+Per candidate: `open_weights`, `summary`, `answered`, `agreement` (counts per category), `agreement_rate` (exact), `tool_choice_rate`, `judged_equivalent`, `failures`, `failure_examples` (one detail per category, such as `HTTP 404`) and `failure_rate`, `by_tool` (agreement and per-argument agreement), `latency_seconds`, `tokens_per_call`, `retries`, `cost` (`per_call_usd`, `per_session_usd`, `per_month_usd`), `calls_not_run`. Dry runs carry `estimate` instead.
 
 Agreement categories: `same_tool_same_args`, `same_tool_different_args`, `different_tool`, `text_instead_of_tool`, `same_text`, `different_text`, `tool_instead_of_text`.
 

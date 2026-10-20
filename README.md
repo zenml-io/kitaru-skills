@@ -1,7 +1,9 @@
 # Kitaru Agent Skills
 
 This repository contains agent skills for experiencing, connecting, and using
-[Kitaru](https://kitaru.ai). They support a value-first tour of the public
+[Kitaru](https://kitaru.ai). The main path, `kitaru-model-swap`, helps you
+choose the right model for your agent from its own traces: better, cheaper,
+faster, or open. The other skills support a value-first tour of the public
 returns agent example, custom adapter and importer development, evidence-led
 investigations, durable annotations, versioned cohorts, evaluator selection,
 evaluator validation, and bounded replay experiments.
@@ -26,12 +28,12 @@ improvement, and compare the result.
 
 | Skill | Purpose |
 |---|---|
+| [`kitaru-model-swap`](skills/kitaru-model-swap/SKILL.md) | **Start here.** Choose the right model for an agent from its own traces (better, cheaper, faster, or open): compare candidates with the `kitaru/model-swap` analyzer after an approved dry run, judge the differences with the user, score quality from those verdicts, and hand finalists to a replay experiment when the agent supports it. |
 | [`kitaru-hosted-onboarding-tour`](skills/kitaru-hosted-onboarding-tour/SKILL.md) | Guide the controlled ZenML Pro onboarding runner through a concise, resume-safe tour that reuses exact durable state and handles pre-existing agent names without overwriting them. |
 | [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | Give a first-time user a prepared three-session frontend review of the PydanticAI returns agent example, collect human verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. |
 | [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Act as Kitaru's front door: verify setup, record sessions or import files or provider API traces, follow up on insight cards, guide human review, define one accepted behavior and cohort, select an evaluator, and offer a bounded replay experiment. |
 | [`kitaru-validate-evaluator`](skills/kitaru-validate-evaluator/SKILL.md) | Check a judge against criterion-specific human verdicts, inspect disagreements with visual summaries, and assess untouched cases without confusing abstentions or errors with quality. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
-| [`kitaru-model-swap`](skills/kitaru-model-swap/SKILL.md) | Find out what changes and what it would cost if an agent's model calls move to an open, local, or cheaper model: import recent traces, send each recorded model call to candidates with the `kitaru/model-swap` analyzer after an approved dry run, render the HTML report, review disagreements with the user as node annotations, and recommend which calls can move without applying the change. |
 | [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with optional API fetching, conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
 | [`kitaru-adapter-builder`](skills/kitaru-adapter-builder/SKILL.md) | Select a supported provider-backed adapter or build a project-local Python or TypeScript adapter for an unsupported agent framework, with explicit recording and replay boundaries, partial-trace handling, side-effect controls, and separately approved upstream contribution. |
 
