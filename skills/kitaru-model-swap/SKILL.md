@@ -74,6 +74,16 @@ Ask one question: what matters most for this agent right now: better answers,
 lower cost, faster replies, or not being locked to one provider? Several answers
 are fine. Use it to pick candidates and to lead the summary later.
 
+Then ask whether any provenance rules apply, for example no models from labs in
+certain countries, or hosting only in a given region. Record each candidate's
+`origin` (`lab`, `lab_country`, `host`, `host_region`) as far as the user or the
+provider's documentation states it, and pass the rules as `excluded_origins`.
+Excluded candidates are still compared but never recommended; say so, and never
+guess an origin the user has not confirmed.
+
+When the steps are hard or answers vary, suggest `repeats` of 2 or 3 to read
+run-to-run noise, and say it multiplies calls and spend.
+
 Suggest a small set, one line each, covering those goals:
 
 - the model the agent uses today, as the `reference`;
@@ -301,8 +311,15 @@ End with a recommendation, not a decision, framed by the user's goals:
   `recorded_decision_call_cost_usd` on fully decision-shaped calls, and say
   that partial calls keep an LLM for their free-form parts;
 - the best candidate for each goal they named, with the evidence: verdict-backed
-  quality and how many verdicts back it, cost per month, latency, openness, and
-  replay results when available;
+  quality and how many verdicts back it, cost per month, latency, openness,
+  origin, and replay results when available; never recommend an excluded
+  candidate;
+- the report's **Best mix** when it moves some kinds of call: which kinds go to
+  which candidate and which stay on today's model, with the combined cost, and
+  the agent change needed to route by step;
+- that costs per session and month assume the recorded number of steps: point
+  to tokens per call, and say a full replay is needed to know cost per task for
+  a model that may take more turns or retries;
 - calls or tools where today's model should stay, and why;
 - what still needs a check: few reviewed disagreements, many failures, inferred
   schemas, reasoning-heavy steps.

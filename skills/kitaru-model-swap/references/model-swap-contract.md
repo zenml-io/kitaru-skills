@@ -144,8 +144,10 @@ A missing judge key fails the whole analysis at the start.
 | `concurrency` | `4` | Up to 32. |
 | `time_budget_seconds` | `600` | Up to 840; the task times out at 900 seconds. Shared by decision candidates (first), LLM candidates, and the judge. |
 | `max_disagreements` | `200` | Kept in the report. |
+| `repeats` | `1` | 1 to 5 attempts per call per candidate; agreement, judge and disagreements use the first; per-candidate `consistency` gives `any_match_rate` and `all_match_rate`. Multiplies calls and spend. |
+| `excluded_origins` | `{}` | Map of `lab`, `lab_country`, `host`, `host_region` to disallowed values (case-insensitive), e.g. `{"lab_country": ["CN"]}`. Excluded candidates are compared but never recommended. |
 
-Candidate fields: `name`, `base_url`, `model`, `api_key_env` (a variable name,
+Candidate fields: `name`, `base_url`, `model`, `origin` (`lab`, `lab_country`, `host`, `host_region`; declared, not verified), `api_key_env` (a variable name,
 never a key), `reference` (today's model), `open_weights` (true for open-weight
 models), `price` (`input_per_mtok`, `output_per_mtok`, optional
 `cached_input_per_mtok`, USD strings), `price_provider` (for example `openai`,
@@ -273,3 +275,18 @@ For savings, compare `decision_call_cost_usd` with
 model entirely only on decision-shaped calls. `cost_per_call_usd` covers just
 the decision parts of partial calls, which still need an LLM for the rest, so
 never compare it with a full recorded cost per call.
+
+## Best mix and cost per task
+
+Run-level `best_mix` (null in dry runs or when no kind of call can move) has
+`groups`, each with `group` (the recorded tool, or `text answer`), `share` of
+sampled calls, `candidate` (null means today's model), `rate`, and
+`cost_per_call_usd`, plus `cost` and `recorded_cost` projections. A group moves
+only to a non-excluded, non-reference candidate whose tool choice (or answer
+agreement for text) there is within 10 points of the reference's, and that is
+cheaper than today. `best_for` then includes a "Best mix" row.
+
+Per candidate, `excluded`, `origin`, `consistency` (null unless `repeats` > 1)
+and `tokens_per_call` (input, cached input, output, reasoning) are reported.
+The `notes` always say per-session and monthly costs assume the recorded number
+of steps; cost per task needs a full replay.
