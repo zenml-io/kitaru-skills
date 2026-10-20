@@ -7,7 +7,7 @@ for contributor scope, validation, accuracy, distribution, and release rules.
 
 Claude Code exposes the skills as `/kitaru-hosted-onboarding-tour`,
 `/kitaru-guided-tour`, `/kitaru-investigation`, `/kitaru-validate-evaluator`,
-`/kitaru-replay-experiment`,
+`/kitaru-replay-experiment`, `/kitaru-model-swap`,
 `/kitaru-importer-builder`, and `/kitaru-adapter-builder`, and may also select
 them automatically from their frontmatter descriptions.
 

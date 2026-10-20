@@ -31,6 +31,7 @@ improvement, and compare the result.
 | [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Act as Kitaru's front door: verify setup, record sessions or import files or provider API traces, follow up on insight cards, guide human review, define one accepted behavior and cohort, select an evaluator, and offer a bounded replay experiment. |
 | [`kitaru-validate-evaluator`](skills/kitaru-validate-evaluator/SKILL.md) | Check a judge against criterion-specific human verdicts, inspect disagreements with visual summaries, and assess untouched cases without confusing abstentions or errors with quality. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
+| [`kitaru-model-swap`](skills/kitaru-model-swap/SKILL.md) | Find out what changes and what it would cost if an agent's model calls move to an open, local, or cheaper model: import recent traces, send each recorded model call to candidates with the `kitaru/model-swap` analyzer after an approved dry run, render the HTML report, review disagreements with the user as node annotations, and recommend which calls can move without applying the change. |
 | [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with optional API fetching, conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
 | [`kitaru-adapter-builder`](skills/kitaru-adapter-builder/SKILL.md) | Select a supported provider-backed adapter or build a project-local Python or TypeScript adapter for an unsupported agent framework, with explicit recording and replay boundaries, partial-trace handling, side-effect controls, and separately approved upstream contribution. |
 
@@ -163,7 +164,7 @@ as a plugin:
 
 You can then invoke
 `/kitaru-hosted-onboarding-tour`, `/kitaru-guided-tour`,
-`/kitaru-investigation`, `/kitaru-validate-evaluator`, `/kitaru-replay-experiment`,
+`/kitaru-investigation`, `/kitaru-validate-evaluator`, `/kitaru-replay-experiment`, `/kitaru-model-swap`,
 `/kitaru-importer-builder`, or `/kitaru-adapter-builder` explicitly.
 
 ### Manual installation

@@ -33,6 +33,7 @@
     "evaluators",
     "replay-experiments",
     "mcp",
-    "evaluator-validation"
+    "evaluator-validation",
+    "model-comparison"
   ]
 }
