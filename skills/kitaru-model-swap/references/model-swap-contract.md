@@ -122,7 +122,7 @@ kitaru connection update model-swap-keys \
 | `use_recorded_tools` | `true` | Use definitions recorded on the call. |
 | `infer_missing_schemas` | `false` | Loose schemas from recorded arguments; reported separately. |
 | `sessions_per_month` | derived | Needed for monthly cost when the import spans less than a day. |
-| `judge` | none | Candidate-shaped model ruling on argument or text differences. |
+| `judge` | none | Rules whether differing answers are equivalent and orders the review. A decision model: `{"kind": "jev"}` (TypeSafe, key `TYPESAFE_API_KEY`), `{"kind": "clef", "base_url": "https://api.cloudflare.com/client/v4/accounts/ACCOUNT_ID/ai/run/@cf/cloudflare/clef"}` (key `CLOUDFLARE_API_TOKEN`, model `clef` or `clef-flash`), or `{"kind": "openai_decisions"}` (key `OPENAI_API_KEY`, model `gpt-6-luna`); optional `equivalent_at` (default 0.8), `model`, `api_key_env`, `price`, `timeout_seconds`. Or a candidate-shaped chat model without `kind`. |
 | `concurrency` | `4` | Up to 32. |
 | `time_budget_seconds` | `600` | Up to 840; the task times out at 900 seconds. |
 | `max_disagreements` | `200` | Kept in the report. |
@@ -150,7 +150,8 @@ known; the rendered dry run then shows "unknown price"), `open_weights`,
 `summary`, `calls_sent` (calls sent to the candidate, including failures),
 `answered` (calls with a comparable reply, excluding calls with inferred tool
 schemas), `agreement` (counts per category over `answered`), `agreement_rate`
-(exact), `tool_choice_rate`, `judged_equivalent`, `failures`, `failure_examples`
+(exact), `tool_choice_rate`, `judged_equivalent`, `judged_different`,
+`judged_unsure`, `failures`, `failure_examples`
 (one detail per category, such as `HTTP 404`) and `failure_rate`, `by_tool`
 (agreement and per-argument agreement), `latency_seconds`, `tokens_per_call`,
 `retries`, `cost` (`per_call_usd`, `per_session_usd`, `per_month_usd`),
@@ -167,7 +168,10 @@ Coverage: `llm_calls_seen`, `replayable`, `replayable_inferred`, `sampled`,
 
 Each disagreement: `candidate`, `session_id`, `node_id`, `node_name`, `group`,
 `agreement`, `schema_source` (`recorded`, `supplied`, `inferred`, or `none`),
-`recorded`, `candidate_answer` (both truncated excerpts), `judge_equivalent`.
+`recorded`, `candidate_answer` (both truncated excerpts), `judge_equivalent`
+(true, false, or null when unsure or not judged), `judge_probability` (decision
+judges only). Within each group, disagreements the judge found different come
+first, then unsure, then equivalent.
 The list includes calls with inferred schemas, which `answered` and `agreement`
 leave out.
 

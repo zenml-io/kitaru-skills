@@ -93,6 +93,17 @@ fields. Estimate the review load before the paid run (roughly the sampled calls
 per candidate times the share of such calls) and tell the user that 10 to 20
 reviewed disagreements per finalist give an early read.
 
+When the review load is large, offer a decision-model judge to order it: TypeSafe
+Jev (`"judge": {"kind": "jev"}`), Cloudflare Clef on Workers AI (`"kind":
+"clef"` with the account's run URL), or OpenAI's Decisions API (`"kind":
+"openai_decisions"`). It rules whether each candidate answer is equivalent to
+the recorded one and returns a probability, so review can start with the
+answers most likely to differ. Explain that it is fast and cheap but can be
+swayed by text inside a recorded answer, that its key goes into the same
+connection as the candidates' keys, and that its ruling only orders the review;
+the user's verdicts still decide quality. A judge needs a `price` when
+`max_spend_usd` is set.
+
 For each paid candidate, find which environment variable will hold its key. Then
 set up keys with the commands in the contract reference, which the user runs
 themselves:
@@ -164,7 +175,10 @@ conversation.
 
 Walk through the disagreements in small batches of three to five, grouped by
 what the recorded model did, starting with the candidates the user is most
-interested in. Skip disagreements whose `schema_source` is `inferred`. For each,
+interested in. When a judge ran, the report already orders each group by its
+ruling: answers it found different come first, then unsure ones, then likely
+equivalent ones. Follow that order, and say before the first batch that the
+likely equivalent ones can be reviewed last or skipped if the user agrees. Skip disagreements whose `schema_source` is `inferred`. For each,
 show both answers in one or two lines and ask: "Today's model did X; this
 candidate did Y. Which is right?" Offer: recorded correct, candidate correct,
 both acceptable, both wrong, unsure.
@@ -172,8 +186,9 @@ both acceptable, both wrong, unsure.
 Store only the user's exact choice, with the command in the contract reference,
 including the run's insight `id` and the candidate's `model`. Never store your
 own opinion as a verdict. Never turn a disagreement's `judge_equivalent` into a
-verdict or a preselected answer; mention it at most as a hint the user is free
-to ignore.
+verdict or a preselected answer, and never skip a disagreement on the judge's
+ruling alone; show its `judge_probability` at most as a hint the user is free to
+ignore.
 
 Stop when the user wants to; then compute and show the verdict-backed quality
 per candidate following
