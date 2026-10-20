@@ -1,4 +1,4 @@
 interface:
   display_name: "Kitaru Model Swap"
-  short_description: "See what changes if your agent switches models"
-  default_prompt: "Use $kitaru-model-swap to find out what changes and what it would cost if my agent's model calls moved to another model."
+  short_description: "Choose the right model for your agent from its own traces"
+  default_prompt: "Use $kitaru-model-swap to help me choose the right model for my agent from its recorded traces: better, cheaper, faster, or open."

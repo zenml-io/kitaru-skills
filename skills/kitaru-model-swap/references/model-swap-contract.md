@@ -1,21 +1,43 @@
 # Model-swap contract
 
-Exact commands, parameters, and outputs for the `kitaru/model-swap` analyzer. Verify against `kitaru schema` and `kitaru analyzer list` when the installed version differs.
+Exact commands, parameters, and outputs for the `kitaru/model-swap` analyzer.
+Verify against `kitaru schema` and `kitaru analyzer list` when the installed
+version differs.
 
 ## Commands
 
-Prefix every command with `KITARU_ACTIVE_SKILL=kitaru-model-swap` and add `--output json --machine --non-interactive --no-browser`.
+Prefix every command with `KITARU_ACTIVE_SKILL=kitaru-model-swap` and add
+`--output json --machine --non-interactive --no-browser`.
 
-Run on an existing import:
+Run on an existing import. A dry run finishes quickly; for the paid run, wait up
+to 900 seconds (the default local wait is 300) and pass an idempotency key, such
+as `model-swap-IMPORT_ID-1`, that is new for each approved run:
 
 ```bash
 kitaru import analyze IMPORT_ID \
   --analyzer kitaru/model-swap@latest \
   --analyzer-params 'kitaru/model-swap@latest=PARAMS_JSON' \
-  --wait
+  --idempotency-key IDEMPOTENCY_KEY \
+  --wait --timeout 900
 ```
 
-Or select it on a new import with `kitaru session import ... --analyzer kitaru/model-swap@latest --analyzer-params 'kitaru/model-swap@latest=PARAMS_JSON'`.
+A finished run returns a receipt with the settled `job` and its `tasks`. When
+the local wait expires first, the command fails with error kind `timeout` and
+`details.job_id`, `details.remote_continues: true`: the analysis is still
+running on the worker. That is not a failure. Follow the job instead of
+rerunning:
+
+```bash
+kitaru job watch JOB_ID --timeout 900
+kitaru job get JOB_ID
+```
+
+Repeating the exact same `import analyze` command with the same idempotency key
+returns the original job rather than starting, and paying for, a second
+analysis. Use a new key only for a run the user has approved separately.
+
+To run it as part of a new import instead, select it with
+`kitaru session import ... --analyzer kitaru/model-swap@latest --analyzer-params 'kitaru/model-swap@latest=PARAMS_JSON'`.
 
 Render the report (no model call):
 
@@ -23,16 +45,38 @@ Render the report (no model call):
 kitaru insight report --import-id IMPORT_ID --out model-swap-report.html
 ```
 
-The report renders the most recent model-swap run of the import; session links use the dashboard URL the server reported when the analysis ran. The full structured report is in the `metadata["kitaru.model_swap/v1"]` field of the `model-swap-summary` insight, next to the rendered section under `kitaru.report_section/v1`: `kitaru insight list --filter '{"field":"import_id","op":"eq","value":"IMPORT_ID"}' --name model-swap-summary`.
+The report renders the most recent model-swap run of the import; session links
+use the dashboard URL the server reported when the analysis ran. The full
+structured report is in the `metadata["kitaru.model_swap/v1"]` field of the
+`model-swap-summary` insight, next to the rendered section under
+`kitaru.report_section/v1`:
+`kitaru insight list --filter '{"field":"import_id","op":"eq","value":"IMPORT_ID"}' --name model-swap-summary`.
 
-Keys, created by the user:
+Keys, set by the user in their own shell. The user exports each key first, so
+the Kitaru command carries only a variable reference. `read -rs` keeps the key
+off the screen and out of shell history; a plain `export NAME=...` also works
+but is recorded in history unless the shell is set to skip it:
 
 ```bash
+# Run by the user, never by the agent; paste the key when prompted.
+read -rs OPENROUTER_API_KEY && export OPENROUTER_API_KEY
 kitaru connection create model-swap-keys --provider model-swap \
-  --set-secret OPENROUTER_API_KEY=... --default
+  --set-secret OPENROUTER_API_KEY="$OPENROUTER_API_KEY" --default
 ```
 
-The analyzer's provider is `model-swap`, so a default connection for that provider is injected into its task. `kitaru connection get model-swap-keys` lists `secret_keys` without values.
+The analyzer's provider is `model-swap`, so a default connection for that
+provider is injected into its task. `kitaru connection get model-swap-keys`
+lists `secret_keys` without values.
+
+When an existing connection lacks a key a candidate needs, the user adds it with
+`update`. An update replaces the whole secret map, so pass every key the
+connection should keep, each from an exported variable:
+
+```bash
+kitaru connection update model-swap-keys \
+  --set-secret OPENAI_API_KEY="$OPENAI_API_KEY" \
+  --set-secret OPENROUTER_API_KEY="$OPENROUTER_API_KEY"
+```
 
 ## Parameters
 
@@ -71,7 +115,7 @@ The analyzer's provider is `model-swap`, so a default connection for that provid
 |---|---|---|
 | `candidates` | required | 1 to 8. Unique `name`. At most one `reference`. |
 | `dry_run` | `false` | Estimates only. |
-| `max_spend_usd` | none | Requires a known price for every candidate and the judge. |
+| `max_spend_usd` | none | Requires a known price for every candidate and the judge; the analyzer refuses the run otherwise. |
 | `max_calls` | `100` | Sample spread across node names and models. |
 | `tool_schemas` | `{}` | Tool name to parameters JSON schema. |
 | `tool_descriptions` | `{}` | Tool name to description. |
@@ -83,23 +127,58 @@ The analyzer's provider is `model-swap`, so a default connection for that provid
 | `time_budget_seconds` | `600` | Up to 840; the task times out at 900 seconds. |
 | `max_disagreements` | `200` | Kept in the report. |
 
-Candidate fields: `name`, `base_url`, `model`, `api_key_env` (a variable name, never a key), `reference` (today's model), `open_weights` (true for open-weight models), `price` (`input_per_mtok`, `output_per_mtok`, optional `cached_input_per_mtok`, USD strings), `price_provider` (for example `openai`, for the bundled price lookup), `provider_settings`.
+Candidate fields: `name`, `base_url`, `model`, `api_key_env` (a variable name,
+never a key), `reference` (today's model), `open_weights` (true for open-weight
+models), `price` (`input_per_mtok`, `output_per_mtok`, optional
+`cached_input_per_mtok`, USD strings), `price_provider` (for example `openai`,
+for the bundled price lookup), `provider_settings`.
 
-`provider_settings`: `tool_call_format` (`native`, `hermes`, `json_content`), `reasoning_effort`, `max_tokens`, `max_tokens_field` (`max_completion_tokens` or `max_tokens`), `temperature`, `extra_body`, `timeout_seconds` (default 120), `max_retries` (default 1).
+`provider_settings`: `tool_call_format` (`native`, `hermes`, `json_content`),
+`reasoning_effort`, `max_tokens`, `max_tokens_field` (`max_completion_tokens` or
+`max_tokens`), `temperature`, `extra_body`, `timeout_seconds` (default 120),
+`max_retries` (default 1).
 
 ## Report fields
 
-Run-level: `best_for`, a list of `{goal, candidate, why}` for "Closest to today", "Cheapest", "Fastest" and "Best open model" (cheapest and fastest only among candidates within 10 points of the closest match; candidates failing over 20% of calls are excluded).
+Run-level: `best_for`, a list of `{goal, candidate, why}` for "Closest to
+today", "Cheapest", "Fastest" and "Best open model" (cheapest and fastest only
+among candidates within 10 points of the closest match; candidates failing over
+20% of calls are excluded).
 
-Per candidate: `open_weights`, `summary`, `answered`, `agreement` (counts per category), `agreement_rate` (exact), `tool_choice_rate`, `judged_equivalent`, `failures`, `failure_examples` (one detail per category, such as `HTTP 404`) and `failure_rate`, `by_tool` (agreement and per-argument agreement), `latency_seconds`, `tokens_per_call`, `retries`, `cost` (`per_call_usd`, `per_session_usd`, `per_month_usd`), `calls_not_run`. Dry runs carry `estimate` instead.
+Per candidate: `name`, `model`, `reference`, `price` (null when no price is
+known; the rendered dry run then shows "unknown price"), `open_weights`,
+`summary`, `calls_sent` (calls sent to the candidate, including failures),
+`answered` (calls with a comparable reply, excluding calls with inferred tool
+schemas), `agreement` (counts per category over `answered`), `agreement_rate`
+(exact), `tool_choice_rate`, `judged_equivalent`, `failures`, `failure_examples`
+(one detail per category, such as `HTTP 404`) and `failure_rate`, `by_tool`
+(agreement and per-argument agreement), `latency_seconds`, `tokens_per_call`,
+`retries`, `cost` (`per_call_usd`, `per_session_usd`, `per_month_usd`),
+`calls_not_run`. Dry runs carry `estimate` instead.
 
-Agreement categories: `same_tool_same_args`, `same_tool_different_args`, `different_tool`, `text_instead_of_tool`, `same_text`, `different_text`, `tool_instead_of_text`.
+Agreement categories: `same_tool_same_args`, `same_tool_different_args`,
+`different_tool`, `text_instead_of_tool`, `same_text`, `different_text`,
+`tool_instead_of_text`.
 
-Coverage: `llm_calls_seen`, `replayable`, `replayable_inferred`, `sampled`, `skipped` by reason (`missing_tool_schema`, `unsupported_input_format`, `non_text_content`, `unrecognized_recorded_output`, `failed_recorded_call`, `missing_inputs`), `schema_sources`, `calls_with_dropped_reasoning`.
+Coverage: `llm_calls_seen`, `replayable`, `replayable_inferred`, `sampled`,
+`skipped` by reason (`missing_tool_schema`, `unsupported_input_format`,
+`non_text_content`, `unrecognized_recorded_output`, `failed_recorded_call`,
+`missing_inputs`), `schema_sources`, `calls_with_dropped_reasoning`.
 
-Each disagreement: `candidate`, `session_id`, `node_id`, `node_name`, `group`, `agreement`, `recorded`, `candidate_answer`, `judge_equivalent`.
+Each disagreement: `candidate`, `session_id`, `node_id`, `node_name`, `group`,
+`agreement`, `schema_source` (`recorded`, `supplied`, `inferred`, or `none`),
+`recorded`, `candidate_answer` (both truncated excerpts), `judge_equivalent`.
+The list includes calls with inferred schemas, which `answered` and `agreement`
+leave out.
 
-Run-level: `stopped_early` (`max_spend`, `time_budget`, or null), `spent_usd`, `notes`.
+Run-level: `disagreements` (at most `max_disagreements` entries),
+`disagreements_total` (all disagreements across candidates before truncation,
+including inferred-schema calls), `stopped_early` (`max_spend`, `time_budget`,
+or null), `spent_usd`, `notes`.
+
+The run identity is the `id` of the `model-swap-summary` insight that carries
+the report. Dry runs also write one, so for review use the newest summary whose
+report has `dry_run: false`, and record its `id` with every verdict.
 
 ## Recording a review verdict
 
@@ -109,14 +188,30 @@ Annotate the disagreeing node:
 kitaru annotation create \
   --session SESSION_ID \
   --selector '{"node_id": "NODE_ID"}' \
-  --value '{"model_swap": {"candidate": "qwen3-local", "verdict": "candidate_correct", "note": "Both refunds are valid; the candidate asked for the order first."}}'
+  --value '{"model_swap": {"run": "INSIGHT_ID", "candidate": "qwen3-local", "model": "qwen3:8b", "verdict": "candidate_correct", "note": "Both refunds are valid; the candidate asked for the order first."}}'
 ```
 
-`verdict` is one of `recorded_correct`, `candidate_correct`, `both_acceptable`, `both_wrong`, `unsure`. Keep `note` to the user's own words. List them later with `kitaru annotation list --session SESSION_ID`.
+`run` is the `model-swap-summary` insight `id` and `model` is the candidate's
+`model` from the report, so a verdict from an earlier run, or for a candidate
+name later reused with another model, is never matched to the wrong answer.
+`verdict` is the user's exact choice: one of `recorded_correct`,
+`candidate_correct`, `both_acceptable`, `both_wrong`, `unsure`. Keep `note` to
+the user's own words.
+
+List a session's annotations later (up to 1000 per page; follow `--cursor` when
+more remain):
+
+```bash
+kitaru annotation list \
+  --filter '{"field":"session_id","op":"eq","value":"SESSION_ID"}' \
+  --size 1000
+```
 
 ## Limits
 
-- Supported message shapes: OTel GenAI parts and OpenAI chat messages. Anthropic-format and LangChain-serialized messages, images, failed calls, and calls without inputs are skipped and counted.
+- Supported message shapes: OTel GenAI parts and OpenAI chat messages.
+  Anthropic-format and LangChain-serialized messages, images, failed calls, and
+  calls without inputs are skipped and counted.
 - Recorded reasoning parts are not sent to candidates.
 - Native-adapter recordings carry no tool definitions; pass `tool_schemas`.
 - The analyzer needs network access from the worker to each endpoint.

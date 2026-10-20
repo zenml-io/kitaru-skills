@@ -52,6 +52,7 @@ cp -R skills/kitaru-adapter-builder .claude/skills/
 cp -R skills/kitaru-investigation .claude/skills/
 cp -R skills/kitaru-validate-evaluator .claude/skills/
 cp -R skills/kitaru-replay-experiment .claude/skills/
+cp -R skills/kitaru-model-swap .claude/skills/
 ```
 
 For marketplace testing:

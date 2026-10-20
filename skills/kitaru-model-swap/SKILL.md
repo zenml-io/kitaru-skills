@@ -5,91 +5,225 @@ description: Help a user choose the right model for their agent from its own rec
 
 # Kitaru model swap
 
-Help the user choose the right model for their agent: better, cheaper, faster, or open. Kitaru sends each recorded model call, exactly as it was recorded, to candidate models and compares their answers. It does not re-run the agent, and it runs on the user's worker with the user's keys. The user's own verdicts on the differences decide quality; a replay experiment confirms the finalists end to end.
+Help the user choose the right model for their agent: better, cheaper, faster,
+or open. Kitaru sends each recorded model call, exactly as it was recorded, to
+candidate models and compares their answers. It does not re-run the agent, and
+it runs on the user's worker with the user's keys. The user's own verdicts on
+the differences decide quality; a replay experiment confirms the finalists end
+to end.
 
 Recommend; do not decide. Never change the agent's configuration yourself.
 
 ## Core contract
 
-- Run every Kitaru CLI command with `KITARU_ACTIVE_SKILL=kitaru-model-swap` set, and prefer `--output json --machine --non-interactive --no-browser`.
-- Never ask for, read, echo, or store an API key in chat, files, parameters, or command lines you show. Keys go into a Kitaru provider connection through a command the user runs themselves, or into the worker's environment. Candidates only name the variable.
-- Always run a dry run first and get explicit approval of the estimated spend before a run that calls paid endpoints. Always pass `max_spend_usd` on a paid run.
-- Include the model the agent uses today as the `reference` candidate. It is compared like the others, and its agreement with its own recording is the noise floor.
-- Agreement means "behaves like today's model", not "is right". Never present agreement as quality on its own; quality comes from the user's verdicts.
-- Report provider failures (timeouts, rate limits, HTTP errors, empty replies, tool-call parse errors, refusals) as setup problems, never as model quality.
-- Keep inferred tool schemas out of conclusions; say how many calls used them.
-- Use Kitaru product terms: agent, session, node, import, analyzer, insight, connection, worker, annotation, cohort, evaluator, replay.
+- Run every Kitaru CLI command with `KITARU_ACTIVE_SKILL=kitaru-model-swap` set,
+  and prefer `--output json --machine --non-interactive --no-browser`.
+- Never ask for, read, echo, or store an API key in chat, files, parameters, or
+  command lines you show. The user exports the key in their own shell and passes
+  it to a Kitaru provider connection by variable reference, or sets it in the
+  worker's environment. Candidates only name the variable.
+- Always run a dry run first and get explicit approval of the estimated spend
+  before a run that calls paid endpoints. Always pass `max_spend_usd` on a paid
+  run.
+- A wait timeout is not a failure. Never start another paid analysis of the same
+  import without first checking whether the earlier job is still running or
+  already finished.
+- Include the model the agent uses today as the `reference` candidate. It is
+  compared and scored like every other candidate, and its agreement with its own
+  recording is the noise floor.
+- Agreement means "behaves like today's model", not "is right". Never present
+  agreement as quality on its own; quality comes from the user's verdicts.
+- Report provider failures (timeouts, rate limits, HTTP errors, empty replies,
+  tool-call parse errors, refusals) as setup problems, never as model quality.
+- Keep calls with inferred tool schemas out of conclusions; say how many calls
+  used them.
+- Use Kitaru product terms: agent, session, node, import, analyzer, insight,
+  connection, worker, annotation, cohort, evaluator, replay.
 
 ## Load references only when needed
 
-- Read [references/model-swap-contract.md](references/model-swap-contract.md) before running any Kitaru command in this skill: exact commands, analyzer parameters, report fields, and annotation shape.
-- Read [references/tool-schemas.md](references/tool-schemas.md) when the coverage shows `missing_tool_schema` skips, or before importing traces that are known to lack tool definitions.
-- Read [references/verdict-quality.md](references/verdict-quality.md) before step 5 and whenever you report quality.
+- Read [references/model-swap-contract.md](references/model-swap-contract.md)
+  before running any Kitaru command in this skill: exact commands, analyzer
+  parameters, report fields, and annotation shape.
+- Read [references/tool-schemas.md](references/tool-schemas.md) when the
+  coverage shows `missing_tool_schema` skips, or before importing traces that
+  are known to lack tool definitions.
+- Read [references/verdict-quality.md](references/verdict-quality.md) before
+  step 5 and whenever you report quality.
 
 ## 1. Set up and import
 
-1. Check `kitaru status`. If Kitaru is missing or not logged in, install it (`uv add "kitaru[cli,worker]"`) and log in: `kitaru login --local` for a local server, or `kitaru login` / `kitaru login SERVER` for a managed or team server. Ask which one the user wants when it is not obvious.
-2. Make sure a worker that claims analyzer tasks is running (`kitaru worker start --claim importer --claim analyzer --concurrency 10`). A local Ollama candidate needs the worker on the same machine as Ollama.
-3. Find or register the agent, then import a recent, bounded slice of traces: the last 7 days from the user's trace provider through its importer and connection, or a JSONL export file. Use the matching Kitaru import guide for the provider. Route unsupported sources to `kitaru-importer-builder`.
+1. Check `kitaru status`. If Kitaru is missing or not logged in, install it
+   (`uv add "kitaru[cli,worker]"`) and log in: `kitaru login --local` for a
+   local server, or `kitaru login` / `kitaru login SERVER` for a managed or team
+   server. Ask which one the user wants when it is not obvious.
+2. Make sure a worker that claims analyzer tasks is running
+   (`kitaru worker start --claim importer --claim analyzer --concurrency 10`). A
+   local Ollama candidate needs the worker on the same machine as Ollama.
+3. Find or register the agent, then import a recent, bounded slice of traces:
+   the last 7 days from the user's trace provider through its importer and
+   connection, or a JSONL export file. Use the matching Kitaru import guide for
+   the provider. Route unsupported sources to `kitaru-importer-builder`.
 4. Note the `import_id`.
 
 If the user already has an import, reuse it.
 
 ## 2. Ask what matters, then choose candidates
 
-Ask one question: what matters most for this agent right now: better answers, lower cost, faster replies, or not being locked to one provider? Several answers are fine. Use it to pick candidates and to lead the summary later.
+Ask one question: what matters most for this agent right now: better answers,
+lower cost, faster replies, or not being locked to one provider? Several answers
+are fine. Use it to pick candidates and to lead the summary later.
 
 Suggest a small set, one line each, covering those goals:
 
 - the model the agent uses today, as the `reference`;
 - one open-weight model on a hosted provider (`"open_weights": true`);
-- one local model if Ollama is installed (`ollama list` shows what is available; base URL `http://localhost:11434/v1`, price zero, `"open_weights": true`);
-- one cheaper tier and, when quality matters, one stronger model from the current provider.
+- one local model if Ollama is installed (`ollama list` shows what is available;
+  base URL `http://localhost:11434/v1`, price zero, `"open_weights": true`);
+- one cheaper tier and, when quality matters, one stronger model from the
+  current provider.
 
-For each paid candidate, find which environment variable will hold its key. If no connection exists, give the user the exact `kitaru connection create model-swap-keys --provider model-swap --set-secret NAME=... --default` command to run themselves, with placeholders instead of values. Then confirm the connection lists the expected `secret_keys` without reading values.
+Set expectations up front when the agent delivers its final answer as a
+free-text tool argument (for example a `final_result` or `reply` tool whose
+argument is the message to the user). No two models word an answer identically,
+so every candidate, including the reference, will show most of those calls as
+`same_tool_different_args`. Agreement says little there: quality rests on the
+user's reviewed verdicts and on per-argument agreement for the structured
+fields. Estimate the review load before the paid run (roughly the sampled calls
+per candidate times the share of such calls) and tell the user that 10 to 20
+reviewed disagreements per finalist give an early read.
 
-Ask about provider settings only when relevant: a model served without a tool-call parser needs `tool_call_format: "hermes"`; reasoning models may need `reasoning_effort`.
+For each paid candidate, find which environment variable will hold its key. Then
+set up keys with the commands in the contract reference, which the user runs
+themselves:
+
+- **No connection yet:** the user exports the key in their own shell
+  (`export NAME=...`, or `read -rs NAME && export NAME` to keep it out of
+  history), then runs
+  `kitaru connection create ... --set-secret NAME="$NAME" --default`, so the
+  key never appears literally in the Kitaru command line.
+- **A connection lacks a needed key:** the user runs
+  `kitaru connection update CONNECTION --set-secret ...` the same way. An update
+  replaces the whole secret map, so the user passes every key the connection
+  should keep, not only the new one.
+
+Confirm the connection lists the expected `secret_keys` without reading values.
+
+Ask about provider settings only when relevant: a model served without a
+tool-call parser needs `tool_call_format: "hermes"`; reasoning models may need
+`reasoning_effort`.
 
 ## 3. Estimate, approve, run
 
-1. Run the analyzer with `"dry_run": true`, render the report, and show the user: calls per candidate, estimated spend per candidate and in total, and coverage (replayable versus skipped calls).
-2. If coverage shows `missing_tool_schema`, follow [references/tool-schemas.md](references/tool-schemas.md) before going on.
-3. Ask for approval of the spend and a cap. Run again without `dry_run` and with `max_spend_usd`.
-4. If the run stopped early (`max_spend` or `time_budget`), say so and offer to rerun with a smaller `max_calls` or a higher cap.
+1. Run the analyzer with `"dry_run": true`, render the report, and show the
+   user: calls per candidate, estimated spend per candidate and in total, and
+   coverage (replayable versus skipped calls).
+2. If coverage shows `missing_tool_schema`, follow
+   [references/tool-schemas.md](references/tool-schemas.md) before going on.
+3. Check each candidate's `price` in the dry-run report. A candidate with
+   `price: null` (shown as "unknown price" in the rendered report) blocks a
+   capped run: the analyzer refuses `max_spend_usd` until every candidate, and
+   the judge if one is set, has a known price. Ask the user for that model's
+   input and output price per million tokens and set an explicit `price` on the
+   candidate, or drop it.
+4. Ask for approval of the spend and a cap. Run again without `dry_run`, with
+   `max_spend_usd`, an `--idempotency-key`, and `--wait --timeout 900`.
+5. If the wait times out, the analysis keeps running on the worker. Take the
+   `job_id` from the timeout error, follow it with `kitaru job watch JOB_ID` or
+   check it with `kitaru job get JOB_ID`, and consider another run only after
+   the job has settled. Repeating the same command with the same idempotency key
+   returns the original job instead of starting a new one.
+6. If the run stopped early (`max_spend` or `time_budget`), say so and offer to
+   rerun with a smaller `max_calls` or a higher cap.
 
 ## 4. Show the comparison
 
-Render `kitaru insight report --import-id IMPORT_ID --out model-swap-report.html` and give the user the path. Lead with the report's **Best for** rows, ordered by what the user said matters, then summarize each candidate in plain words:
+Render
+`kitaru insight report --import-id IMPORT_ID --out model-swap-report.html` and
+give the user the path. Lead with the report's **Best for** rows, ordered by
+what the user said matters, then summarize each candidate in plain words:
 
-- how often it picks the same tool or gives the same answer as today's model, read against today's model's own noise floor, and per-argument agreement on structured fields;
-- cost per call and per month, and why (price, tokens, reasoning tokens, retries);
+- how often it picks the same tool or gives the same answer as today's model,
+  read against today's model's own noise floor, and per-argument agreement on
+  structured fields;
+- cost per call and per month, and why (price, tokens, reasoning tokens,
+  retries);
 - median and tail latency;
 - whether it is open-weight;
 - failures by category and what to change in provider settings.
 
-Say plainly that these are similarities to today's model, and that the next step decides which answers are right.
+Say plainly that these are similarities to today's model, and that the next step
+decides which answers are right.
 
 ## 5. Judge the differences
 
-Walk through the disagreements in small batches of three to five, grouped by what the recorded model did, starting with the candidates the user is most interested in. For each, show both answers in one or two lines and ask: "Today's model did X; this candidate did Y. Which is right?" Offer: recorded correct, candidate correct, both acceptable, both wrong, unsure.
+Review happens here in chat because the Kitaru dashboard has no view that
+compares a candidate's answer with the recorded one. Each verdict is still
+stored in Kitaru as an annotation on the session node, so it outlives this
+conversation.
 
-Store each answer as an annotation on the node with the exact command in the contract reference. Stop when the user wants to; then compute and show the verdict-backed quality per candidate following [references/verdict-quality.md](references/verdict-quality.md), including how many disagreements were reviewed. A candidate that differs from today's model can score higher than it.
+Walk through the disagreements in small batches of three to five, grouped by
+what the recorded model did, starting with the candidates the user is most
+interested in. Skip disagreements whose `schema_source` is `inferred`. For each,
+show both answers in one or two lines and ask: "Today's model did X; this
+candidate did Y. Which is right?" Offer: recorded correct, candidate correct,
+both acceptable, both wrong, unsure.
+
+Store only the user's exact choice, with the command in the contract reference,
+including the run's insight `id` and the candidate's `model`. Never store your
+own opinion as a verdict. Never turn a disagreement's `judge_equivalent` into a
+verdict or a preselected answer; mention it at most as a hint the user is free
+to ignore.
+
+Stop when the user wants to; then compute and show the verdict-backed quality
+per candidate following
+[references/verdict-quality.md](references/verdict-quality.md), including how
+many disagreements were reviewed. A candidate that differs from today's model
+can score higher than it.
 
 ## 6. Prove the finalists
 
-Pick one or two finalists with the user from the verdict-backed quality and the goals from step 2.
+Pick one or two finalists with the user from the verdict-backed quality and the
+goals from step 2.
 
-Check whether the agent can replay with a model override: `kitaru agent version get AGENT@VERSION` and read `runtime_capabilities.overrides` in its run spec (it defaults to true when absent).
+Check whether the agent can replay with a model override: run
+`kitaru agent version get AGENT@VERSION`. Replay is possible only when the
+version's `run_spec` is not null and `run_spec.runtime_capabilities.overrides`
+is true. Whether the sessions were imported or recorded live does not decide
+this; the agent version does.
 
-- **Overrides supported** (the agent records through an adapter such as Pydantic AI or OpenAI Agents): create a cohort from the reviewed sessions (`kitaru cohort create NAME --agent AGENT --session SESSION ...`), and hand off to the `kitaru-replay-experiment` skill with the cohort version, the finalist as the model override, and the user's verdicts as the accepted behavior for choosing or authoring an evaluator. That skill owns the tool policy, approval, and interpretation.
-- **Overrides not supported** (imported, importer-backed agents): say that a full replay is not available for this agent, so the step-level comparison and verdicts are the evidence. Explain that recording the agent through a Kitaru adapter would make end-to-end replay possible, and offer `kitaru-adapter-builder` when the user wants that.
+- **Replay possible:** translate each finalist into the model string the agent's
+  framework accepts, because the replay `model` override goes to the agent's
+  framework, not to the analyzer. For Pydantic AI that is a `provider:model`
+  string such as `openai:gpt-5-mini`, `openrouter:qwen/qwen3-32b`, or
+  `ollama:qwen3:8b`; other frameworks name models their own way. Confirm the
+  worker that runs the agent has that provider's credentials and, for local or
+  self-hosted models, its base URL. Report a finalist the framework cannot
+  address as not replayable instead of forcing it. Then create a cohort from the
+  reviewed sessions
+  (`kitaru cohort create NAME --agent AGENT --session SESSION ...`) and hand off
+  to the `kitaru-replay-experiment` skill with the cohort version, the
+  translated model string as the override, and the user's verdicts as the
+  accepted behavior for choosing or authoring an evaluator. That skill owns the
+  tool policy, approval, and interpretation.
+- **Replay not possible** (no run spec, or `overrides` is false, as for
+  importer-backed adapters that record a provider trace after the run): say that
+  a full replay is not available for this agent version, so the step-level
+  comparison and verdicts are the evidence. Explain that recording the agent
+  through a Kitaru adapter that supports overrides would make end-to-end replay
+  possible, and offer `kitaru-adapter-builder` when the user wants that.
 
 ## 7. Recommend
 
 End with a recommendation, not a decision, framed by the user's goals:
 
-- the best candidate for each goal they named, with the evidence: verdict-backed quality and how many verdicts back it, cost per month, latency, openness, and replay results when available;
+- the best candidate for each goal they named, with the evidence: verdict-backed
+  quality and how many verdicts back it, cost per month, latency, openness, and
+  replay results when available;
 - calls or tools where today's model should stay, and why;
-- what still needs a check: few reviewed disagreements, many failures, inferred schemas, reasoning-heavy steps.
+- what still needs a check: few reviewed disagreements, many failures, inferred
+  schemas, reasoning-heavy steps.
 
-Give the configuration change needed to switch, as the base URL and model name the agent would use, and do not apply it. Suggest rerunning the comparison on new traces when models or traffic change.
+Give the configuration change needed to switch, as the base URL and model name
+the agent would use, and do not apply it. Suggest rerunning the comparison on
+new traces when models or traffic change.

@@ -79,15 +79,18 @@ question once sessions exist:
 > or open), debug a specific behavior, or explore several runs to discover
 > recurring problems?
 
-Offer finding the right model first; it is Kitaru's main path. When the user
-chooses it, or says nothing more specific, continue with the
-`kitaru-model-swap` skill and carry the agent and import IDs forward. Its
-review, cohort, and replay steps reuse this skill's method. Debugging and
-discovery stay here; for them, ask whether to learn the review flow on one run
-first.
+List finding the right model first; it is Kitaru's main path. Always ask:
+model comparison calls paid model endpoints, so never route a vague request or
+an unanswered question into it by default. When the user chooses it, continue
+with the `kitaru-model-swap` skill and carry the agent and import IDs forward.
+Its review, cohort, and replay steps reuse this skill's method. If that skill
+is not installed, say so, suggest adding it with
+`npx skills add zenml-io/kitaru-skills` or `kitaru setup`, and offer debugging
+or discovery here in the meantime. Debugging and discovery stay here; for
+them, ask whether to learn the review flow on one run first.
 
 Use a structured question action when the host provides one. Infer the path
-without asking when the request already names a model choice, session,
+without asking only when the request explicitly names a model choice, session,
 insight, investigation, or accepted behavior.
 
 An incomplete starter handoff takes precedence over this question. Give the

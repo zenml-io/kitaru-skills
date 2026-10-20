@@ -48,8 +48,8 @@ metadata. It is not a Python package.
   display metadata for the replay skill.
 - `skills/kitaru-model-swap/SKILL.md` guides a model-swap comparison from
   recorded traces through the `kitaru/model-swap` analyzer and its report.
-- `skills/kitaru-model-swap/references/` contains the analyzer contract and
-  tool-schema extraction recipes.
+- `skills/kitaru-model-swap/references/` contains the analyzer contract,
+  tool-schema extraction recipes, and the verdict-backed quality method.
 - `skills/kitaru-importer-builder/SKILL.md` guides custom parser and optional
   API fetcher development.
 - `skills/kitaru-importer-builder/references/` contains parser, normalization,
