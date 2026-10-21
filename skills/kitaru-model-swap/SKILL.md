@@ -84,9 +84,18 @@ guess an origin the user has not confirmed.
 When the steps are hard or answers vary, suggest `repeats` of 2 or 3 to read
 run-to-run noise, and say it multiplies calls and spend.
 
-Suggest a small set, one line each, covering those goals:
+Suggest a small set, one line each, covering those goals. A candidate is a
+setting, not only a model: today's model at a lower `reasoning_effort`, or with
+a cleaned-up `system_prompt`, is often the cheapest change that holds quality,
+so offer those next to other models. Only use a prompt the user wrote or
+approved, and never build one from the recorded failures, which would tune the
+prompt to the very calls it is then judged on.
 
-- the model the agent uses today, as the `reference`;
+- the model the agent uses today, as the `reference`. Always include it: today's
+  model run again is the noise floor, and without it the report cannot tell a
+  real difference from run-to-run variation (it says so in its notes);
+- today's model at a lower effort level, and with a cleaned-up prompt when the
+  user has one, each as its own named candidate;
 - one open-weight model on a hosted provider (`"open_weights": true`);
 - one local model if Ollama is installed (`ollama list` shows what is available;
   base URL `http://localhost:11434/v1`, price zero, `"open_weights": true`);
@@ -153,6 +162,9 @@ Ask about provider settings only when relevant: a model served without a
 tool-call parser needs `tool_call_format: "hermes"`; reasoning models may need
 `reasoning_effort`; OpenAI's reasoning models (GPT-6 and later) refuse tools
 with reasoning on at `/chat/completions`, so give them `"api": "responses"`.
+
+Pick a judge that is not one of the candidates: a model may favor answers like
+its own, and the report notes it when a chat judge runs a candidate's model.
 
 ## 3. Estimate, approve, run
 
@@ -278,6 +290,15 @@ per candidate following
 many disagreements were reviewed. A candidate that differs from today's model
 can score higher than it.
 
+Read the checks on the checker before trusting the numbers, and say what they
+show: replies cut off by the token limit (`truncated`), timeouts, and provider
+errors are failures, not disagreements, and a high count means fixing
+`max_tokens` or the provider setup, not the model; `judge_check` shows how often
+the judge changed its ruling when only the order of the answers changed, and
+the notes flag an unstable judge. Open a handful of raw disagreements yourself
+and show them to the user: a wrong grader or a contradictory recorded answer
+explains a surprising number more often than the model does.
+
 ## 6. Prove the finalists
 
 Start from the report's **Worth a full replay** row: every candidate except
@@ -290,6 +311,34 @@ ranks low. A full replay of a few dozen sessions usually costs a few dollars
 per candidate, so replaying more finalists is cheaper than missing the right
 one; give the user that estimate before they trim further. Only a full replay
 graded on outcomes shows which finalist keeps them.
+
+Before handing off, settle what a full replay can show:
+
+- **Headroom.** Ask for, or read from the baseline evaluation, how often today's
+  model already passes. At 95% or more there is little quality left to gain:
+  frame the run as "same quality, lower cost or latency", and ask whether a
+  finalist holds quality, not whether it beats today's model.
+- **Noise.** Include today's model as its own replay arm, so the experiment
+  measures how much outcomes vary when nothing changes. A difference smaller
+  than that, or whose 95% interval includes zero, is no evidence: never
+  recommend switching for quality on it, and when the user is iterating, say
+  how many more sessions would resolve it.
+- **Hard cases.** Recorded traffic skews easy, because users try what they
+  expect to work. Add sessions people found hard to the cohort: complaints,
+  escalations, human overrides, reopened cases, and the disagreements the user
+  judged in step 5. Say how many of each are in the cohort.
+- **Held-out sessions.** When the user changes prompts or settings between
+  rounds, split the sessions into a tuning cohort and a held-out cohort before
+  the first round, and keep a change only when the held-out cohort improves too
+  (or holds, when the goal is cost). A gain only on the tuning cohort is
+  overfitting.
+- **The evaluator.** Prefer a programmatic check (exact label, schema, tests)
+  when the outcome allows it. An LLM evaluator should not be a finalist's
+  model, should see the two outcomes without being told which is today's, and
+  should score checkable yes-or-no claims rather than a 1 to 5 scale. Run it
+  twice on a few sessions and report whether any verdict changed before
+  trusting it. Keep replays that timed out, errored, or were cut off out of the
+  quality denominator and report them apart.
 
 Check whether the agent can replay with a model override: run
 `kitaru agent version get AGENT@VERSION`. Replay is possible only when the
@@ -330,25 +379,33 @@ End with a recommendation, not a decision, framed by the user's goals:
 - the best candidate for each goal they named, with the evidence: verdict-backed
   quality and how many verdicts back it, cost per month, latency, openness,
   origin, and replay results when available; never recommend an excluded
-  candidate. Present **Best for** picks as a shortlist of two or three, not a
-  single winner: in calibration against full-run task success, the top few
-  held up, but a single "cheapest within 10 points" pick could still lose task
-  success. Confirm the finalists with a full replay before switching;
+  candidate. Present **Best for** picks as candidates to confirm, not a single
+  winner: in calibration against full-run task success on five agents, step
+  agreement kept the best model near the top but often ranked the cheapest
+  model that held quality low, and a single "cheapest within 10 points" pick
+  could still lose task success. Confirm the finalists with a full replay
+  before switching;
 - the report's **Best mix** when it moves some steps: which steps (named by
   what a router sees before the call, such as "first turn" or "after
   lookup_order") go to which candidate and which stay on today's model, with
   the combined cost and the agent change needed to route by step. Say which
-  steps stayed put for too few calls (`too_few_calls`, below `min_mix_calls`)
-  or because today's model does not match its own recording there
-  (`noisy_reference`), and that today's cost comes from the reference's replay
-  when there is one (`today_source`). A mix is a shortlist too: replay it
+  steps stayed put for too few calls (`too_few_calls`, below `min_mix_calls`),
+  because today's model does not match its own recording there
+  (`noisy_reference`), or because the pick did not hold on held-out sessions
+  (`held_out: failed`); flag picks with too few held-out calls to confirm
+  (`held_out: too_few`); and say that today's cost comes from the reference's
+  replay when there is one (`today_source`). A mix is a shortlist too: replay it
   before routing traffic;
 - that costs per session and month assume the recorded number of steps: point
   to tokens per call, and say a full replay is needed to know cost per task for
   a model that may take more turns or retries;
 - calls or tools where today's model should stay, and why;
 - what still needs a check: few reviewed disagreements, many failures, inferred
-  schemas, reasoning-heavy steps.
+  schemas, reasoning-heavy steps, an unstable judge or evaluator;
+- when a finalist's difference from today's model is within noise, say so in
+  those words: for a quality goal the recommendation is not to switch; for a
+  cost goal it is that the cheaper finalist held quality on this many sessions,
+  with the interval.
 
 Give the configuration change needed to switch, as the base URL and model name
 the agent would use, and do not apply it. Suggest rerunning the comparison on

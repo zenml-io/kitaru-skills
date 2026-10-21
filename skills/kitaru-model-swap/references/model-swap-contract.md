@@ -140,7 +140,7 @@ A missing judge key fails the whole analysis at the start.
 | `infer_missing_schemas` | `false` | Loose schemas from recorded arguments; reported separately. |
 | `sessions_per_month` | derived | Needed for monthly cost when the import spans less than a day. |
 | `decision_candidates` | `[]` | 0 to 4 decision models answering the decision parts of each decision or partial call: `{"name": "jev", "kind": "jev", "price": {...}}`, same fields, defaults, and key rules as a decision `judge` (without `equivalent_at`), plus a `name` unique across both candidate lists. They run first, before the LLM candidates, sharing `max_spend_usd` and `time_budget_seconds`; the LLM candidates get what is left. Their dry-run estimate is at `decision_candidates[].estimate`. |
-| `judge` | none | Rules on `same_tool_different_args` and `different_text` disagreements only, never on a different tool choice, and orders the review. A decision model: `{"kind": "jev"}` (TypeSafe, key `TYPESAFE_API_KEY`, default model `jev-latest`; may require early access), `{"kind": "clef", "base_url": "https://api.cloudflare.com/client/v4/accounts/ACCOUNT_ID/ai/run/@cf/cloudflare/clef", "api_key_env": "CLOUDFLARE_API_TOKEN"}` (always pass `base_url`, the account's run URL, and `api_key_env`; model `clef` (default) or `clef-flash`), or `{"kind": "openai_decisions"}` (key `OPENAI_API_KEY`, default model `gpt-6-luna`). Every kind has a default model (`jev-latest`, `clef`, `gpt-6-luna`), and an explicit `null` for any field falls back to its default. Optional `equivalent_at` (above 0.5, up to 1; default 0.8), `model`, `api_key_env`, `base_url`, `price`, `timeout_seconds`. When `base_url` is overridden, `api_key_env` must be given explicitly; no default key is sent to a custom URL. Give `price` whenever `max_spend_usd` is set, since decision models have no bundled price. Or a candidate-shaped chat model without `kind`. Judge spend counts against `max_spend_usd` and its time against `time_budget_seconds`; the dry-run estimate leaves judge spend out. |
+| `judge` | none | Rules on `same_tool_different_args` and `different_text` disagreements only, never on a different tool choice, and orders the review. A decision model: `{"kind": "jev"}` (TypeSafe, key `TYPESAFE_API_KEY`, default model `jev-latest`; may require early access), `{"kind": "clef", "base_url": "https://api.cloudflare.com/client/v4/accounts/ACCOUNT_ID/ai/run/@cf/cloudflare/clef", "api_key_env": "CLOUDFLARE_API_TOKEN"}` (always pass `base_url`, the account's run URL, and `api_key_env`; model `clef` (default) or `clef-flash`), or `{"kind": "openai_decisions"}` (key `OPENAI_API_KEY`, default model `gpt-6-luna`). Every kind has a default model (`jev-latest`, `clef`, `gpt-6-luna`), and an explicit `null` for any field falls back to its default. Optional `equivalent_at` (above 0.5, up to 1; default 0.8), `model`, `api_key_env`, `base_url`, `price`, `timeout_seconds`. When `base_url` is overridden, `api_key_env` must be given explicitly; no default key is sent to a custom URL. Give `price` whenever `max_spend_usd` is set, since decision models have no bundled price. Or a candidate-shaped chat model without `kind`. Judge spend counts against `max_spend_usd` and its time against `time_budget_seconds`; the dry-run estimate leaves judge spend out. The judge sees the two answers as answer A and answer B in an order that varies by call, never told which is today's, and keeps its own instructions even if `system_prompt` is set on it. After the run, up to 20 of its rulings are asked again with the order swapped (`judge_check`, also counted against the cap). |
 | `concurrency` | `4` | Up to 32. |
 | `time_budget_seconds` | `600` | Up to 840; the task times out at 900 seconds. Shared by decision candidates (first), LLM candidates, and the judge. |
 | `max_disagreements` | `200` | Kept in the report. |
@@ -152,7 +152,12 @@ Candidate fields: `name`, `base_url`, `model`, `origin` (`lab`, `lab_country`, `
 never a key), `reference` (today's model), `open_weights` (true for open-weight
 models), `price` (`input_per_mtok`, `output_per_mtok`, optional
 `cached_input_per_mtok`, USD strings), `price_provider` (for example `openai`,
-for the bundled price lookup), `provider_settings`.
+for the bundled price lookup), `provider_settings`, `system_prompt` (a prompt
+sent instead of every recorded system and developer message, to compare a
+cleaned-up prompt as its own candidate; counted in spend estimates; the notes
+name such candidates). A setting is a candidate too: the same `model` can
+appear under several names with a different `reasoning_effort` or
+`system_prompt`.
 
 `provider_settings`: `api` (`chat_completions`, default, or `responses` for
 OpenAI's `/responses`, which OpenAI's reasoning models need to call tools with
@@ -164,10 +169,17 @@ at `native`), `tool_call_format` (`native`, `hermes`, `json_content`),
 
 ## Report fields
 
-Run-level: `best_for`, a list of `{goal, candidate, why}` for "Closest to
-today", "Cheapest", "Fastest" and "Best open model" (cheapest and fastest only
-among candidates within 10 points of the closest match; candidates failing over
-20% of calls are excluded).
+Run-level: `best_for`, a list of `{goal, candidate, why}`. "Closest to today"
+is the non-reference candidate that most often matches today's model.
+"Cheapest" and "Fastest" are named only among candidates within 10 points of
+how often the reference matches itself (or the closest candidate's rate
+without a reference), and are left out when none is that close or the
+reference matches itself less than half the time; "Cheapest" names the
+reference when no comparable candidate costs less. "Best open model" is the
+closest open-weight candidate. "Worth a full replay" lists every candidate
+except clear failures (under half the closest candidate's rate), plus the
+cheapest, joined by ` + `. Candidates failing over 20% of calls are excluded
+throughout, and the reference is never its own pick.
 
 Per candidate: `name`, `model`, `reference`, `price` (null when no price is
 known; the rendered dry run then shows "unknown price"), `open_weights`,
@@ -178,7 +190,9 @@ schemas), `agreement` (counts per category over `answered`), `agreement_rate`
 (each interval a Wilson 95% `[low, high]`, null with no calls),
 `judged_equivalent`, `judged_different`,
 `judged_unsure`, `judge_failures` (failure category to count, for judge calls
-that did not return a ruling), `failures`, `failure_examples`
+that did not return a ruling), `failures` (by category: `timeout`,
+`rate_limited`, `http_error`, `empty_reply`, `tool_call_parse_error`,
+`refusal`, `truncated` for replies cut off by the token limit), `failure_examples`
 (one detail per category, such as `HTTP 404`) and `failure_rate`, `by_tool`
 (agreement and per-argument agreement), `latency_seconds`, `tokens_per_call`,
 `retries`, `cost` (`per_call_usd`, `per_session_usd`, `per_month_usd`),
@@ -207,7 +221,12 @@ out.
 Run-level: `disagreements` (at most `max_disagreements` entries),
 `disagreements_total` (all disagreements across candidates before truncation,
 including inferred-schema calls), `stopped_early` (`max_spend`, `time_budget`,
-or null), `spent_usd`, `notes`.
+or null), `spent_usd`, `judge_check` (`checked`, `changed`, `unanswered` for
+the rulings asked again with the answers swapped; null without a judge),
+`notes`. The notes say when no candidate is the reference (no noise floor),
+which candidates use their own `system_prompt`, when a chat judge runs a
+candidate's model, and the judge-check result, flagging the judge as weak
+evidence when it changed a fifth or more of at least 5 rechecked rulings.
 
 The run identity is the `id` of the `model-swap-summary` insight that carries
 the report. Dry runs also write one, so for review use the newest summary whose
@@ -284,14 +303,21 @@ never compare it with a full recorded cost per call.
 
 ## Best mix and cost per task
 
-Run-level `best_mix` (null in dry runs or when no step can move) has `groups`,
+Run-level `best_mix` (null in dry runs, or when no step can move and no pick
+failed on held-out sessions) has `groups`,
 one per step, each with `group` (the step, named by what comes just before the
 call and so visible to a router: `first turn`, `after a user message`, or
 `after TOOL` for the tool result the model is reading), `share` of sampled
 calls, `calls`, `candidate` (null means today's model), `rate`,
 `cost_per_call_usd`, `too_few_calls` (no candidate answered `min_mix_calls` of
-the step's calls) and `noisy_reference` (today's model does not match its own
-recording there, so nothing can move). Run-level fields: `min_calls`,
+the step's calls), `noisy_reference` (today's model does not match its own
+recording there, so nothing can move), `held_out` (`held`, `failed` when the
+pick fell more than 10 points below the reference on the held-out half and the
+step stays on today's model, `too_few` when fewer than a quarter of
+`min_mix_calls` held-out calls could confirm it, so the pick stays
+unconfirmed, or null), `held_out_rate`, and `held_out_calls`. Sessions are
+split in two by session id: picks are chosen on one half and checked on the
+other. Run-level fields: `min_calls`,
 `today_source` (`reference replay` when a reference candidate ran, since
 recorded calls often hit a warm prompt cache that replays do not, otherwise
 `recording`), and `cost` and `recorded_cost` projections. A step moves only to a
