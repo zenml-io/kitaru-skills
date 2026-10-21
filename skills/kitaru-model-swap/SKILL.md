@@ -280,13 +280,16 @@ can score higher than it.
 
 ## 6. Prove the finalists
 
-Start from the report's **Worth a full replay** row, the candidates closest by
-step agreement, and pick up to three finalists with the user from it, the
-verdict-backed quality, and the goals from step 2. Add the cheapest candidate
-the user would accept if it is not among them: step agreement ranks candidates
-but often places a cheap model that keeps outcomes low. Step agreement narrows
-the field; only a full replay graded on outcomes shows which finalist keeps
-them.
+Start from the report's **Worth a full replay** row: every candidate except
+clear failures, plus the cheapest. Step agreement often ranks a cheap model that
+keeps outcomes low, so do not cut the list to the top few by agreement rate.
+With the user, remove only candidates the goals from step 2 rule out (price,
+provenance, openness, latency) or that the verdicts show getting important
+calls wrong, and keep the cheapest candidate the user would accept even if it
+ranks low. A full replay of a few dozen sessions usually costs a few dollars
+per candidate, so replaying more finalists is cheaper than missing the right
+one; give the user that estimate before they trim further. Only a full replay
+graded on outcomes shows which finalist keeps them.
 
 Check whether the agent can replay with a model override: run
 `kitaru agent version get AGENT@VERSION`. Replay is possible only when the
