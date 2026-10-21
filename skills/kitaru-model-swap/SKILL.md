@@ -198,7 +198,12 @@ with reasoning on at `/chat/completions`, so give them `"api": "responses"`.
 Render
 `kitaru insight report --import-id IMPORT_ID --out model-swap-report.html` and
 give the user the path. Lead with the report's **Best for** rows, ordered by
-what the user said matters, then summarize each candidate in plain words:
+what the user said matters. When the report names no **Cheapest** or
+**Fastest** candidate, say why in its words: no candidate behaves like today's
+model often enough, or today's model varies too much from run to run for step
+agreement to vouch for an equivalent. Do not pick one yourself from the rates;
+point to the **Worth a full replay** row instead. Then summarize each candidate
+in plain words:
 
 - how often it picks the same tool or gives the same answer as today's model,
   read against today's model's own noise floor, and per-argument agreement on
@@ -275,8 +280,13 @@ can score higher than it.
 
 ## 6. Prove the finalists
 
-Pick one or two finalists with the user from the verdict-backed quality and the
-goals from step 2.
+Start from the report's **Worth a full replay** row, the candidates closest by
+step agreement, and pick up to three finalists with the user from it, the
+verdict-backed quality, and the goals from step 2. Add the cheapest candidate
+the user would accept if it is not among them: step agreement ranks candidates
+but often places a cheap model that keeps outcomes low. Step agreement narrows
+the field; only a full replay graded on outcomes shows which finalist keeps
+them.
 
 Check whether the agent can replay with a model override: run
 `kitaru agent version get AGENT@VERSION`. Replay is possible only when the
