@@ -151,7 +151,8 @@ Confirm the connection lists the expected `secret_keys` without reading values.
 
 Ask about provider settings only when relevant: a model served without a
 tool-call parser needs `tool_call_format: "hermes"`; reasoning models may need
-`reasoning_effort`.
+`reasoning_effort`; OpenAI's reasoning models (GPT-6 and later) refuse tools
+with reasoning on at `/chat/completions`, so give them `"api": "responses"`.
 
 ## 3. Estimate, approve, run
 
@@ -201,7 +202,10 @@ what the user said matters, then summarize each candidate in plain words:
 
 - how often it picks the same tool or gives the same answer as today's model,
   read against today's model's own noise floor, and per-argument agreement on
-  structured fields;
+  structured fields; quote each rate with its 95% interval
+  (`agreement_interval`, `tool_choice_interval`), and do not rank candidates
+  on gaps that fall inside the intervals, since with a few dozen calls a gap of
+  a few points is usually noise;
 - cost per call and per month, and why (price, tokens, reasoning tokens,
   retries);
 - median and tail latency;
@@ -313,10 +317,19 @@ End with a recommendation, not a decision, framed by the user's goals:
 - the best candidate for each goal they named, with the evidence: verdict-backed
   quality and how many verdicts back it, cost per month, latency, openness,
   origin, and replay results when available; never recommend an excluded
-  candidate;
-- the report's **Best mix** when it moves some kinds of call: which kinds go to
-  which candidate and which stay on today's model, with the combined cost, and
-  the agent change needed to route by step;
+  candidate. Present **Best for** picks as a shortlist of two or three, not a
+  single winner: in calibration against full-run task success, the top few
+  held up, but a single "cheapest within 10 points" pick could still lose task
+  success. Confirm the finalists with a full replay before switching;
+- the report's **Best mix** when it moves some steps: which steps (named by
+  what a router sees before the call, such as "first turn" or "after
+  lookup_order") go to which candidate and which stay on today's model, with
+  the combined cost and the agent change needed to route by step. Say which
+  steps stayed put for too few calls (`too_few_calls`, below `min_mix_calls`)
+  or because today's model does not match its own recording there
+  (`noisy_reference`), and that today's cost comes from the reference's replay
+  when there is one (`today_source`). A mix is a shortlist too: replay it
+  before routing traffic;
 - that costs per session and month assume the recorded number of steps: point
   to tokens per call, and say a full replay is needed to know cost per task for
   a model that may take more turns or retries;

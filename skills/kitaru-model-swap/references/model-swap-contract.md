@@ -144,6 +144,7 @@ A missing judge key fails the whole analysis at the start.
 | `concurrency` | `4` | Up to 32. |
 | `time_budget_seconds` | `600` | Up to 840; the task times out at 900 seconds. Shared by decision candidates (first), LLM candidates, and the judge. |
 | `max_disagreements` | `200` | Kept in the report. |
+| `min_mix_calls` | `20` | Answered calls a candidate needs on a step before the best mix can move that step to it; smaller steps stay on today's model. |
 | `repeats` | `1` | 1 to 5 attempts per call per candidate; agreement, judge and disagreements use the first; per-candidate `consistency` gives `any_match_rate` and `all_match_rate`. Multiplies calls and spend. |
 | `excluded_origins` | `{}` | Map of `lab`, `lab_country`, `host`, `host_region` to disallowed values (case-insensitive), e.g. `{"lab_country": ["CN"]}`. Excluded candidates are compared but never recommended. |
 
@@ -153,7 +154,10 @@ models), `price` (`input_per_mtok`, `output_per_mtok`, optional
 `cached_input_per_mtok`, USD strings), `price_provider` (for example `openai`,
 for the bundled price lookup), `provider_settings`.
 
-`provider_settings`: `tool_call_format` (`native`, `hermes`, `json_content`),
+`provider_settings`: `api` (`chat_completions`, default, or `responses` for
+OpenAI's `/responses`, which OpenAI's reasoning models need to call tools with
+reasoning on; tool calls then come back natively, so leave `tool_call_format`
+at `native`), `tool_call_format` (`native`, `hermes`, `json_content`),
 `reasoning_effort`, `max_tokens`, `max_tokens_field` (`max_completion_tokens` or
 `max_tokens`), `temperature`, `extra_body`, `timeout_seconds` (default 120),
 `max_retries` (default 1).
@@ -170,7 +174,9 @@ known; the rendered dry run then shows "unknown price"), `open_weights`,
 `summary`, `calls_sent` (calls sent to the candidate, including failures),
 `answered` (calls with a comparable reply, excluding calls with inferred tool
 schemas), `agreement` (counts per category over `answered`), `agreement_rate`
-(exact), `tool_choice_rate`, `judged_equivalent`, `judged_different`,
+(exact), `agreement_interval`, `tool_choice_rate`, `tool_choice_interval`
+(each interval a Wilson 95% `[low, high]`, null with no calls),
+`judged_equivalent`, `judged_different`,
 `judged_unsure`, `judge_failures` (failure category to count, for judge calls
 that did not return a ruling), `failures`, `failure_examples`
 (one detail per category, such as `HTTP 404`) and `failure_rate`, `by_tool`
@@ -278,13 +284,22 @@ never compare it with a full recorded cost per call.
 
 ## Best mix and cost per task
 
-Run-level `best_mix` (null in dry runs or when no kind of call can move) has
-`groups`, each with `group` (the recorded tool, or `text answer`), `share` of
-sampled calls, `candidate` (null means today's model), `rate`, and
-`cost_per_call_usd`, plus `cost` and `recorded_cost` projections. A group moves
-only to a non-excluded, non-reference candidate whose tool choice (or answer
-agreement for text) there is within 10 points of the reference's, and that is
-cheaper than today. `best_for` then includes a "Best mix" row.
+Run-level `best_mix` (null in dry runs or when no step can move) has `groups`,
+one per step, each with `group` (the step, named by what comes just before the
+call and so visible to a router: `first turn`, `after a user message`, or
+`after TOOL` for the tool result the model is reading), `share` of sampled
+calls, `calls`, `candidate` (null means today's model), `rate`,
+`cost_per_call_usd`, `too_few_calls` (no candidate answered `min_mix_calls` of
+the step's calls) and `noisy_reference` (today's model does not match its own
+recording there, so nothing can move). Run-level fields: `min_calls`,
+`today_source` (`reference replay` when a reference candidate ran, since
+recorded calls often hit a warm prompt cache that replays do not, otherwise
+`recording`), and `cost` and `recorded_cost` projections. A step moves only to a
+non-excluded, non-reference candidate that answered at least `min_mix_calls` of
+its calls, whose kind of action there (same tools, or a text answer) matches
+within 10 points of the reference's, and that is cheaper than today.
+`best_for` then includes a "Best mix" row. Treat the mix as a shortlist to
+confirm with a full replay.
 
 Per candidate, `excluded`, `origin`, `consistency` (null unless `repeats` > 1)
 and `tokens_per_call` (input, cached input, output, reasoning) are reported.
