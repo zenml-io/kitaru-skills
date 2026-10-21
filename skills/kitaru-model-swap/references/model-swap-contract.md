@@ -153,9 +153,11 @@ never a key), `reference` (today's model), `open_weights` (true for open-weight
 models), `price` (`input_per_mtok`, `output_per_mtok`, optional
 `cached_input_per_mtok`, USD strings), `price_provider` (for example `openai`,
 for the bundled price lookup), `provider_settings`, `system_prompt` (a prompt
-sent instead of every recorded system and developer message, to compare a
-cleaned-up prompt as its own candidate; counted in spend estimates; the notes
-name such candidates). A setting is a candidate too: the same `model` can
+sent instead of every recorded system and developer message, including any
+per-call context there, to compare a cleaned-up prompt as its own candidate;
+counted in spend estimates; the notes name such candidates; not allowed on the
+reference), `system_prompt_nodes` (node names whose calls get it; empty means
+every call). A setting is a candidate too: the same `model` can
 appear under several names with a different `reasoning_effort` or
 `system_prompt`.
 
@@ -221,12 +223,15 @@ out.
 Run-level: `disagreements` (at most `max_disagreements` entries),
 `disagreements_total` (all disagreements across candidates before truncation,
 including inferred-schema calls), `stopped_early` (`max_spend`, `time_budget`,
-or null), `spent_usd`, `judge_check` (`checked`, `changed`, `unanswered` for
-the rulings asked again with the answers swapped; null without a judge),
+or null), `spent_usd`, `judge_check` (`checked`, `changed` (flipped), `unsure` (became unsure), and
+`unanswered` (could not be asked within the budget) for the rulings asked again
+with the answers swapped; null without a judge, in dry runs, or when the judge
+gave no definite ruling),
 `notes`. The notes say when no candidate is the reference (no noise floor),
 which candidates use their own `system_prompt`, when a chat judge runs a
-candidate's model, and the judge-check result, flagging the judge as weak
-evidence when it changed a fifth or more of at least 5 rechecked rulings.
+candidate's model or today's recorded model, and the judge-check result,
+flagging the judge as weak evidence when it flipped a fifth or more of at least
+5 rechecked rulings, or saying that no recheck could run.
 
 The run identity is the `id` of the `model-swap-summary` insight that carries
 the report. Dry runs also write one, so for review use the newest summary whose
@@ -315,9 +320,11 @@ recording there, so nothing can move), `held_out` (`held`, `failed` when the
 pick fell more than 10 points below the reference on the held-out half and the
 step stays on today's model, `too_few` when fewer than a quarter of
 `min_mix_calls` held-out calls could confirm it, so the pick stays
-unconfirmed, or null), `held_out_rate`, and `held_out_calls`. Sessions are
+unconfirmed, `no_split` when the step appears in only one half and was judged
+on all its calls, or null), `held_out_rate`, and `held_out_calls`. Sessions are
 split in two by session id: picks are chosen on one half and checked on the
-other. Run-level fields: `min_calls`,
+other (against the reference's held-out rate, or the first-half bar without a
+reference); run-level `sessions` gives the count in each half. Run-level fields: `min_calls`,
 `today_source` (`reference replay` when a reference candidate ran, since
 recorded calls often hit a warm prompt cache that replays do not, otherwise
 `recording`), and `cost` and `recorded_cost` projections. A step moves only to a

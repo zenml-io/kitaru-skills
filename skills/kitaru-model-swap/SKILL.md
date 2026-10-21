@@ -34,7 +34,8 @@ Recommend; do not decide. Never change the agent's configuration yourself.
 - Agreement means "behaves like today's model", not "is right". Never present
   agreement as quality on its own; quality comes from the user's verdicts.
 - Report provider failures (timeouts, rate limits, HTTP errors, empty replies,
-  tool-call parse errors, refusals) as setup problems, never as model quality.
+  tool-call parse errors, refusals, replies truncated by the token limit) as
+  setup problems, never as model quality.
 - Keep calls with inferred tool schemas out of conclusions; say how many calls
   used them.
 - Use Kitaru product terms: agent, session, node, import, analyzer, insight,
@@ -163,8 +164,9 @@ tool-call parser needs `tool_call_format: "hermes"`; reasoning models may need
 `reasoning_effort`; OpenAI's reasoning models (GPT-6 and later) refuse tools
 with reasoning on at `/chat/completions`, so give them `"api": "responses"`.
 
-Pick a judge that is not one of the candidates: a model may favor answers like
-its own, and the report notes it when a chat judge runs a candidate's model.
+Pick a judge that is neither a candidate nor today's model: a model may favor
+answers like its own, and the report notes it when a chat judge runs a
+candidate's model or the recorded one.
 
 ## 3. Estimate, approve, run
 
@@ -209,7 +211,18 @@ its own, and the report notes it when a chat judge runs a candidate's model.
 
 Render
 `kitaru insight report --import-id IMPORT_ID --out model-swap-report.html` and
-give the user the path. Lead with the report's **Best for** rows, ordered by
+give the user the path.
+
+Read the checks on the checker before trusting the numbers, and say what they
+show: replies cut off by the token limit (`truncated`), timeouts, and provider
+errors are failures, not disagreements, and a high count means fixing
+`max_tokens` or the provider setup, not the model; `judge_check` shows how often
+the judge changed its ruling when only the order of the answers changed, and
+the notes flag an unstable judge. Open a handful of raw disagreements yourself
+and show them to the user: a wrong grader or a contradictory recorded answer
+explains a surprising number more often than the model does.
+
+Then lead with the report's **Best for** rows, ordered by
 what the user said matters. When the report names no **Cheapest** or
 **Fastest** candidate, say why in its words: no candidate behaves like today's
 model often enough, or today's model varies too much from run to run for step
@@ -290,15 +303,6 @@ per candidate following
 many disagreements were reviewed. A candidate that differs from today's model
 can score higher than it.
 
-Read the checks on the checker before trusting the numbers, and say what they
-show: replies cut off by the token limit (`truncated`), timeouts, and provider
-errors are failures, not disagreements, and a high count means fixing
-`max_tokens` or the provider setup, not the model; `judge_check` shows how often
-the judge changed its ruling when only the order of the answers changed, and
-the notes flag an unstable judge. Open a handful of raw disagreements yourself
-and show them to the user: a wrong grader or a contradictory recorded answer
-explains a surprising number more often than the model does.
-
 ## 6. Prove the finalists
 
 Start from the report's **Worth a full replay** row: every candidate except
@@ -318,24 +322,30 @@ Before handing off, settle what a full replay can show:
   model already passes. At 95% or more there is little quality left to gain:
   frame the run as "same quality, lower cost or latency", and ask whether a
   finalist holds quality, not whether it beats today's model.
-- **Noise.** Include today's model as its own replay arm, so the experiment
-  measures how much outcomes vary when nothing changes. A difference smaller
+- **Noise.** Run today's model as its own arm: a second experiment on the same
+  cohort, tool policy and evaluators with no override, which replays the agent
+  unchanged and measures how much outcomes vary when nothing changes. Count
+  that arm in the cost estimate. A difference smaller
   than that, or whose 95% interval includes zero, is no evidence: never
   recommend switching for quality on it, and when the user is iterating, say
   how many more sessions would resolve it.
 - **Hard cases.** Recorded traffic skews easy, because users try what they
-  expect to work. Add sessions people found hard to the cohort: complaints,
-  escalations, human overrides, reopened cases, and the disagreements the user
-  judged in step 5. Say how many of each are in the cohort.
+  expect to work. Build the cohort from a random sample of sessions plus
+  sessions people found hard: complaints, escalations, human overrides, and
+  reopened cases. Ask the user for their session ids or for the tag or
+  annotation that marks them; do not pick them from the step comparison, since
+  sessions where candidates disagreed would tilt the cohort toward them. Report
+  results for the random sample and the hard cases separately.
 - **Held-out sessions.** When the user changes prompts or settings between
-  rounds, split the sessions into a tuning cohort and a held-out cohort before
-  the first round, and keep a change only when the held-out cohort improves too
+  rounds, create two cohorts from disjoint sessions before the first round, a
+  tuning cohort and a held-out cohort, and keep a change only when the held-out cohort improves too
   (or holds, when the goal is cost). A gain only on the tuning cohort is
   overfitting.
 - **The evaluator.** Prefer a programmatic check (exact label, schema, tests)
   when the outcome allows it. An LLM evaluator should not be a finalist's
-  model, should see the two outcomes without being told which is today's, and
-  should score checkable yes-or-no claims rather than a 1 to 5 scale. Run it
+  model or today's model, should score each replayed session on its own
+  without being told which arm produced it, and should score checkable
+  yes-or-no claims rather than a 1 to 5 scale. Run it
   twice on a few sessions and report whether any verdict changed before
   trusting it. Keep replays that timed out, errored, or were cut off out of the
   quality denominator and report them apart.
@@ -353,12 +363,12 @@ this; the agent version does.
   `ollama:qwen3:8b`; other frameworks name models their own way. Confirm the
   worker that runs the agent has that provider's credentials and, for local or
   self-hosted models, its base URL. Report a finalist the framework cannot
-  address as not replayable instead of forcing it. Then create a cohort from the
-  reviewed sessions
-  (`kitaru cohort create NAME --agent AGENT --session SESSION ...`) and hand off
-  to the `kitaru-replay-experiment` skill with the cohort version, the
-  translated model string as the override, and the user's verdicts as the
-  accepted behavior for choosing or authoring an evaluator. That skill owns the
+  address as not replayable instead of forcing it. Then create the cohort
+  described above (`kitaru cohort create NAME --agent AGENT --session SESSION
+  ...`) and hand off to the `kitaru-replay-experiment` skill with the cohort
+  version, one experiment per finalist with its translated model string as the
+  override plus the no-override experiment for today's model, and the user's
+  verdicts as the accepted behavior for choosing or authoring an evaluator. That skill owns the
   tool policy, approval, and interpretation.
 - **Replay not possible** (no run spec, or `overrides` is false, as for
   importer-backed adapters that record a provider trace after the run): say that
