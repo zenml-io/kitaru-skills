@@ -1,16 +1,21 @@
 ---
 name: kitaru-model-swap
-description: Help a user choose the right model for their agent from its own recorded traces, comparing quality, cost, speed, and openness. Use when a user asks which model is best for their agent, whether to switch or upgrade models, how an open, local, Ollama, cheaper, faster, or newer model would do, how to cut LLM cost or avoid provider lock-in, or wants to compare models on production traffic before shipping a change. Imports traces, sends each recorded model call to candidate models with the kitaru/model-swap analyzer, renders an HTML report, collects the user's verdicts on the differences, scores quality from those verdicts, and hands finalists to a replay experiment when the agent supports it.
+description: Help a user choose the right model for their agent from its own recorded traces, comparing quality, cost, speed, and openness. Use when a user asks which model is best for their agent, whether to switch or upgrade models, how an open, local, Ollama, cheaper, faster, or newer model would do, how to cut LLM cost or avoid provider lock-in, or wants to compare models on production traffic before shipping a change. Audits the agent's prompt first, then works in two stages. A cheap screen sends each recorded model call to candidate models (model, effort, and prompt combinations) with the kitaru/model-swap analyzer to rule candidates out, and full replays of the finalists, graded on outcomes per question type, decide. Collects the user's verdicts on the differences along the way.
 ---
 
 # Kitaru model swap
 
 Help the user choose the right model for their agent: better, cheaper, faster,
-or open. Kitaru sends each recorded model call, exactly as it was recorded, to
-candidate models and compares their answers. It does not re-run the agent, and
-it runs on the user's worker with the user's keys. The user's own verdicts on
-the differences decide quality; a replay experiment confirms the finalists end
-to end.
+or open. The choice runs in two stages. First, a cheap screen: Kitaru sends each
+recorded model call, exactly as it was recorded, to candidate models and
+compares their answers with today's model, on the user's worker with the user's
+keys, without re-running the agent. The screen rules candidates out; it does not
+pick a winner. Second, full replays of the finalists, graded on outcomes,
+decide. The user's verdicts on the differences guide both.
+
+Before comparing models, check the agent's prompt: an under-specified prompt
+often costs more than a weaker model, and a fixed prompt can change which model
+is worth paying for.
 
 Recommend; do not decide. Never change the agent's configuration yourself.
 
@@ -32,7 +37,13 @@ Recommend; do not decide. Never change the agent's configuration yourself.
   compared and scored like every other candidate, and its agreement with its own
   recording is the noise floor.
 - Agreement means "behaves like today's model", not "is right". Never present
-  agreement as quality on its own; quality comes from the user's verdicts.
+  agreement as quality on its own; quality comes from the user's verdicts and
+  from full replays graded on outcomes.
+- The screen rules candidates out; full replays pick. Never name a winner from
+  the screen alone.
+- Audit the prompt before comparing models, and compare models under the best
+  prompt found, not under a prompt one candidate happens to suit.
+- Do not add a judge or decision model by default; see step 3.
 - Report provider failures (timeouts, rate limits, HTTP errors, empty replies,
   tool-call parse errors, refusals, replies truncated by the token limit) as
   setup problems, never as model quality.
@@ -50,7 +61,7 @@ Recommend; do not decide. Never change the agent's configuration yourself.
   coverage shows `missing_tool_schema` skips, or before importing traces that
   are known to lack tool definitions.
 - Read [references/verdict-quality.md](references/verdict-quality.md) before
-  step 5 and whenever you report quality.
+  step 6 and whenever you report quality.
 
 ## 1. Set up and import
 
@@ -69,7 +80,52 @@ Recommend; do not decide. Never change the agent's configuration yourself.
 
 If the user already has an import, reuse it.
 
-## 2. Ask what matters, then choose candidates
+## 2. Audit the prompt before comparing models
+
+A weak prompt can cost more than a weak model. In a 12-model underwriting
+benchmark, rewriting the system prompt lifted most models by 6 to 16 points on
+held-out cases, and one shared good prompt did as well as tuning a prompt for
+each model. So start here.
+
+Kitaru does not optimize prompts itself. Use whatever optimizer the user
+prefers to propose the rewrite: GEPA through DSPy, Claude Code's
+`/claude-api hillclimb`, the prompt tools in their tracing platform, or simply a
+strong model that reads the failures and rewrites the prompt. Kitaru's part is
+what makes the rewrite testable and believable: real cases from the recorded
+sessions, full replays of the agent, grading the user has checked, held-out
+sessions, and measured noise.
+
+1. Read the agent's system prompt (the first system message of a sampled
+   `llm_call` node, or the agent's code) and audit it as text. Look for: no rule
+   for how and when to give the final answer; room to hedge or give several
+   answers; no instruction to ask for missing facts; no instruction to rely on
+   the agent's tools and data rather than memory; rules that contradict each
+   other; special cases that read like patches. Quote each finding and propose
+   a rewrite made of general instructions, or produce one with the user's
+   optimizer, fed only the tuning cohort's failures. Never put facts, answers, or
+   failures from recorded sessions into the prompt: the prompt would then be
+   tuned to the cases it is judged on.
+2. Judge a rewrite on outcomes, never with the step screen. The screen measures
+   how much a candidate acts like today's prompt and model, so it marks a
+   better prompt down just as it marks a better model down.
+3. When the agent can be replayed with overrides (the capability check in step
+   7) and its adapter applies a `system_prompt` override (the Pydantic AI
+   adapter does; check the adapter's documentation otherwise), test the rewrite
+   with the `kitaru-replay-experiment` skill: create a tuning cohort and a
+   held-out cohort from disjoint sessions, run the rewrite (a `system_prompt`
+   override, plus `model_params` for an effort change) on the tuning cohort,
+   keep it only if outcomes improve there, then run it once on the held-out
+   cohort next to a no-override run of today's setup for noise. Report the
+   held-out result with its interval.
+4. When the agent cannot be replayed, the audit stays a recommendation. Today's
+   model with the rewritten prompt can still join the screen as its own
+   candidate (`system_prompt`), as a check that nothing breaks (failures,
+   truncated replies, malformed tool calls), not as a quality score.
+5. Carry the winning prompt forward: from step 3 on, compare other models
+   under it. If the user declines the audit, say that model differences found
+   under the current prompt may shrink once the prompt is fixed.
+
+## 3. Ask what matters, then choose candidates
 
 Ask one question: what matters most for this agent right now: better answers,
 lower cost, faster replies, or not being locked to one provider? Several answers
@@ -85,18 +141,26 @@ guess an origin the user has not confirmed.
 When the steps are hard or answers vary, suggest `repeats` of 2 or 3 to read
 run-to-run noise, and say it multiplies calls and spend.
 
-Suggest a small set, one line each, covering those goals. A candidate is a
-setting, not only a model: today's model at a lower `reasoning_effort`, or with
-a cleaned-up `system_prompt`, is often the cheapest change that holds quality,
-so offer those next to other models. Only use a prompt the user wrote or
-approved, and never build one from the recorded failures, which would tune the
-prompt to the very calls it is then judged on.
+Ask how the sessions mark the kind of question or request (a tag, a metadata
+field, or the opening user message), so results can be broken down by type;
+the model that wins overall can lose on the type the user cares about.
 
-- the model the agent uses today, as the `reference`. Always include it: today's
-  model run again is the noise floor, and without it the report cannot tell a
-  real difference from run-to-run variation (it says so in its notes);
-- today's model at a lower effort level, and with a cleaned-up prompt when the
-  user has one, each as its own named candidate;
+Suggest a small set, one line each, covering those goals. A candidate is a
+combination of model, effort level, and prompt, each under its own `name`.
+Keep the grid small: today's model with {the current prompt, the audited
+prompt} and {its default effort, one level up or down}, then every other model
+with the audited prompt only (`system_prompt` on each, so the comparison is
+fair). A prompt tuned for one model usually serves the others as well, so offer
+a model-specific prompt only when a finalist falls behind under the shared one,
+and tune it on the tuning cohort like any other change. Only use a prompt the
+user wrote or approved, and never build one from the recorded failures.
+
+- the model the agent uses today, as the `reference` (with its recorded prompt,
+  which a reference cannot replace). Always include it: today's model run again
+  is the noise floor, and without it the report cannot tell a real difference
+  from run-to-run variation (it says so in its notes);
+- today's model with the audited prompt, and at one other effort level, each as
+  its own named candidate;
 - one open-weight model on a hosted provider (`"open_weights": true`);
 - one local model if Ollama is installed (`ollama list` shows what is available;
   base URL `http://localhost:11434/v1`, price zero, `"open_weights": true`);
@@ -121,7 +185,13 @@ values; a judge is sent both answers it compares. Recorded trace content goes
 to that decision service (TypeSafe, Cloudflare, or OpenAI), not only to the
 candidate providers the user already chose.
 
-When the review load is large, offer a decision-model judge to order it:
+Do not add a judge by default. In tests, decision-model judges changed 12 to 20
+percent of their rulings when only the order of the two answers changed, and
+rated almost every step of every model as sound, so they order a review at
+best. Offer one only when the user asks for help ordering a large review, or
+when the agent's steps are mostly choices among fixed options (routing, approve
+or deny), where a decision candidate may take over those choices. In that case
+the options are a decision-model judge to order the review:
 TypeSafe Jev (`"judge": {"kind": "jev"}`, key `TYPESAFE_API_KEY`; Jev may
 require early access from TypeSafe), Cloudflare Clef on Workers AI (`"kind":
 "clef"` with the account's run URL, which contains the account ID, as
@@ -168,7 +238,7 @@ Pick a judge that is neither a candidate nor today's model: a model may favor
 answers like its own, and the report notes it when a chat judge runs a
 candidate's model or the recorded one.
 
-## 3. Estimate, approve, run
+## 4. Estimate, approve, run
 
 1. Run the analyzer with `"dry_run": true`, render the report, and show the
    user: calls per candidate, estimated spend per candidate and in total, and
@@ -207,7 +277,7 @@ candidate's model or the recorded one.
 6. If the run stopped early (`max_spend` or `time_budget`), say so and offer to
    rerun with a smaller `max_calls` or a higher cap.
 
-## 4. Show the comparison
+## 5. Show the comparison
 
 Render
 `kitaru insight report --import-id IMPORT_ID --out model-swap-report.html` and
@@ -222,6 +292,7 @@ the notes flag an unstable judge. Open a handful of raw disagreements yourself
 and show them to the user: a wrong grader or a contradictory recorded answer
 explains a surprising number more often than the model does.
 
+Present the report as stage 1: who to rule out, and who is worth a full replay.
 Then lead with the report's **Best for** rows, ordered by
 what the user said matters. When the report names no **Cheapest** or
 **Fastest** candidate, say why in its words: no candidate behaves like today's
@@ -257,7 +328,7 @@ trusted for decisions. When decision calls or a large partial share exist,
 offer to try a decision model on them as a `decision_candidates` entry (Jev,
 Clef, or OpenAI Decisions; same `kind`, `base_url`, `model`, `api_key_env`,
 and `price` fields as a decision judge, plus a `name`), after telling the user
-what it is sent (see step 2), with the same key setup, dry-run, price, and
+what it is sent (see step 3), with the same key setup, dry-run, price, and
 approval steps as any paid run. A run may hold only decision candidates, with
 `candidates` empty. Report its tool-choice agreement, how often all its
 decisions matched, per-argument agreement, failures, and `calls_not_run`. For
@@ -270,7 +341,7 @@ still needs an LLM for the rest. Explain that moving a partial call means
 changing the agent to decide with the decision model and generate the rest
 with an LLM.
 
-## 5. Judge the differences
+## 6. Judge the differences
 
 Review happens here in chat because the Kitaru dashboard has no view that
 compares a candidate's answer with the recorded one. Each verdict is still
@@ -303,12 +374,12 @@ per candidate following
 many disagreements were reviewed. A candidate that differs from today's model
 can score higher than it.
 
-## 6. Prove the finalists
+## 7. Prove the finalists
 
 Start from the report's **Worth a full replay** row: every candidate except
 clear failures, plus the cheapest. Step agreement often ranks a cheap model that
 keeps outcomes low, so do not cut the list to the top few by agreement rate.
-With the user, remove only candidates the goals from step 2 rule out (price,
+With the user, remove only candidates the goals from step 3 rule out (price,
 provenance, openness, latency) or that the verdicts show getting important
 calls wrong, and keep the cheapest candidate the user would accept even if it
 ranks low. A full replay of a few dozen sessions usually costs a few dollars
@@ -349,6 +420,14 @@ Before handing off, settle what a full replay can show:
   twice on a few sessions and report whether any verdict changed before
   trusting it. Keep replays that timed out, errored, or were cut off out of the
   quality denominator and report them apart.
+- **Conversation discipline.** Add checks, as their own evaluation results,
+  for how the agent ran the conversation: it gave a final answer; it did not
+  end on a question to the user; it gave one committed answer rather than
+  alternatives; it stayed within its step and turn limits; its tool calls were
+  well formed. Report these apart from wrong answers: they are usually fixed by
+  the prompt, not by a different model.
+- **Per type.** Break results down by the question or request type from
+  step 3, with counts, next to the overall numbers.
 
 Check whether the agent can replay with a model override: run
 `kitaru agent version get AGENT@VERSION`. Replay is possible only when the
@@ -377,7 +456,7 @@ this; the agent version does.
   through a Kitaru adapter that supports overrides would make end-to-end replay
   possible, and offer `kitaru-adapter-builder` when the user wants that.
 
-## 7. Recommend
+## 8. Recommend
 
 End with a recommendation, not a decision, framed by the user's goals:
 
@@ -406,6 +485,10 @@ End with a recommendation, not a decision, framed by the user's goals:
   (`held_out: too_few`); and say that today's cost comes from the reference's
   replay when there is one (`today_source`). A mix is a shortlist too: replay it
   before routing traffic;
+- results per question or request type and the conversation-discipline
+  failures, apart from wrong answers, for today's setup and each finalist;
+  when discipline failures dominate, recommend fixing the prompt before
+  switching models;
 - that costs per session and month assume the recorded number of steps: point
   to tokens per call, and say a full replay is needed to know cost per task for
   a model that may take more turns or retries;
