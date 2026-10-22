@@ -156,15 +156,18 @@ for the bundled price lookup), `provider_settings`, `system_prompt` (a prompt
 sent instead of every recorded system and developer message, including any
 per-call context there, to compare a cleaned-up prompt as its own candidate;
 counted in spend estimates; the notes name such candidates; not allowed on the
-reference), `system_prompt_nodes` (node names whose calls get it; empty means
+reference; policy text in user messages remains unchanged),
+`system_prompt_nodes` (node names whose calls get it; empty means
 every call). A setting is a candidate too: the same `model` can
 appear under several names with a different `reasoning_effort` or
 `system_prompt`.
 
 `provider_settings`: `api` (`chat_completions`, default, or `responses` for
-OpenAI's `/responses`, which OpenAI's reasoning models need to call tools with
-reasoning on; tool calls then come back natively, so leave `tool_call_format`
-at `native`), `tool_call_format` (`native`, `hermes`, `json_content`),
+OpenAI's `/responses`; explicitly select `responses` for OpenAI reasoning
+models using function tools, including GPT-5.6, and preserve the intended
+`reasoning_effort`; tool calls then come back natively, so leave
+`tool_call_format` at `native`), `tool_call_format` (`native`, `hermes`,
+`json_content`),
 `reasoning_effort`, `max_tokens`, `max_tokens_field` (`max_completion_tokens` or
 `max_tokens`), `temperature`, `extra_body`, `timeout_seconds` (default 120),
 `max_retries` (default 1).

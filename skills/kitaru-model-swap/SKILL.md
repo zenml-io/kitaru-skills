@@ -95,8 +95,10 @@ what makes the rewrite testable and believable: real cases from the recorded
 sessions, full replays of the agent, grading the user has checked, held-out
 sessions, and measured noise.
 
-1. Read the agent's system prompt (the first system message of a sampled
-   `llm_call` node, or the agent's code) and audit it as text. Look for: no rule
+1. Read the agent's instructions in a sampled `llm_call` node or the agent's
+   code and audit them as text. Inspect system and developer messages and the
+   first user message, which may contain policy text. Absent system or developer
+   messages alone do not show that instructions were lost. Look for: no rule
    for how and when to give the final answer; room to hedge or give several
    answers; no instruction to ask for missing facts; no instruction to rely on
    the agent's tools and data rather than memory; rules that contradict each
@@ -231,8 +233,10 @@ Confirm the connection lists the expected `secret_keys` without reading values.
 
 Ask about provider settings only when relevant: a model served without a
 tool-call parser needs `tool_call_format: "hermes"`; reasoning models may need
-`reasoning_effort`; OpenAI's reasoning models (GPT-6 and later) refuse tools
-with reasoning on at `/chat/completions`, so give them `"api": "responses"`.
+`reasoning_effort`. For OpenAI reasoning models using function tools, including
+GPT-5.6, explicitly set `provider_settings.api` to `"responses"` and preserve
+the intended `reasoning_effort`. Select the API explicitly rather than inferring
+it from the model name, falling back between endpoints, or disabling reasoning.
 
 Pick a judge that is neither a candidate nor today's model: a model may favor
 answers like its own, and the report notes it when a chat judge runs a
