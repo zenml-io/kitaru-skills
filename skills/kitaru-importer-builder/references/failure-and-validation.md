@@ -177,18 +177,20 @@ After registration or import trouble, preserve every identifier before doing any
 - source-code blob and digest;
 - payload blob;
 - job and task;
-- created session IDs, provider, and external IDs;
+- selected server version and verified deduplication scope;
+- logical destination agent ID and requested agent version;
+- created or existing session IDs, provider, external IDs, and actual agent-version provenance;
 - created, skipped, and failed counts;
 - sampled failures and the total failed count;
 - post-import tag results.
 
-Re-read current state and classify each relevant external identity:
+Re-read current state for each provider/external ID across the [applicable server scope](importer-contract.md#identity-and-deduplication): all versions of the logical destination agent on servers 0.24.0 and newer, globally on 0.23.0. Keep the requested version separate from each existing session’s actual version, then classify:
 
 | Classification | Evidence | Safe next step |
 |---|---|---|
 | Untouched | No matching session; item never ran | Include only this item in a newly approved import when supported |
 | Complete | Session and expected node set exist | Keep it; do not rerun |
-| Skipped duplicate | Matching provider/external ID already exists | Inspect the existing session and its digest/provenance |
+| Skipped duplicate | Matching provider/external ID already exists in the applicable scope | Inspect the existing session, actual agent version, and digest/provenance |
 | Stale duplicate | Existing digest differs or the local joined export has more turns | Stop; require a frozen snapshot or an installed targeted repair path |
 | Incomplete | Session exists but expected nodes or payloads are missing | Stop; use an installed targeted repair path only if one exists |
 | Unrecoverable here | Incomplete state and no safe repair/delete operation exists | Preserve IDs and escalate the product limitation |
@@ -197,6 +199,6 @@ Do not infer untouched items merely from the failure sample: the reference recei
 
 A waiter timeout does not cancel the job. Read job state before retrying or creating another job.
 
-A parser may yield valid sessions before crashing. Session creation may also succeed before node ingestion fails. With a stable nonempty registered provider, reruns deduplicate on provider and external ID, so a direct retry can skip the incomplete session rather than repair it. Without a provider, do not assume a retry will skip duplicates.
+A parser may yield valid sessions before crashing. Session creation may also succeed before node ingestion fails. With a stable nonempty registered provider, reruns deduplicate within the applicable server scope, so a direct retry can skip the incomplete session rather than repair it. A new agent version or importer version does not change the key or update existing nodes. Without a provider, do not assume a retry will skip duplicates.
 
 Patch the importer locally, create a new immutable version after approval, and propose the smallest recovery payload only when the installed product exposes a safe route. Never delete, reimport, or change external IDs merely to bypass a collision without explicit user direction and a documented provenance consequence.

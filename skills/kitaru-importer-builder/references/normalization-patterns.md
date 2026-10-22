@@ -50,7 +50,7 @@ Percent-encode each UTF-8 component independently, including `/`, `%`, and `:`, 
 
 The source-instance node prefix may be omitted only when the provider guarantees that native trace and node identities are globally unique across every source instance handled by the registered importer.
 
-A nonempty importer registration provider and the session external ID form the remote deduplication key. Include any additional account or project scope in the external ID when the same registered provider can import several isolated source instances. Provider-less imports are not reliably deduplicated; require a stable provider before depending on duplicate skips or safe retries.
+Keep the provider and session external ID stable across destination agents and versions. The [server-version contract](importer-contract.md#identity-and-deduplication) scopes this pair to the logical destination agent on servers 0.24.0 and newer, but globally on 0.23.0. Include any additional account or project scope in the external ID when the same registered provider can import several isolated source instances. Provider-less imports are not reliably deduplicated; require a stable provider before depending on duplicate skips or safe retries.
 
 Reject conflicting required identity inside one source group. Do not silently select one of two conversation IDs or merge records from different account scopes.
 
@@ -101,7 +101,7 @@ Sorting by timestamp and trace ID is not enough when clocks differ, precision cr
 
 Preserve every turn's original trace ID and root tree. Do not fabricate a parent edge between turn roots merely to make one connected tree.
 
-Before remotely importing joined turns, establish whether the source conversation is closed or can still receive turns. A provider plus session external ID is a snapshot identity, not an append operation. For a growing conversation, wait for a frozen export boundary or use a provider-native immutable segment identity. Do not import an early snapshot under the final conversation identity and expect a later export to extend it; deduplication can preserve the shorter session.
+Before remotely importing joined turns, establish whether the source conversation is closed or can still receive turns. A provider plus session external ID identifies a snapshot within the applicable server deduplication scope, not an append operation. For a growing conversation, wait for a frozen export boundary or use a provider-native immutable segment identity. Do not import an early snapshot under the final conversation identity and expect a later export to extend it; deduplication can preserve the shorter session.
 
 ## Build the node tree
 
@@ -206,4 +206,4 @@ The digest must:
 - remain stable for exact duplicate source records;
 - change when mapped semantic content, identity, hierarchy, status, or order changes.
 
-Before a remote import, compare the local digest and `source_trace_count` with the existing session metadata for each expected external ID when the installed session-read surface exposes them. A differing digest or larger local turn count is a stale duplicate, not a harmless skip: stop and report that the existing session will not be extended automatically. When the existing metadata cannot be read, treat incremental imports of joined conversations as unsupported and require a frozen snapshot. The digest does not change Kitaru's deduplication key or repair an existing session.
+Before a remote import, compare the local digest and `source_trace_count` with the existing session metadata for each expected provider/external ID across every version of the logical destination agent (globally on server 0.23.0), following the [server-version contract](importer-contract.md#identity-and-deduplication), when the installed session-read surface exposes them. A differing digest or larger local turn count is a stale duplicate, not a harmless skip: stop and report that the existing session will not be extended automatically. When the existing metadata cannot be read, treat incremental imports of joined conversations as unsupported and require a frozen snapshot. The digest does not change Kitaru's deduplication key or repair an existing session.
