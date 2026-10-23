@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kitaru Model Swap"
+  short_description: "Choose the right model for your agent from its own traces"
+  default_prompt: "Use $kitaru-model-swap to help me choose the right model for my agent from its recorded traces: better, cheaper, faster, or open."

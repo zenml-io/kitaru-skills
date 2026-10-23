@@ -1,6 +1,6 @@
 {
   "name": "kitaru",
-  "description": "Experience Kitaru through hosted onboarding or a public tour, build integrations, investigate sessions, and run bounded replay experiments and evaluator validation",
+  "description": "Choose the right model for your agent from its own traces, experience Kitaru through hosted onboarding or a public tour, build integrations, investigate sessions, and run bounded replay experiments and evaluator validation",
   "version": "0.18.0",
   "author": {
     "name": "ZenML",
@@ -33,6 +33,7 @@
     "evaluators",
     "replay-experiments",
     "mcp",
-    "evaluator-validation"
+    "evaluator-validation",
+    "model-comparison"
   ]
 }
