@@ -176,12 +176,15 @@ models using function tools, including GPT-5.6, and preserve the intended
 
 Run-level: `best_for`, a list of `{goal, candidate, why}`. "Closest to today"
 is the non-reference candidate that most often matches today's model.
-"Cheapest" and "Fastest" are named only among candidates within 10 points of
-how often the reference matches itself (or the closest candidate's rate
-without a reference), and are left out when none is that close or the
-reference matches itself less than half the time; "Cheapest" names the
-reference when no comparable candidate costs less. "Best open model" is the
-closest open-weight candidate. "Worth a full replay" lists every candidate
+"Cheapest" and "Fastest" are named only among comparable candidates that are
+also cheaper or faster than today's model. A candidate is comparable when its
+rate is within 10 points of how often the reference matches its own recording,
+both measured on the calls the two answered (the closest candidate's rate
+without a reference). When no candidate qualifies, or the reference matches
+itself less than half the time, the row is kept with an empty `candidate` and
+`why` says why and names the cheapest candidate outside the band; the report
+shows it as "No pick". "Best open model" is the closest open-weight candidate,
+with a "No pick" row when none can be ranked. "Worth a full replay" lists every candidate
 except clear failures (under half the closest candidate's rate), plus the
 cheapest, joined by ` + `. Candidates failing over 20% of calls are excluded
 throughout, and the reference is never its own pick.

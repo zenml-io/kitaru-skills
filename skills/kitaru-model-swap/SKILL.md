@@ -298,8 +298,8 @@ explains a surprising number more often than the model does.
 
 Present the report as stage 1: who to rule out, and who is worth a full replay.
 Then lead with the report's **Best for** rows, ordered by
-what the user said matters. When the report names no **Cheapest** or
-**Fastest** candidate, say why in its words: no candidate behaves like today's
+what the user said matters. When a **Cheapest** or **Fastest** row says
+"No pick", say why in the report's words: no candidate behaves like today's
 model often enough, or today's model varies too much from run to run for step
 agreement to vouch for an equivalent. Do not pick one yourself from the rates;
 point to the **Worth a full replay** row instead. Then summarize each candidate
