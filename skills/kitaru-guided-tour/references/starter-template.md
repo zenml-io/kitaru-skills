@@ -59,6 +59,10 @@ Do not choose recorded history merely because baseline traces exist. Use history
 
 Re-read durable Kitaru state before every setup write or retry:
 
+Before concluding that no usable sessions exist or proposing an import, determine the selected server version. With a stable nonempty provider, servers 0.24.0 and newer deduplicate on `(imported_from, external_id, agent_id)`: check the checked-in evidence's expected provider/external-ID identities across all versions of the same logical agent. Server 0.23.0 uses the global `(imported_from, external_id)` pair, so check across agents too. For unknown or other legacy server versions, verify the runtime contract before choosing a scope. Use supported bounded reads, not just the requested version, current import task, or tag. If the installed reads cannot establish whether those identities are occupied, preserve the known IDs and report that recovery cannot yet be determined.
+
+An occupied identity under another version is existing evidence with that actual version’s provenance, not a match for the requested version. Keep exact-version and evidence matching as the reuse gate. When occupied keys have mismatched or incomplete evidence, preserve the agent, version, session, and import IDs and present an explicit recovery or collision choice through supported product operations. Obtain approval for the chosen write. Do not blindly retry, create a version, or change source IDs to bypass the occupied keys.
+
 1. Resolve the exact `returns-resolver` parent and version whose entrypoint and source identity match the checkout.
 2. Inspect relevant active and completed import jobs.
 3. Resolve sessions through the exact import task when possible, then use `returns-baseline` as a convenient index rather than sole proof of provenance.

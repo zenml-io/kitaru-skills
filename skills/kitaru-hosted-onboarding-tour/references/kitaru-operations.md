@@ -8,10 +8,10 @@ The hosted runtime contract is fixed: use `kitaru`, `/app/.venv/bin/python`, and
 
 `prepareOnboardingRunner` already establishes the runner, selected cloud workspace, template directory, and worker. Do not repeat those checks unless its result reports a blocker.
 
-Use the status returned by `prepareOnboardingRunner`; rerun it only when that result is missing, failed, or stale. Do not run separate version, adapter-import, provider-import, credential, or worker probes. Then make one targeted Kitaru state read:
+Use the status returned by `prepareOnboardingRunner`; rerun it only when that result is missing, failed, or stale. Retain the selected server version separately from the bundled CLI version; if the runner result does not establish the server’s deduplication contract, report that missing capability before proposing an import. Do not run separate version, adapter-import, provider-import, credential, or worker probes. Then make one targeted Kitaru state read:
 
 1. Resolve the `returns-resolver` parent and exact version whose entrypoint and source identity match the bundled template.
-2. Read only relevant active or completed imports and the sessions they produced.
+2. Read only relevant active or completed imports and the sessions they produced, including expected provider/external-ID occupancy in the applicable server scope below. A version, task, or tag filter alone cannot establish that an import is missing.
 3. Confirm that usable sessions belong to the resolved version and retain full trace payloads.
 
 Do not list all workspace resources as a substitute for this targeted read. Do not run discovery loops that try several speculative commands. If a verified form fails because the installed version rejects it, inspect that command's installed help once. If the correction is not clear from that one help result, stop and report the exact command and error rather than creating probe objects.
@@ -105,6 +105,10 @@ A matching template route requires more than the parent name:
 - sessions belong to that exact version and have complete trace payloads.
 
 A same-name parent without this proof is a collision, not a match.
+
+Before concluding that no usable sessions exist or proposing the initial import, check the checked-in evidence’s expected provider/external-ID identities in the selected server’s deduplication scope. A hosted server at 0.23.0 uses the global `(imported_from, external_id)` pair, so this check must include other agents. Use the selected server version, not the bundled 0.23 CLI version: servers 0.24.0 and newer scope the key to the logical agent across all its versions. See the [version contract](../../kitaru-importer-builder/references/importer-contract.md#identity-and-deduplication); verify unknown or other legacy runtime contracts before relying on a scope. Use supported bounded reads and inspect identity metadata rather than assuming the `returns-baseline` listing proves absence. If those reads cannot establish occupancy, preserve the known IDs and report the blocked recovery decision.
+
+An occupied key does not prove a reusable population. Retain the session’s actual agent and version, import provenance, and payload completeness. Another version’s evidence still fails the exact-version match above. For occupied keys with mismatched or incomplete evidence, preserve the IDs and ask for an explicit supported recovery or collision choice before any write. A retry or a new agent version will not repair the evidence; on 0.23.0, even an isolated demo parent still collides with the same global source identities. Keep provider and external IDs stable rather than changing them to bypass the collision.
 
 For downstream recovery, follow relationships outward from the exact session set. A unique investigation with the same ordered sessions and prepared questions can be offered for resumption. A unique cohort version containing the human-reviewed members and evaluator version scoped to the same agent can be resumed. When uniqueness or ownership is unclear, ask rather than choosing by recency or name.
 
