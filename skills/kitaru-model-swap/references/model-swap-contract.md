@@ -163,14 +163,79 @@ appear under several names with a different `reasoning_effort` or
 `system_prompt`.
 
 `provider_settings`: `api` (`chat_completions`, default, or `responses` for
-OpenAI's `/responses`; explicitly select `responses` for OpenAI reasoning
-models using function tools, including GPT-5.6, and preserve the intended
-`reasoning_effort`; tool calls then come back natively, so leave
-`tool_call_format` at `native`), `tool_call_format` (`native`, `hermes`,
-`json_content`),
+OpenAI's `/responses`), `tool_call_format` (`native`, `hermes`, `json_content`),
 `reasoning_effort`, `max_tokens`, `max_tokens_field` (`max_completion_tokens` or
 `max_tokens`), `temperature`, `extra_body`, `timeout_seconds` (default 120),
 `max_retries` (default 1).
+
+## Provider and replay compatibility
+
+Select `provider_settings.api` explicitly for the provider, model, and tool
+combination. For OpenAI, use `responses` when the model requires it or rejects
+reasoning with function tools on chat completions. Preserve the intended
+`reasoning_effort` when supported and keep `tool_call_format: "native"` for
+native tool calls. Report an unsupported combination as blocked; silently
+dropping reasoning or switching to text-parsed tools changes the candidate.
+
+### Claude screening through the compatibility API
+
+For compatible credentials, add this candidate to the bounded analyzer params;
+replace `CLAUDE_MODEL_ID` with a currently available model ID for the account:
+
+```json
+{
+  "name": "claude-screening",
+  "base_url": "https://api.anthropic.com/v1",
+  "model": "CLAUDE_MODEL_ID",
+  "api_key_env": "ANTHROPIC_API_KEY",
+  "provider_settings": {
+    "api": "chat_completions",
+    "tool_call_format": "native",
+    "max_tokens": 2048,
+    "max_tokens_field": "max_tokens"
+  }
+}
+```
+
+Have the user supply `ANTHROPIC_API_KEY` through the analyzer connection as
+above, retaining its other secrets. Verify current pricing before setting the
+spend cap.
+
+Check [Anthropic's compatibility documentation](https://platform.claude.com/docs/en/cli-sdks-libraries/libraries/openai-sdk)
+for the chosen model and key. Personal or service account keys without workspace
+scope require `anthropic-workspace-id` on each request. The current analyzer
+sends only Bearer authentication and exposes no custom-header setting; its
+parameter models reject unknown fields, and `extra_body` adds JSON body fields,
+not headers. If the key requires that header or another unsupported setting,
+report the candidate as blocked with the missing configuration. Do not invent
+a header parameter, substitute a body field, or change product code to run it.
+
+This is compatibility screening, not native Claude full replay equivalence.
+Anthropic ignores function `strict`, `response_format`, and `reasoning_effort`
+here, and hoists and concatenates system/developer messages into the initial
+system prompt. Record these differences with the result; a successful request
+does not establish equivalent structured output, reasoning, or prompt order.
+
+### Native PydanticAI full replay
+
+Before proposing native Claude replay, inspect the replay worker's project,
+installed adapter and PydanticAI versions, dependency constraints, and lockfile.
+The quickstart installs `kitaru-pydantic-ai[openai]`; the adapter currently
+publishes only an `openai` extra. Native Anthropic support comes from
+[`pydantic-ai-slim[anthropic]`](https://ai.pydantic.dev/models/anthropic/), not
+`kitaru-pydantic-ai[anthropic]`. Choose a version compatible with the installed
+adapter and the project's resolved dependencies. Verify the resulting lockfile
+and Anthropic SDK compatibility; an older observed SDK failure is not evidence
+for a blanket version pin.
+
+Verify that the worker can construct the native Anthropic model with its own
+credentials and required provider configuration before starting paid replay.
+For a supported PydanticAI construction path, translate the analyzer candidate
+to the replay `model` string `anthropic:CLAUDE_MODEL_ID`; the analyzer's base URL
+is not a native provider configuration.
+The analyzer's `model-swap` connection does not configure the replay worker's
+provider. Preserve the explicit replay tool policy and report missing provider
+support or configuration as blocked.
 
 ## Report fields
 

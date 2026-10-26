@@ -62,6 +62,9 @@ Recommend; do not decide. Never change the agent's configuration yourself.
   are known to lack tool definitions.
 - Read [references/verdict-quality.md](references/verdict-quality.md) before
   step 6 and whenever you report quality.
+- Read [references/replay-method.md](references/replay-method.md) before planning
+  any full replay, including the prompt audit: required handoff, outcome grading,
+  matched controls, small cohorts, and full-replay repetitions.
 
 ## 1. Set up and import
 
@@ -113,12 +116,14 @@ sessions, and measured noise.
 3. When the agent can be replayed with overrides (the capability check in step
    7) and its adapter applies a `system_prompt` override (the Pydantic AI
    adapter does; check the adapter's documentation otherwise), test the rewrite
-   with the `kitaru-replay-experiment` skill: create a tuning cohort and a
-   held-out cohort from disjoint sessions, run the rewrite (a `system_prompt`
-   override, plus `model_params` for an effort change) on the tuning cohort,
-   keep it only if outcomes improve there, then run it once on the held-out
-   cohort next to a no-override run of today's setup for noise. Report the
-   held-out result with its interval.
+   with the [replay method](references/replay-method.md) and
+   [kitaru-replay-experiment](../kitaru-replay-experiment/SKILL.md): freeze
+   disjoint tuning and held-out cohorts before tuning, compare the rewrite
+   (`system_prompt`) with today's model and original prompt under otherwise
+   matched conditions, then assess the selected rewrite on untouched held-out
+   sessions. Keep model settings fixed to isolate the prompt change; test an
+   effort change separately. Report paired counts and uncertainty, and use the
+   method's small-cohort and repetition guidance before making a claim.
 4. When the agent cannot be replayed, the audit stays a recommendation. Today's
    model with the rewritten prompt can still join the screen as its own
    candidate (`system_prompt`), as a check that nothing breaks (failures,
@@ -140,8 +145,10 @@ provider's documentation states it, and pass the rules as `excluded_origins`.
 Excluded candidates are still compared but never recommended; say so, and never
 guess an origin the user has not confirmed.
 
-When the steps are hard or answers vary, suggest `repeats` of 2 or 3 to read
-run-to-run noise, and say it multiplies calls and spend.
+When the steps are hard or answers vary, suggest analyzer `repeats` of 2 or 3
+to read call-level variation, and say it multiplies calls and spend. These do
+not rerun the agent. Plan matched full-replay repetitions separately using
+[references/replay-method.md](references/replay-method.md).
 
 Ask how the sessions mark the kind of question or request (a tag, a metadata
 field, or the opening user message), so results can be broken down by type;
@@ -168,6 +175,9 @@ user wrote or approved, and never build one from the recorded failures.
   base URL `http://localhost:11434/v1`, price zero, `"open_weights": true`);
 - one cheaper tier and, when quality matters, one stronger model from the
   current provider.
+
+When provider diversity matters, consider a Claude candidate using the
+[Anthropic screening and replay guidance](references/model-swap-contract.md#provider-and-replay-compatibility).
 
 Set expectations up front when the agent delivers its final answer as a
 free-text tool argument (for example a `final_result` or `reply` tool whose
@@ -233,10 +243,12 @@ Confirm the connection lists the expected `secret_keys` without reading values.
 
 Ask about provider settings only when relevant: a model served without a
 tool-call parser needs `tool_call_format: "hermes"`; reasoning models may need
-`reasoning_effort`. For OpenAI reasoning models using function tools, including
-GPT-5.6, explicitly set `provider_settings.api` to `"responses"` and preserve
-the intended `reasoning_effort`. Select the API explicitly rather than inferring
-it from the model name, falling back between endpoints, or disabling reasoning.
+`reasoning_effort`. Select `provider_settings.api` explicitly for the provider,
+model, and tool configuration. For OpenAI, use `"responses"` when the model
+requires it or Chat Completions rejects function tools with reasoning. Preserve
+the intended supported `reasoning_effort` and native tool-call format; do not
+infer the API from a model-family list, silently fall back between endpoints,
+or disable reasoning to make a request pass.
 
 Pick a judge that is neither a candidate nor today's model: a model may favor
 answers like its own, and the report notes it when a chat judge runs a
@@ -391,19 +403,19 @@ per candidate, so replaying more finalists is cheaper than missing the right
 one; give the user that estimate before they trim further. Only a full replay
 graded on outcomes shows which finalist keeps them.
 
-Before handing off, settle what a full replay can show:
+Before handing off, read [references/replay-method.md](references/replay-method.md)
+and settle what a full replay can show:
 
 - **Headroom.** Ask for, or read from the baseline evaluation, how often today's
   model already passes. At 95% or more there is little quality left to gain:
   frame the run as "same quality, lower cost or latency", and ask whether a
   finalist holds quality, not whether it beats today's model.
-- **Noise.** Run today's model as its own arm: a second experiment on the same
-  cohort, tool policy and evaluators with no override, which replays the agent
-  unchanged and measures how much outcomes vary when nothing changes. Count
-  that arm in the cost estimate. A difference smaller
-  than that, or whose 95% interval includes zero, is no evidence: never
-  recommend switching for quality on it, and when the user is iterating, say
-  how many more sessions would resolve it.
+- **Control and noise.** Compare today's model and every finalist with the
+  same approved prompt, cohort, tool policy, and evaluators. After adopting an
+  audited prompt, the control needs that prompt override too. A no-override
+  control is appropriate only when the unchanged configuration is the intended
+  comparison. Count control runs and any matched repetitions in the estimate;
+  report differences within observed variation as inconclusive.
 - **Hard cases.** Recorded traffic skews easy, because users try what they
   expect to work. Build the cohort from a random sample of sessions plus
   sessions people found hard: complaints, escalations, human overrides, and
@@ -413,11 +425,16 @@ Before handing off, settle what a full replay can show:
   results for the random sample and the hard cases separately.
 - **Held-out sessions.** When the user changes prompts or settings between
   rounds, create two cohorts from disjoint sessions before the first round, a
-  tuning cohort and a held-out cohort, and keep a change only when the held-out cohort improves too
-  (or holds, when the goal is cost). A gain only on the tuning cohort is
-  overfitting.
+  tuning cohort and a held-out cohort. Use the held-out cases only to assess the
+  selected change, not to choose the next rewrite. A tiny split, such as five
+  sessions per side, supports exploration rather than a reliable quality or
+  equivalence claim. More repetitions measure variation; more independent
+  sessions are needed for broader evidence.
 - **The evaluator.** Prefer a programmatic check (exact label, schema, tests)
-  when the outcome allows it. An LLM evaluator should not be a finalist's
+  when the outcome allows it. Use a reviewed fixed-cohort answer key only for
+  known-case grading; use observable behavior rules for reusable evaluators.
+  Keep expected answers out of the candidate's prompt and accessible fixtures,
+  as explained in the replay method. An LLM evaluator should not be a finalist's
   model or today's model, should score each replayed session on its own
   without being told which arm produced it, and should score checkable
   yes-or-no claims rather than a 1 to 5 scale. Run it
@@ -444,15 +461,18 @@ this; the agent version does.
   framework, not to the analyzer. For Pydantic AI that is a `provider:model`
   string such as `openai:gpt-5-mini`, `openrouter:qwen/qwen3-32b`, or
   `ollama:qwen3:8b`; other frameworks name models their own way. Confirm the
-  worker that runs the agent has that provider's credentials and, for local or
-  self-hosted models, its base URL. Report a finalist the framework cannot
-  address as not replayable instead of forcing it. Then create the cohort
-  described above (`kitaru cohort create NAME --agent AGENT --session SESSION
-  ...`) and hand off to the `kitaru-replay-experiment` skill with the cohort
-  version, one experiment per finalist with its translated model string as the
-  override plus the no-override experiment for today's model, and the user's
-  verdicts as the accepted behavior for choosing or authoring an evaluator. That skill owns the
-  tool policy, approval, and interpretation.
+  worker's project environment includes the provider's compatible dependencies,
+  credentials, and configuration; the analyzer's connection and endpoint do
+  not configure native replay. Follow the provider guidance in the contract.
+  Report unsupported finalists as not replayable instead of forcing them.
+  Prepare the [complete replay handoff](references/replay-method.md#prepare-the-handoff)
+  for the prompt-matched control and one experiment per finalist. Pin exact
+  cohort-version IDs and at least one evaluator-version ID with its parameters,
+  include the complete supported overrides and an explicit tool policy, then
+  use [kitaru-replay-experiment](../kitaru-replay-experiment/SKILL.md) for
+  capability checks, approval before creation or execution, and interpretation.
+  Node-level preference verdicts inform the outcome criterion; the user must
+  accept that session-level criterion before choosing or authoring its evaluator.
 - **Replay not possible** (no run spec, or `overrides` is false, as for
   importer-backed adapters that record a provider trace after the run): say that
   a full replay is not available for this agent version, so the step-level
