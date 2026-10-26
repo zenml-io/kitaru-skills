@@ -162,26 +162,26 @@ Require a stable nonempty provider before registration when remote deduplication
 
 Proceed only when authorization covers uploading a bounded redacted payload or fetching an exact bounded provider selection. For live fetching, first review the importer and use only the intended provider credentials in the approved worker environment; local generated-code tests remain credential-free.
 
-Show the exact importer version, agent version, target tenant or project, payload or query and connection, parameters, persistence, expected session identities, and the fact that this skill has no automatic cleanup path. When the installed schema exposes `--tag`, require one unique durable smoke tag and include `--wait` because current post-import tagging requires it. If tagging is unavailable, require a disposable agent or a clearly marked isolated source identity instead. Do not write minimized smoke fixtures into the ordinary production session population without a marker that the investigation flow can exclude.
+Show the selected server version and deduplication scope, exact importer version, logical destination agent ID and agent version, target tenant or project, payload or query and connection, parameters, persistence, expected session identities, and the fact that this skill has no automatic cleanup path. When the installed schema exposes `--tag`, require one unique durable smoke tag and include `--wait` because current post-import tagging requires it. If tagging is unavailable, require a disposable agent or a clearly marked isolated source identity instead. Do not write minimized smoke fixtures into the ordinary production session population without a marker that the investigation flow can exclude.
 
-Create one import job and wait only through the installed supported mechanism. A local wait timeout does not stop the remote job. Preserve the smoke tag plus the blob, job, task, session, and terminal receipt identifiers. Tag application can fail after session import succeeds, so retain the session receipt and report that partial state rather than rerunning the import.
+Create one import job and wait only through the installed supported mechanism. A local wait timeout does not stop the remote job. Preserve the smoke tag plus the blob, job, task, session, and terminal receipt identifiers. Retain the provider/external IDs, logical agent ID, requested agent version, and each existing or created session’s actual agent-version provenance. Tag application can fail after session import succeeds, so retain the session receipt and report that partial state rather than rerunning the import.
 
 Classify the result as created, skipped duplicate, failed, or still running. Inspect representative imported sessions rather than trusting counts alone.
 
 ## Recover without compounding partial state
 
-Before proposing any retry, classify each relevant external identity:
+Before proposing any retry, inspect each relevant provider/external ID across the [applicable server scope](references/importer-contract.md#identity-and-deduplication), including every version of the same logical agent on servers 0.24.0 and newer and all agents on 0.23.0. Retain actual version provenance separately from the requested version, then classify:
 
 | State | Meaning |
 |---|---|
 | Untouched | No session exists and the item did not run |
 | Complete | Session and expected nodes exist |
-| Skipped duplicate | The same nonempty provider and external ID already existed |
+| Skipped duplicate | The same nonempty provider/external ID already existed in the applicable scope; retain its actual agent and version |
 | Stale duplicate | Existing digest differs or the local joined export contains more turns |
 | Incomplete | Session exists but expected node ingestion did not finish |
 | Unrecoverable here | Installed Kitaru exposes no safe repair or deletion path |
 
-Remember that session creation can succeed before node ingestion fails. With a stable nonempty registered provider, a direct rerun may then skip the existing external ID instead of repairing the session. Without one, a rerun may create another session instead. A growing joined conversation can produce a skip while the existing session contains fewer turns. Compare readable digest and trace-count metadata before classifying the skip; if the installed surface cannot expose that metadata, do not use incremental joined-conversation imports. Preserve evidence, patch and version the importer locally if needed, and propose only recovery operations the installed product actually exposes.
+Remember that session creation can succeed before node ingestion fails. With a stable nonempty registered provider, a direct rerun in the same deduplication scope may then skip the existing external ID instead of repairing the session, even under a new version of the same logical agent or importer. Without one, a rerun may create another session instead. A growing joined conversation can produce a skip while the existing session contains fewer turns. Compare readable digest and trace-count metadata before classifying the skip; if the installed surface cannot expose that metadata, do not use incremental joined-conversation imports. Preserve evidence, patch and version the importer locally if needed, and propose only recovery operations the installed product actually exposes.
 
 ## Finish
 

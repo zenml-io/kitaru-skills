@@ -15,7 +15,7 @@ Use this reference to inspect the installed importer surface, implement the pars
 
 ## Authority and capability fingerprint
 
-Treat the installed Kitaru version and offline schema as authoritative. Re-check the current installed schema before relying on these parser, API-fetch, and connection contracts.
+Treat the installed Kitaru SDK version and offline schema as authoritative for local commands and parser types. Determine the selected server version separately before relying on remote deduplication scope; a local SDK version alone does not establish the server contract. Re-check the current installed schema before relying on these parser, API-fetch, and connection contracts.
 
 Inspect read-only before emitting exact commands:
 
@@ -33,6 +33,7 @@ Confirm the installed parser import path in the active Python environment. Recor
 
 | Capability | Evidence to record |
 |---|---|
+| Server identity | Selected server and its reported version, separate from the local SDK version; verified deduplication scope |
 | Parser types | `Parser`, `ImportedSession`, `ImportedNode`, and `ImportFailure` import successfully; `Importer` and `FetchingImporter` when an object entrypoint is needed |
 | API fetching | Installed provider support, accepted query fields, fetch entrypoint, connection schema, and bounded provider selection |
 | Scaffold | Exact destination and overwrite behavior, or that manual file creation is required |
@@ -140,7 +141,11 @@ API import has no FILE argument. FILE cannot be combined with query flags or `--
 
 ## Identity and deduplication
 
-With a nonempty registered `provider`, Kitaru deduplicates imported sessions on that provider plus session `external_id`. Agent, agent version, owner, and content are not part of that key. Require a stable nonempty provider before claiming retry or duplicate-skip guarantees. Current registration permits an omitted provider, but provider-less imports are not reliably deduplicated because the stored uniqueness key contains a null value.
+On Kitaru servers 0.24.0 and newer, the deduplication key is `(imported_from, external_id, agent_id)`: the registered importer provider, source session identity, and logical destination agent. Agent version, owner, content, and importer version are not part of the key. Reimporting the same provider/external ID into the same agent skips it even when targeting a new agent version. A different logical agent can receive a separate copy.
+
+Server 0.23.0 uses the global `(imported_from, external_id)` pair, so the same source can collide across agents. Release 0.24.0 introduced the agent-scoped constraint through migration 006. Determine the selected server version, not just the local SDK version. For unknown or other legacy server versions, verify the applicable runtime contract before relying on either scope.
+
+Require a stable nonempty provider before claiming retry or duplicate-skip guarantees. Current registration permits an omitted provider, but provider-less imports are not reliably deduplicated because the stored uniqueness key contains a null value.
 
 Construct a collision-free namespaced external ID from stable encoded components. One readable form is to percent-encode every UTF-8 component as a URI path segment and join the encoded segments with `/`:
 
@@ -156,9 +161,9 @@ Construct node IDs from separately encoded source-instance, native-trace, and sp
 
 Consequences:
 
-- rerunning the same provider and external ID is expected to count as skipped;
-- changed content under the same identity is not automatically repaired or replaced;
-- importing the same source trace under another logical agent may still collide;
+- rerunning an occupied key in the applicable server scope is expected to count as skipped;
+- a conflict with a session from an earlier import skips it without updating its session, nodes, or agent-version provenance;
+- changing the agent version or importer version does not repair or replace an occupied key;
 - a source instance fallback such as a filename is weaker and must be reported.
 
 Use a deterministic content digest to detect changed content locally before a remote rerun. See [normalization-patterns.md](normalization-patterns.md).
