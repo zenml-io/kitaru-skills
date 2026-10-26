@@ -1,8 +1,11 @@
 # Kitaru Agent Skills
 
 This repository contains agent skills for experiencing, connecting, and using
-[Kitaru](https://kitaru.ai). They support a value-first tour of the public
-returns agent example, custom adapter and importer development, evidence-led
+[Kitaru](https://kitaru.ai). If you have your own agent traces, the main path,
+`kitaru-model-swap`, helps you choose the right model for your agent from them:
+better, cheaper, faster, or open. If you have no agent or traces yet, start with
+`kitaru-guided-tour`, a value-first tour of the public returns agent example.
+The other skills support custom adapter and importer development, evidence-led
 investigations, durable annotations, versioned cohorts, evaluator selection,
 evaluator validation, and bounded replay experiments.
 
@@ -26,8 +29,9 @@ improvement, and compare the result.
 
 | Skill | Purpose |
 |---|---|
+| [`kitaru-model-swap`](skills/kitaru-model-swap/SKILL.md) | **Start here with your own traces.** Choose the right model for an agent from its own traces (better, cheaper, faster, or open): compare candidates with the `kitaru/model-swap` analyzer after an approved dry run, judge the differences with the user, score quality from those verdicts, and hand finalists to a replay experiment when the agent supports it. |
 | [`kitaru-hosted-onboarding-tour`](skills/kitaru-hosted-onboarding-tour/SKILL.md) | Guide the controlled ZenML Pro onboarding runner through a concise, resume-safe tour that reuses exact durable state and handles pre-existing agent names without overwriting them. |
-| [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | Give a first-time user a prepared three-session frontend review of the PydanticAI returns agent example, collect human verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. |
+| [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | **Start here without traces.** Give a first-time user a prepared three-session frontend review of the PydanticAI returns agent example, collect human verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. |
 | [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Act as Kitaru's front door: verify setup, record sessions or import files or provider API traces, follow up on insight cards, guide human review, define one accepted behavior and cohort, select an evaluator, and offer a bounded replay experiment. |
 | [`kitaru-validate-evaluator`](skills/kitaru-validate-evaluator/SKILL.md) | Check a judge against criterion-specific human verdicts, inspect disagreements with visual summaries, and assess untouched cases without confusing abstentions or errors with quality. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
@@ -44,6 +48,7 @@ product handoff rather than recreating the review UI in chat.
 
 - "Resume the hosted Kitaru onboarding tour from what already exists in this workspace."
 - "I do not have an agent yet. Show me why Kitaru is useful."
+- "Which model should my agent use? Compare a cheaper and an open model on last week's traces."
 - "Give me a guided tour of Kitaru with the public returns agent example."
 - "Import last week's Langfuse traces using my existing connection and generate insights."
 - "Follow up on this Kitaru insight and check its supporting sessions."
@@ -137,8 +142,9 @@ npx skills add zenml-io/kitaru-skills
 ```
 
 When the installer asks, select the host you actually use. Include
-`kitaru-guided-tour` for the public demo and `kitaru-investigation` for your own
-agents and traces. Your agent can select a skill from context, or you can ask
+`kitaru-guided-tour` for the public demo, `kitaru-model-swap` to choose a model
+from your own traces, and `kitaru-investigation` for reviewing your own agents
+and traces. Your agent can select a skill from context, or you can ask
 for it by name. Exact invocation syntax varies by host.
 
 `kitaru-hosted-onboarding-tour` is intended for the controlled ZenML Pro
@@ -163,7 +169,8 @@ as a plugin:
 
 You can then invoke
 `/kitaru-hosted-onboarding-tour`, `/kitaru-guided-tour`,
-`/kitaru-investigation`, `/kitaru-validate-evaluator`, `/kitaru-replay-experiment`,
+`/kitaru-investigation`, `/kitaru-validate-evaluator`,
+`/kitaru-replay-experiment`, `/kitaru-model-swap`,
 `/kitaru-importer-builder`, or `/kitaru-adapter-builder` explicitly.
 
 ### Manual installation

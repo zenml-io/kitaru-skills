@@ -1,6 +1,6 @@
 ---
 name: kitaru-investigation
-description: Guide users from their own agent code or recorded traces through Kitaru setup, session import or recording, human review, an accepted behavior, a versioned cohort, and evaluator selection, then hand one bounded change to the replay-experiment skill. Use when a user wants to connect or inspect an existing agent, import real traces from files or provider APIs, follow up on a post-import insight, investigate a known bad or surprising session, discover recurring failure modes, learn the evidence-led review flow, resume an investigation, create a cohort from reviewed evidence, or author an evaluator for an accepted behavior. When a first-time user has no agent or evidence and wants a fast demonstration with the PydanticAI returns agent example, use the `kitaru-guided-tour` skill instead.
+description: Kitaru's front door. Guide users from their own agent code or recorded traces through Kitaru setup and session import or recording, then route to choosing the right model for the agent (the kitaru-model-swap skill) or to human review, an accepted behavior, a versioned cohort, and evaluator selection, then hand one bounded change to the replay-experiment skill. Use when a user wants to connect or inspect an existing agent, import real traces from files or provider APIs, follow up on a post-import insight, investigate a known bad or surprising session, discover recurring failure modes, learn the evidence-led review flow, resume an investigation, create a cohort from reviewed evidence, or author an evaluator for an accepted behavior. When a first-time user has no agent or evidence and wants a fast demonstration with the PydanticAI returns agent example, use the `kitaru-guided-tour` skill instead.
 ---
 
 # Kitaru investigation
@@ -73,14 +73,25 @@ next action after the orientation rather than repeating the whole map.
 When a first-time user has no agent or traces and wants to see why Kitaru is
 useful through the PydanticAI returns agent example, continue with the `kitaru-guided-tour`
 skill. For a generic first run with the user's own evidence, ask one user-facing
-question before choosing the review size:
+question once sessions exist:
 
-> Do you want to learn the review flow on one run, debug a specific behavior,
-> or explore several runs to discover recurring problems?
+> Do you want to find the right model for this agent (better, cheaper, faster,
+> or open), debug a specific behavior, or explore several runs to discover
+> recurring problems?
+
+List finding the right model first; it is Kitaru's main path. Always ask:
+model comparison calls paid model endpoints, so never route a vague request or
+an unanswered question into it by default. When the user chooses it, continue
+with the `kitaru-model-swap` skill and carry the agent and import IDs forward.
+Its review, cohort, and replay steps reuse this skill's method. If that skill
+is not installed, say so, suggest adding it with
+`npx skills add zenml-io/kitaru-skills` or `kitaru setup`, and offer debugging
+or discovery here in the meantime. Debugging and discovery stay here; for
+them, ask whether to learn the review flow on one run first.
 
 Use a structured question action when the host provides one. Infer the path
-without asking when the request already names a session, insight, investigation,
-or accepted behavior.
+without asking only when the request explicitly names a model choice, session,
+insight, investigation, or accepted behavior.
 
 An incomplete starter handoff takes precedence over this question. Give the
 short five-step orientation, ask only for a reachable checkout, and defer
