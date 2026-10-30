@@ -54,8 +54,9 @@ Store how the card was made under `metadata["kitaru.insights.skill/v1"]`:
   "models": {"main": "model ID", "subagents": "model ID or null"},
   "scope": {"description": "tag refunds, started after 2026-10-23", "selector": {}, "population_count": 400, "population_sha256": "hex"},
   "sample": {"seed": 1234, "targeted": 25, "random": 15, "measurement_seed": null, "measured": 0, "read_sequentially": false},
-  "pattern": {"id": "p1", "definition": "...", "status": "new", "checker_verdict": null},
-  "rate": {"basis": "measurement", "numerator": 27, "denominator": 150, "low": 0.127, "high": 0.249},
+  "pattern": {"id": "p1", "kind": "finding", "definition": "...", "status": "new", "checker_verdict": null, "rule_id": null},
+  "rate": {"basis": "measurement", "method": "subagents", "numerator": 27, "denominator": 150, "low": 0.127, "high": 0.249, "unclear": 4, "unavailable": 0},
+  "agreement": null,
   "hypothesis": {"text": "...", "path": "src/tools/orders.py", "revision": "git SHA"},
   "caveats": ["..."]
 }
@@ -63,8 +64,11 @@ Store how the card was made under `metadata["kitaru.insights.skill/v1"]`:
 
 - `level` is `standard` or `deep`. Quick cards come from the analyzer and carry its own provenance.
 - `population_sha256` is the SHA-256 of the sorted pinned IDs joined by newlines; `pick_sample.py` reports it. Two runs with the same hash covered the same sessions.
+- `pattern.kind` is `finding` (something going wrong), `bright_spot` (something going well), `opportunity` (a "what if" worth an experiment), or `coverage_gap` (a failure pattern no existing eval checks). `rule_id` names the `rules.json` rule a finding breaks, or is null.
 - `pattern.status` is `new`, `recurring`, or null when no earlier run exists. `checker_verdict` is `holds`, `narrow`, or null.
-- `rate.basis` is `census` (every session in scope was read), `exact_proxy`, `measurement`, `random_slice`, or `targeted_only`. Leave `low` and `high` null except for `measurement`. Copy the numbers from `tally.json`.
+- `rate.method` is `readers` (noticed while reading), `subagents` (judged by measurement subagents), `jev`, or `mixed` for how the numerator was found, or null for counts. `unclear` and `unavailable` count judgments kept out of the denominator.
+- `agreement` is null, or the tally's agreement table for a Jev question against reader-based membership: `{"both_yes": 3, "jev_only": 1, "readers_only": 0, "both_no": 6}`.
+- `rate.basis` is `census` (every session in scope was read), `exact_proxy`, `measurement`, `random_slice`, or `targeted_only`. Leave `low` and `high` null except for `measurement` on a sample; a measurement over every session in scope has no sampling interval. Copy the numbers from `tally.json`.
 - `hypothesis` is null when no code supports one.
 - Record model IDs only when the host reports them; otherwise write null.
 
@@ -72,7 +76,7 @@ Store how the card was made under `metadata["kitaru.insights.skill/v1"]`:
 
 Write the prompt as a briefing for a fresh coding agent with no access to this run:
 
-1. Start with setup: use the `kitaru-investigation` skill, against the named server and agent.
+1. Start with setup: use the `kitaru-investigation` skill, against the named server and agent. For an `opportunity` card, say that a confirmed cohort then goes to `kitaru-replay-experiment` with the candidate change, and that skill sets the tool policy and asks for approval.
 2. State the finding in one sentence, with the rate phrasing from the tally.
 3. List three to six session IDs to review first, with node IDs, and the counterexample.
 4. Give the hypothesis, if any, and what would confirm or refute it.

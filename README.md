@@ -30,7 +30,7 @@ improvement, and compare the result.
 | [`kitaru-hosted-onboarding-tour`](skills/kitaru-hosted-onboarding-tour/SKILL.md) | Guide the controlled ZenML Pro onboarding runner through a concise, resume-safe tour that reuses exact durable state and handles pre-existing agent names without overwriting them. |
 | [`kitaru-guided-tour`](skills/kitaru-guided-tour/SKILL.md) | Give a first-time user a prepared three-session frontend review of the PydanticAI returns agent example, collect human verdicts, turn one accepted finding into a deterministic evaluator, and finish with one approved bounded replay experiment. |
 | [`kitaru-investigation`](skills/kitaru-investigation/SKILL.md) | Act as Kitaru's front door: verify setup, record sessions or import files or provider API traces, follow up on insight cards, guide human review, define one accepted behavior and cohort, select an evaluator, and offer a bounded replay experiment. |
-| [`kitaru-insights`](skills/kitaru-insights/SKILL.md) | Read dozens to hundreds of sessions with your coding agent and its subagents, find recurring failure and success patterns that fixed counters miss, measure how common they are, and save them as insight cards that hand off to investigation. |
+| [`kitaru-insights`](skills/kitaru-insights/SKILL.md) | Read dozens to hundreds of sessions with your coding agent and its subagents, find recurring failure and success patterns that fixed counters miss, check them against your agent's own rules and eval suite, measure how common they are (optionally across every session with TypeSafe's Jev), compare agent versions, and save them as insight cards that hand off to investigation or a replay experiment. |
 | [`kitaru-validate-evaluator`](skills/kitaru-validate-evaluator/SKILL.md) | Check a judge against criterion-specific human verdicts, inspect disagreements with visual summaries, and assess untouched cases without confusing abstentions or errors with quality. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
 | [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with optional API fetching, conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
@@ -54,6 +54,7 @@ product handoff rather than recreating the review UI in chat.
 - "Help me discover recurring failure modes in last week's agent sessions."
 - "Read last week's refund-agent sessions and save the biggest problems as Kitaru insights."
 - "Do a deep dive with subagents on the sessions tagged `refunds` and tell me how common each problem is."
+- "Did last week's release change how my support agent behaves? Compare the two agent versions."
 - "Resume investigation `INVESTIGATION_ID` and show me what remains."
 - "Turn this accepted behavior and cohort into a narrow evaluator."
 - "Help me validate this TypeSafe judge against my judgments, showing disagreements before the statistics."

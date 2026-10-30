@@ -10,6 +10,7 @@ Use this reference for exact operations. Inspect `kitaru schema`, command help, 
 - [Run Quick analysis](#run-quick-analysis)
 - [Count cheaply](#count-cheaply)
 - [Export sessions](#export-sessions)
+- [Measure with the TypeSafe evaluator](#measure-with-the-typesafe-evaluator)
 - [Write, replace, and list cards](#write-replace-and-list-cards)
 - [Known gaps](#known-gaps)
 
@@ -77,6 +78,17 @@ python3 scripts/condense_sessions.py RUN/export RUN/transcripts
 ```
 
 MCP can read the same data (`kitaru_activity_read` `get` with kind `session`, and `list_children` with kind `session_nodes`, `parent_id`, `include_payloads: true`, `size` up to 100), but every payload then passes through the agent's own context, which defeats the run folder. Use MCP export only for a handful of sessions when no CLI is available; the condenser accepts saved MCP results.
+
+## Measure with the TypeSafe evaluator
+
+Jev measurement runs as an ordinary Kitaru evaluation, so its results are stored as evaluation rows with their evaluator version and params. Follow `kitaru-investigation`'s TypeSafe reference (`references/typesafe-evaluator.md`) for package installation, registration, connections, and consent; this section covers only what the insights run adds.
+
+- Find a registered TypeSafe evaluator with `kitaru evaluator list` and `kitaru evaluator version list`; its entrypoint is `kitaru_typesafe_evaluator.judge:judge`. Reuse an existing version. Its questions are params, so a new set of questions needs no new registration.
+- Write the params to `RUN/measure/jev-params.json`: `{"state": "outcome", "questions": {"insights.p1": {"type": "noul", "instructions": "..."}}}`. Question names allow letters, digits, `-`, `_`, and `.`. Use `"state": "full"` only when a question needs the system prompt or model messages; `include` narrows either view.
+- Run: `kitaru session evaluate --sessions-file RUN/population_ids.txt --evaluator EVALUATOR@VERSION --evaluator-params "EVALUATOR@VERSION=$(cat RUN/measure/jev-params.json)" --evaluator-connection EVALUATOR@VERSION=CONNECTION --wait --idempotency-key RUN_ID-jev-1`. Run the agreement check first with a sessions file holding only the read sessions.
+- Each session answers every question in one request. A session above Jev's input limit produces an `unavailable` row per question; invalid params or credentials fail the task.
+- Read the rows: `kitaru evaluation list --filter '{"field":"task_id","op":"in","value":[TASK_IDS]}' --size 1000 --output json`, following cursors, saving each page under `RUN/measure/evaluations/`. Then `python3 scripts/evaluations_to_judgments.py RUN/measure/evaluations/*.json --out RUN/measure/judgments/jev.jsonl`.
+- MCP: `kitaru_workflow_start` with `operation: "evaluation"` takes `session_ids` (at most 100) and `evaluators` (at most 100), so the CLI with `--sessions-file` suits a whole-scope run.
 
 ## Write, replace, and list cards
 
