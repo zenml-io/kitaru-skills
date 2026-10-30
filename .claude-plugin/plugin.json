@@ -1,6 +1,6 @@
 {
   "name": "kitaru",
-  "description": "Experience Kitaru through hosted onboarding or a public tour, build integrations, investigate sessions, and run bounded replay experiments and evaluator validation",
+  "description": "Experience Kitaru through hosted onboarding or a public tour, build integrations, investigate sessions, find insights across many sessions, and run bounded replay experiments and evaluator validation",
   "version": "0.18.1",
   "author": {
     "name": "ZenML",
@@ -15,6 +15,7 @@
     "ai-agents",
     "agent-evaluation",
     "error-discovery",
+    "agent-insights",
     "guided-tour",
     "onboarding",
     "trace-analysis",

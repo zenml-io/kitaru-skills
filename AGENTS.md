@@ -37,6 +37,10 @@ metadata. It is not a Python package.
   operation, review, evaluator, and replay method.
 - `skills/kitaru-investigation/references/` contains method, transport, public
   starter, and evaluator details loaded only when needed.
+- `skills/kitaru-insights/` reads many sessions with the user's coding agent
+  and optional subagents, groups recurring patterns, measures them from random
+  samples, and writes insight cards. Its `scripts/` helpers sample, condense,
+  tally, and check cards from local exports; they never contact Kitaru.
 - `skills/kitaru-validate-evaluator/` guides criterion-specific human labeling,
   exact-run comparisons, and development/test separation. Its reporting helper
   computes counts from local normalized snapshots, not new Kitaru product state.
@@ -69,7 +73,7 @@ supporting material in `references/`.
 There is no build step. Match validation to the change:
 
 - Run `python3 -m unittest discover -s tests` when changing the validation
-  reporting helper. Its fixtures are synthetic; it does not call Kitaru.
+  reporting helper or the `kitaru-insights` scripts. Their fixtures are synthetic; they do not call Kitaru.
 
 - Always inspect the final diff and run `git diff --check`.
 - For changed skills, validate frontmatter with the `skill-creator`
@@ -123,6 +127,8 @@ There is no build step. Match validation to the change:
   agent/import/session state before creating replacements.
 - Treat raw trace exports as sensitive, keep them out of version control, and
   use redacted fixtures for importer development.
+- Label skill-written insight cards as agent findings with their sampling
+  basis. Report a rate only from a random sample, never from targeted picks.
 - Treat installed Kitaru schemas as authoritative when importer commands or
   parser contracts differ from branch examples.
 - Treat the user's installed framework and Kitaru SDK as authoritative when

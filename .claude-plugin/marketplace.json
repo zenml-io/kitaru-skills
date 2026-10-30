@@ -6,7 +6,7 @@
     "url": "https://zenml.io"
   },
   "metadata": {
-    "description": "Experience Kitaru through hosted onboarding or a public tour, build integrations, investigate sessions, and run bounded replay experiments and evaluator validation",
+    "description": "Experience Kitaru through hosted onboarding or a public tour, build integrations, investigate sessions, find insights across many sessions, and run bounded replay experiments and evaluator validation",
     "version": "0.18.1",
     "homepage": "https://kitaru.ai",
     "repository": "https://github.com/zenml-io/kitaru-skills"
@@ -15,7 +15,7 @@
     {
       "name": "kitaru",
       "source": "./",
-      "description": "Claude Code package for hosted onboarding, a guided Kitaru tour, integrations, human-reviewed investigations, evaluator authoring, and safe bounded replay experiments and evaluator validation.",
+      "description": "Claude Code package for hosted onboarding, a guided Kitaru tour, integrations, human-reviewed investigations, model-read insights across many sessions, evaluator authoring, and safe bounded replay experiments and evaluator validation.",
       "version": "0.18.1",
       "author": {
         "name": "ZenML",
@@ -31,6 +31,7 @@
         "ai-agents",
         "agent-evaluation",
         "error-discovery",
+        "agent-insights",
         "guided-tour",
         "onboarding",
         "trace-analysis",

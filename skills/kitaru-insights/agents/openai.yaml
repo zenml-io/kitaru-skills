@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kitaru Insights"
+  short_description: "Find recurring patterns across many agent sessions"
+  default_prompt: "Use $kitaru-insights to read my agent's recent sessions, find what keeps going wrong, and save the strongest findings as insight cards."

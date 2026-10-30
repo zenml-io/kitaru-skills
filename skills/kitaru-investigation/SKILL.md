@@ -1,6 +1,6 @@
 ---
 name: kitaru-investigation
-description: Guide users from their own agent code or recorded traces through Kitaru setup, session import or recording, human review, an accepted behavior, a versioned cohort, and evaluator selection, then hand one bounded change to the replay-experiment skill. Use when a user wants to connect or inspect an existing agent, import real traces from files or provider APIs, follow up on a post-import insight, investigate a known bad or surprising session, discover recurring failure modes, learn the evidence-led review flow, resume an investigation, create a cohort from reviewed evidence, or author an evaluator for an accepted behavior. When a first-time user has no agent or evidence and wants a fast demonstration with the PydanticAI returns agent example, use the `kitaru-guided-tour` skill instead.
+description: Guide users from their own agent code or recorded traces through Kitaru setup, session import or recording, human review, an accepted behavior, a versioned cohort, and evaluator selection, then hand one bounded change to the replay-experiment skill. Use when a user wants to connect or inspect an existing agent, import real traces from files or provider APIs, follow up on a post-import insight, investigate a known bad or surprising session, discover recurring failure modes, learn the evidence-led review flow, resume an investigation, create a cohort from reviewed evidence, or author an evaluator for an accepted behavior. To have models read many sessions and save recurring patterns as insight cards without human review first, use the `kitaru-insights` skill instead. When a first-time user has no agent or evidence and wants a fast demonstration with the PydanticAI returns agent example, use the `kitaru-guided-tour` skill instead.
 ---
 
 # Kitaru investigation
@@ -85,6 +85,12 @@ or accepted behavior.
 An incomplete starter handoff takes precedence over this question. Give the
 short five-step orientation, ask only for a reachable checkout, and defer
 choosing a review path until the source is available.
+
+When the user wants models to read many sessions (dozens or more) and save the
+recurring patterns as insight cards before any human review, offer the optional
+`kitaru-insights` skill. Its cards return here as leads through their copied
+investigation prompts. Keep this skill's bounded discovery for a small worklist
+the human reviews directly.
 
 When the user wants to check a judge against human decisions, offer the optional
 `kitaru-validate-evaluator` skill. Carry the criterion, exact evaluator settings,
