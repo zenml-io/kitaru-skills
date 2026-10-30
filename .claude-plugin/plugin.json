@@ -1,7 +1,7 @@
 {
   "name": "kitaru",
   "description": "Experience Kitaru through hosted onboarding or a public tour, build integrations, investigate sessions, find insights across many sessions, and run bounded replay experiments and evaluator validation",
-  "version": "0.18.1",
+  "version": "0.19.0",
   "author": {
     "name": "ZenML",
     "url": "https://kitaru.ai"
