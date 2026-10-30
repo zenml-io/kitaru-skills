@@ -63,16 +63,17 @@ The template is at `/opt/kitaru/examples/python/pydantic_ai_ticket_resolver`. Wo
 
 ## Read state once, then choose the route
 
-After runner preparation, make one bounded durable-state read. Resolve the selected server, the `returns-resolver` parent, its source-matched version, relevant import jobs, and usable sessions. Do not perform a generic inventory of every agent, session, job, evaluator, cohort, and experiment.
+After runner preparation, make one bounded durable-state read. Resolve the selected server, the `returns-resolver` parent, its source-matched version, relevant import jobs, and usable sessions. Include the expected provider/external-ID occupancy check in [references/kitaru-operations.md](references/kitaru-operations.md#identify-matching-durable-state) before concluding that an import is missing. Do not perform a generic inventory of every agent, session, job, evaluator, cohort, and experiment.
 
 Classify what you found:
 
 | Durable state | Route |
 |---|---|
-| No matching agent | Preview one combined setup write: register the template version and import the checked-in traces. Ask once before starting it. Select evidence afterward, then use the separate combined review-write approval below. |
+| No matching agent and expected import identities are unoccupied in the applicable server scope | Preview one combined setup write: register the template version and import the checked-in traces. Ask once before starting it. Select evidence afterward, then use the separate combined review-write approval below. |
 | Source-matched template version with usable sessions | Reuse it. State the session count and continue from the first missing tour result. |
-| Same parent name, but source identity is different or unclear | Do not register over it. Explain the collision and ask whether to use that agent's existing evidence or create an isolated demo parent with a distinct name. Recommend the existing evidence when it has complete sessions and the user wants onboarding on their own state; otherwise recommend the isolated demo. |
-| Source-matched template agent with no usable sessions | Recommend importing the checked-in traces and ask once before the import. If the source match is unclear, use the collision route instead. Do not pretend registration completed the tour. |
+| Same parent name, but source identity is different or unclear | Do not register over it. Explain the collision and ask whether to use that agent's existing evidence or create an isolated demo parent with a distinct name. Recommend the existing evidence when it has complete sessions and the user wants onboarding on their own state; otherwise recommend the isolated demo only when the expected import identities are unoccupied in the selected server's scope. |
+| Source-matched template agent with no usable sessions and expected import identities unoccupied | Recommend importing the checked-in traces and ask once before the import. If the source match is unclear, use the collision route instead. Do not pretend registration completed the tour. |
+| Expected import identities occupied by mismatched or incomplete evidence | Preserve the actual agent/version/session/import IDs and offer an explicit supported recovery or collision choice. Keep exact provenance matching; do not silently adopt another version’s evidence, blindly retry, create a version, or change source IDs to bypass the collision. |
 | A running import for the matching source | Wait once, then report its exact ID and state. Do not launch another import. |
 
 When a user chooses the existing agent, use `kitaru-investigation` for open-ended or production evidence. Keep this skill only for the preloaded template route.
