@@ -42,7 +42,7 @@ Over the whole pinned scope, collect what the server can count without reading t
 - failed tool and model nodes per session through the node `node_type` filter;
 - `kitaru_failure_matrix` over the scope, when MCP is available, for where failures first appear by tool or step.
 
-Use these to aim the sample and to give each pattern a countable proxy when one exists. Report them as counts over the full scope; they need no sampling caveat.
+Use these to aim the sample and to give each pattern a countable proxy when one exists. Report them as counts over the full scope; they need no sampling caveat. Uniform counts, including zero tool calls, are not findings by themselves. Check whether the recorded behavior matters for the agent's task. Distinguish observed absence from missing instrumentation: a trace with no recorded tool calls does not prove the agent used no tools when tool activity was not captured.
 
 ## Pick the sample
 
@@ -67,7 +67,7 @@ Without subagents, read the transcripts yourself in batches of five to eight, wr
 
 ## Group notes into patterns
 
-Read all notes, then propose three to eight candidate patterns. A pattern is an observable behavior, not a cause:
+Read all notes, then propose up to eight supported patterns, including none. A pattern is an observable behavior, not a cause:
 
 - **Definition:** one or two sentences a reader could apply to a new session with a yes or no answer.
 - **Members:** the session IDs whose notes show it, with node IDs.
@@ -76,7 +76,9 @@ Read all notes, then propose three to eight candidate patterns. A pattern is an 
 
 Merge notes that describe the same behavior in different words. Keep a pattern that appears once only when its impact is severe, and label it as a single observation. Include one notably good behavior when the notes support it; users act on what works too.
 
-Write `patterns.json` in the format the tally script expects; see [subagent-briefs.md](subagent-briefs.md).
+If no useful patterns remain after grouping or checking, report what scope was read and any coverage gaps, then finish without card validation or write calls. A run with no useful patterns is a complete outcome.
+
+For surviving patterns, write `patterns.json` in the format the tally script expects; see [subagent-briefs.md](subagent-briefs.md).
 
 ## Deep waves
 
