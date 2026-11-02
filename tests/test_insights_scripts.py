@@ -5,12 +5,15 @@ import importlib.util
 import io
 import json
 import shlex
+import sys
 import tempfile
 import unittest
 import uuid
 from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parents[1] / "skills/kitaru-insights/scripts"
+# The helpers import their shared page loader the way `python3 scripts/NAME.py` resolves it.
+sys.path.insert(0, str(SCRIPTS))
 
 
 def load(name: str):
@@ -24,6 +27,8 @@ pick_sample = load("pick_sample")
 condense = load("condense_sessions")
 tally = load("tally_notes")
 cards = load("check_cards")
+scope_counts = load("scope_counts")
+to_judgments = load("evaluations_to_judgments")
 
 
 def session(i: int, status: str = "completed", cost: float = 0.01, tools: int = 2, agent: str = "agent") -> dict:
@@ -156,7 +161,7 @@ class TallyTest(unittest.TestCase):
         census = {**self.sample, "population_count": len(ids), "population_ids": ids}
         document = tally.tally(census, {"patterns": [{"id": "p1", "members": ["t1", "r0"]}]}, None, None, None)
         self.assertTrue(document["census"])
-        self.assertEqual(document["patterns"][0]["rate"], {"basis": "census", "numerator": 2, "denominator": 12, "low": None, "high": None})
+        self.assertEqual(document["patterns"][0]["rate"], {"basis": "census", "method": "readers", "numerator": 2, "denominator": 12, "low": None, "high": None})
 
     def test_targeted_only_has_no_interval(self):
         sample = {**self.sample, "picks": self.sample["picks"][:2]}
@@ -196,6 +201,21 @@ class TallyTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "no .jsonl"):
                 tally.read_lines(Path(tmp))
 
+    def test_whole_scope_jev_measurement_has_no_interval_and_reports_agreement(self):
+        ids = [p["session_id"] for p in self.sample["picks"]]
+        scope = {**self.sample, "population_count": len(ids), "population_ids": ids}
+        measure = {"seed": 2, "population_sha256": "0" * 64, "picks": [{"session_id": s, "reasons": ["all_in_scope"], "random": False} for s in ids]}
+        judgments = [{"session_id": s, "pattern_id": "p1", "verdict": "yes" if s in {"t1", "r0", "r1"} else "no", "evaluation_id": f"e-{s}"} for s in ids]
+        judgments[-1]["verdict"] = "unavailable"
+        versions = {s: ("v1" if s.startswith("t") else "v2") for s in ids}
+        result = tally.tally(scope, {"patterns": [{"id": "p1", "members": ["t1", "t2"]}]}, None, measure, judgments, versions)["patterns"][0]
+        self.assertEqual(result["rate"]["basis"], "measurement", "judged measurement outranks a census of reader notes")
+        self.assertEqual(result["rate"]["method"], "jev")
+        self.assertIsNone(result["rate"]["low"])
+        self.assertEqual(result["rate"]["unavailable"], 1)
+        self.assertEqual(result["agreement"], {"both_yes": 1, "judged_only": 2, "readers_only": 1, "both_no": 7})
+        self.assertEqual(result["by_version"]["v1"]["yes"], 1)
+
     def test_note_coverage(self):
         notes = [{"session_id": "t1"}, {"session_id": "t1"}, {"session_id": "zz"}]
         coverage = tally.tally(self.sample, {"patterns": []}, notes, None, None)["notes"]
@@ -218,7 +238,7 @@ def card(**overrides) -> dict:
         "data": {"type": "text", "content": "Body."},
         "metadata": {
             "kitaru.insights/v1": {"investigation_prompt": "Use the kitaru-investigation skill.", "cta_label": "Investigate early refunds", "contributing_session_ids": [sid], "evidence": [{"session_id": sid, "node_id": None, "signal": "refund before policy"}]},
-            "kitaru.insights.skill/v1": {"schema_version": 1, "run_id": str(uuid.uuid4()), "level": "standard", "scope": {"population_count": 10, "population_sha256": "a" * 64}, "sample": {}, "pattern": {}, "rate": {"basis": "measurement", "low": 0.1, "high": 0.5}},
+            "kitaru.insights.skill/v1": {"schema_version": 1, "run_id": str(uuid.uuid4()), "level": "standard", "scope": {"population_count": 10, "population_sha256": "a" * 64}, "sample": {}, "pattern": {"kind": "finding"}, "rate": {"basis": "measurement", "method": "subagents", "low": 0.1, "high": 0.5}},
         },
     }
     base.update(overrides)
@@ -266,6 +286,44 @@ class CheckCardsTest(unittest.TestCase):
         errors = cards.check_cards([card(), card()])
         self.assertIn("cards: names must be unique within a run", errors)
         self.assertIn("cards: every card in one batch must share one run_id", errors)
+
+
+class ScopeCountsTest(unittest.TestCase):
+    def test_cost_concentration_needs_enough_sessions(self):
+        few = scope_counts.build([session(i, cost=1.0) for i in range(5)])
+        self.assertIsNone(few["scope"]["cost"]["top_share"])
+        items = [session(i, cost=10.0 if i < 2 else 1.0) for i in range(20)]
+        self.assertEqual(scope_counts.build(items)["scope"]["cost"]["top_share"], round(20 / 38, 4))
+
+    def test_cache_share_follows_the_convention_the_data_shows(self):
+        exclusive = [{**session(1), "tokens": {"input_tokens": 100, "cached_input_tokens": 300}}]
+        cache = scope_counts.build(exclusive)["scope"]["cache"]
+        self.assertEqual((cache["convention"], cache["share"]), ("exclusive", 0.75))
+        unknown = [{**session(1), "tokens": {"input_tokens": 400, "cached_input_tokens": 100}}]
+        cache = scope_counts.build(unknown)["scope"]["cache"]
+        self.assertEqual((cache["convention"], cache["share_if_inclusive"], cache["share_if_exclusive"]), ("unknown", 0.25, 0.2))
+
+    def test_counts_per_agent_version(self):
+        items = [{**session(i, status="failed" if i == 0 else "completed"), "agent_version_id": "v1" if i < 3 else "v2"} for i in range(5)]
+        by_version = scope_counts.build(items)["by_version"]
+        self.assertEqual(by_version["v1"]["status"], {"completed": 2, "failed": 1})
+        self.assertEqual(by_version["v2"]["sessions"], 2)
+
+
+class EvaluationsToJudgmentsTest(unittest.TestCase):
+    def row(self, session_id: str, name: str, score, value=None) -> dict:
+        return {"id": f"{session_id}-{name}", "session_id": session_id, "name": name, "score": score, "value": value, "explanation": "jev"}
+
+    def test_maps_probabilities_and_unavailable_rows(self):
+        rows = [self.row("s1", "insights.p1", 0.93), self.row("s2", "insights.p1", 0.1), self.row("s3", "insights.p1", 0.5), self.row("s4", "insights.p1", None, "unavailable"), self.row("s1", "other", 0.9)]
+        judged = {j["session_id"]: j["verdict"] for j in to_judgments.convert(rows, "insights.", 0.8)}
+        self.assertEqual(judged, {"s1": "yes", "s2": "no", "s3": "unclear", "s4": "unavailable"})
+
+    def test_rejects_duplicate_runs_and_empty_results(self):
+        with self.assertRaisesRegex(ValueError, "two insights.p1 rows"):
+            to_judgments.convert([self.row("s1", "insights.p1", 0.9), {**self.row("s1", "insights.p1", 0.2), "id": "other"}], "insights.", 0.8)
+        with self.assertRaisesRegex(ValueError, "no evaluation rows"):
+            to_judgments.convert([self.row("s1", "other", 0.9)], "insights.", 0.8)
 
 
 if __name__ == "__main__":

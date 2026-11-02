@@ -20,6 +20,8 @@ SKILL_KEY = "kitaru.insights.skill/v1"
 CARD_FIELDS = {"name", "title", "description", "data", "metadata"}
 SHARED_FIELDS = {"investigation_prompt", "cta_label", "contributing_session_ids", "evidence", "check_first"}
 LEVELS = {"standard", "deep"}
+CARD_KINDS = {"finding", "bright_spot", "opportunity", "coverage_gap"}
+RATE_METHODS = {None, "readers", "subagents", "jev", "mixed"}
 RATE_BASES = {"census", "exact_proxy", "measurement", "random_slice", "targeted_only"}
 MAX_CARDS = 8
 SERVER_MAX_CARDS = 100
@@ -131,7 +133,12 @@ def check_provenance(skill: Any) -> list[str]:
     scope = skill.get("scope") if isinstance(skill.get("scope"), dict) else {}
     if not isinstance(scope.get("population_count"), int) or not re.fullmatch(r"[0-9a-f]{64}", str(scope.get("population_sha256"))):
         errors.append(f"metadata.{SKILL_KEY}.scope: needs population_count and population_sha256")
+    pattern = skill.get("pattern") if isinstance(skill.get("pattern"), dict) else {}
+    if pattern.get("kind") not in CARD_KINDS:
+        errors.append(f"metadata.{SKILL_KEY}.pattern.kind: expected one of {', '.join(sorted(CARD_KINDS))}")
     rate = skill.get("rate") if isinstance(skill.get("rate"), dict) else {}
+    if rate.get("method") not in RATE_METHODS:
+        errors.append(f"metadata.{SKILL_KEY}.rate.method: expected readers, subagents, jev, mixed, or null")
     if rate.get("basis") not in RATE_BASES:
         errors.append(f"metadata.{SKILL_KEY}.rate.basis: expected one of {', '.join(sorted(RATE_BASES))}")
     elif rate["basis"] != "measurement" and (rate.get("low") is not None or rate.get("high") is not None):
