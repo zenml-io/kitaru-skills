@@ -27,7 +27,7 @@ Read these first; they are cheap and exact. Prefer the analyzer's resource cards
 - **Loud failures:** failed sessions and erroring nodes. The dashboard already shows these; a card needs a shared cause or an unexpected concentration to earn its place.
 - **Cost concentration:** how much of the spend the costliest sessions account for, and what those sessions have in common.
 - **Latency:** where recorded time goes, by tool or model, never summing overlapping parallel calls.
-- **Prompt cache:** the share of input served from cache, and calls where the system prompt changes between consecutive model calls. Sources differ on whether `input_tokens` includes cached reads; when `cached_input_tokens` exceeds `input_tokens`, the source counts them separately.
+- **Prompt cache:** the share of input served from cache, and calls where the system prompt changes between consecutive model calls. Sources differ on whether `input_tokens` includes cached reads; when `cached_input_tokens` exceeds `input_tokens`, the source counts them separately. `cache_write_input_tokens` (Kitaru 0.27.7 and later) counts input written to the cache, which providers such as Anthropic bill above the normal input rate; sessions that write far more than they later read pay for a cache they do not reuse.
 - **Context size:** model input that grows across a session, and single nodes far larger than the agent's other calls.
 - **Paths:** each session's sequence of tool names. Common paths show habits the user may not know about; paths only one session took are anomalies worth reading.
 - **Statistical outliers:** sessions far outside the scope's own distribution of duration, cost, tool calls, or model calls.

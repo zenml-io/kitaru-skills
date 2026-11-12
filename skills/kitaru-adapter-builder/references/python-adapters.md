@@ -36,6 +36,9 @@ exposes:
 - `client.sessions.create(...)`;
 - `client.sessions.ingest_nodes(...)`;
 - `client.sessions.update(...)`;
+- `client.sessions.ingest(...)` with a `SessionIngestRequest`, which creates a
+  session and all its initial nodes in one transaction, for a coarse adapter
+  that records a finished run at once;
 - `client.sessions.list_nodes(...)` or `iter_nodes(...)` for inspection;
 - `client.replays.get(...)` and `client.replays.tool_lookup(...)` when replay is
   requested;
@@ -57,18 +60,21 @@ package confirms it. Never copy tokens into code, fixtures, logs, or reports.
 ## Use the current reference carefully
 
 The checked `develop` source at commit
-`3675d90e02a690f2bd9a3ff43eba576f0a813515` contains independently versioned
+`35b1f3ef4e23de983a2ed66f8236912fc16c518f` contains independently versioned
 adapter distributions:
 
 | Framework | Distribution | Checked source | Advertised capability |
 |---|---|---|---|
 | PydanticAI | `kitaru-pydantic-ai` | `plugins/packages/pydantic-ai/` | Recording and replay |
-| LangGraph, LangChain, and Deep Agents | `kitaru-langgraph` | `plugins/packages/langgraph/` | Recording and replay |
+| LangGraph, LangChain, and Deep Agents | `kitaru-langgraph` | `plugins/packages/langgraph/` | Recording; replay depends on graph construction |
 | OpenAI Agents SDK | `kitaru-openai-agents` | `plugins/packages/openai-agents/` | Recording and restricted replay |
+| Claude Agent SDK | `kitaru-claude-agent-sdk` | `plugins/packages/claude-agent-sdk/` | Recording and replay of one-shot `query()`; tool policies for SDK MCP tools only |
 
 Their tests live under `plugins/tests/adapters/pydantic_ai/`,
-`plugins/tests/adapters/langgraph/`, and
-`plugins/tests/adapters/openai_agents/`. Adapter distributions are installed by
+`plugins/tests/adapters/langgraph/`, `plugins/tests/adapters/openai_agents/`,
+and `plugins/tests/adapters/claude_agent_sdk/`. The Claude Agent SDK entrypoint
+is `kitaru_claude_agent_sdk.KitaruClaudeRunner`, and the checked source supports
+`claude-agent-sdk>=0.2.149,<0.3`. Adapter distributions are installed by
 agent projects rather than bundled into the core Kitaru wheel. They are
 published independently from Kitaru core, so inspect PyPI and the project's
 lockfile for the current version. This inventory describes the checked source
@@ -77,8 +83,11 @@ tree, not what is installed in the user's project.
 ### Importer-backed adapters
 
 For an already instrumented Python entrypoint, these provider importer packages
-also ship an adapter behind their `adapter` extra. They require Kitaru 0.24 or
-newer. They are not standalone adapter distributions.
+also ship an adapter behind their `adapter` extra. They subclass
+`ImporterBackedAdapter`, which shipped in Kitaru 0.25.0, and each package
+declares its own `kitaru` floor (`kitaru>=0.27.7` in the checked source); check
+the installed package's requirement. They are not standalone adapter
+distributions.
 
 | Provider | Install | Import |
 |---|---|---|
@@ -96,14 +105,29 @@ than copying credentials into project files or commands. `adapter.run(...)` or
 imports the provider trace. It does not intercept model or tool calls. Register
 its run spec with
 `runtime_capabilities.overrides: false` and `tool_policies: false`; the default
-`true` values remain appropriate for native recording adapters.
+`true` values remain appropriate for native recording adapters. Register the
+version with `kitaru agent version register AGENT --spec version.yaml`, or with
+the async `KitaruClient` methods `register_agent(name, RunSpec(...))` and
+`register_agent_version(agent, RunSpec(...))`.
 
 Check the project's installed distributions and current Kitaru documentation
 before designing a custom adapter. When one of these packages supports the
 installed framework version and requested invocation mode, use it instead of
-building a duplicate. Otherwise record the exact missing boundary. Kitaru still
-exposes no general adapter base in the core wheel, so do not import repository
-source into a user project or copy a package wholesale.
+building a duplicate. Otherwise record the exact missing boundary.
+
+When the provider has a Kitaru importer but no `adapter` extra, as with the
+MLflow importer, check whether the installed core wheel exports
+`kitaru.importer_adapter.ImporterBackedAdapter`. A project-local subclass
+passes the provider name and the importer's parser to the constructor,
+implements `open_trace()`, `wait_until_complete(external_id)`, and
+`fetch(external_id)`, and inherits `run`, `run_async`, replay preflight, and the
+completeness timeout. The same worker-task and run-spec rules apply. Prefer it
+to custom session-node code when after-the-fact recording without replay
+control meets the goal.
+
+Kitaru exposes no general base for native recording adapters in the core
+wheel, so do not import repository source into a user project or copy a
+package wholesale.
 
 Re-check the source revision before relying on implementation details. If it
 cannot be resolved, report the reference as unavailable and rely only on
@@ -113,7 +137,7 @@ extract only these design lessons:
 - compose through a public framework wrapper or capability;
 - create fresh run state and a client for each invocation;
 - record one in-progress session and root before agent work;
-- buffer child nodes while preserving stable indexes;
+- buffer child nodes while preserving stable external ids;
 - record input, output, system-prompt, and reasoning JSON Pointer selectors
   only when the framework exposes them, keeping reasoning text in `outputs`;
 - replace the root and then update the session at the terminal state;
@@ -170,9 +194,9 @@ task_id and replay_id when used
 effective input and framework-native prompt/history
 replay spec and override
 started_at
-next node index
+node external-id allocation for events without a native ID
 pending node buffer and ordering lock
-latest observable parent indexes
+latest observable parent external ids
 first failure
 finished and closed flags
 ```
@@ -183,17 +207,22 @@ Use the installed request models to perform this sequence:
    effective input, framework identifier, adapter version, and in-progress
    state when supported.
 2. Store the returned session ID immediately.
-3. Ingest root index `0`, `parent_index=None`, type `span`, status in progress.
-4. Allocate increasing child indexes. Write parents before children.
+3. Ingest the root under a fixed `external_id` (the reference adapters use
+   `"root"`), `parent_external_id=None`, type `span`, status in progress.
+4. Give each child a stable `external_id`, preferably the framework's own call
+   or event ID, and set `parent_external_id`. Order does not matter: the
+   server resolves parents when reading.
 5. Record model and tool nodes only from events the public framework API exposes.
-6. At success, await pending writes, upsert the root at index `0` as completed,
+6. At success, await pending writes, upsert the root external id as completed,
    then update the session as completed with bounded output and end time.
 7. At failure, preserve the primary error, best-effort upsert a failed root and
    update a failed session, then close owned resources.
 
-The node-ingestion API replaces an existing index whole. Use that property for
-the root transition and idempotent retry, but never allocate a different index
-for a retried event.
+The node-ingestion API upserts on `(session, external_id)` and replaces an
+existing node whole. Use that property for the root transition and idempotent
+retry, but never allocate a different external id for a retried event. Kitaru
+releases before 0.27.0 used positional `index` and `parent_index` fields; the
+current request models reject them.
 
 If session creation succeeds but root initialization fails, attempt to mark the
 session failed. If a child batch fails, do not discard already confirmed nodes
@@ -235,6 +264,13 @@ For model events, capture only fields the public hook proves:
 - provider identity and public error;
 - timestamps and stable external call ID when available.
 
+Map these to the node's `requested_model`, `model`, `model_provider`, `tokens`,
+and `cost` fields. Kitaru does not price calls server-side, so `cost` stays null
+unless the adapter computes and sends it. The PydanticAI, LangGraph, and OpenAI
+Agents reference adapters estimate it from token usage with the `genai-prices`
+catalog; use a pricing source the project approves, or leave cost null and say
+so in the report.
+
 For tool events, prefer validated framework arguments. Record the exact public
 tool name, stable call ID, bounded inputs, bounded output or public failure, and
 the model-call parent when it is known.
@@ -259,7 +295,9 @@ execution.
 For tool policies:
 
 - select per-tool policy by the exact observable tool identity;
-- canonicalize the framework's validated JSON arguments before computing a key;
+- canonicalize the framework's validated JSON arguments, then compute the key
+  with `kitaru.cache_keys.compute_tool_cache_key(tool_name, inputs)`; the
+  server only matches the 64-character key that helper produces;
 - implement static exact or subset matching only with explicit tested semantics;
 - treat missing history keys according to the declared miss policy;
 - require separate approval before live passthrough of an effectful tool;
@@ -267,17 +305,24 @@ For tool policies:
   pre-execution hook controls them.
 
 The current public history lookup request carries a tool name, a cache key, and
-an optional zero-based `occurrence`. The response exposes only `found` and
-`result`. The server resolves the lookup by scope:
+an optional zero-based `occurrence`. The response carries `match`, which is
+`None` on a miss or holds the recorded `result`, `status` (`completed` or
+`failed`), and `error`, plus a `rejected_candidate` flag that is true when the
+selected history candidate has an incomplete payload. Replay a `failed` match
+as a tool failure with its recorded error, not as a result. Kitaru releases
+before 0.23.0 returned a flat `found`/`result` pair. The server resolves the
+lookup by scope:
 
 - Baseline scope with `occurrence` n: the nth match in baseline order, a miss
   past the last match.
 - Any scope without `occurrence`: the newest match in scope.
 - Any other scope with `occurrence` set: rejected.
 
-For baseline scope, keep one counter per cache key, send it as `occurrence`,
-and increment it only on a hit. Repeated identical calls then replay their own
-recorded results in order, and extra calls follow the declared miss policy.
+For baseline scope, keep one counter per cache key and send it as
+`occurrence`. Advance it on any match, completed or failed, and on a miss with
+`rejected_candidate` true; keep it unchanged on a plain miss. Repeated
+identical calls then replay their own recorded outcomes in order, and extra
+calls follow the declared miss policy.
 Never send `occurrence` for other scopes. When the installed release lacks
 `occurrence` or the scope is not baseline, claim history replay only when the
 adapter can preflight the complete baseline and prove every required key unique
@@ -324,7 +369,7 @@ For a session-node adapter, also cover at least:
 - child-ingestion failure after confirmed nodes;
 - the documented fail-fast or best-effort availability policy;
 - concurrent invocations through one wrapper;
-- correct parentage and stable monotonic node indexes;
+- correct parentage and stable, unique node external ids;
 - task and replay input precedence;
 - prompt, system-prompt, model, and model-setting overrides when claimed;
 - static and history policy hits and every miss policy;

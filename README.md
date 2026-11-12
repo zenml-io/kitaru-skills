@@ -82,7 +82,7 @@ Provider API imports, provider connections, post-import analyzers, and insight
 handoffs require Kitaru 0.26 or newer. Existing file-based tour and investigation
 paths remain available on their earlier supported versions.
 
-Model-read insights use only session reads and insight creation, which Kitaru 0.26 provides. Their optional server-analyzer baseline uses `kitaru session analyze`; the skill checks for it and continues without it on older versions. Raw session exports and notes stay in a local run folder outside your repositories.
+Model-read insights use only session reads and insight creation, which Kitaru 0.26 provides. Their optional server-analyzer baseline uses `kitaru session analyze`, from the Kitaru release after 0.27.7; on older versions the skill offers it only for a single-import scope through `kitaru import analyze`. Raw session exports and notes stay in a local run folder outside your repositories.
 
 Evaluator validation uses existing investigation verdicts and exact evaluation runs. TypeSafe is optional and requires the `kitaru-typesafe-evaluator` package on the worker; the skill checks its installed schema and setup. Human agreement validation does not certify the model's probabilities or deploy an automatic gate.
 

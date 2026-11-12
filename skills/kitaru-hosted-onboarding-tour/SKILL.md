@@ -57,7 +57,7 @@ Read this skill and each needed reference once per chat. If their contents alrea
 
 Do not clone repositories, install packages or skills, log in, switch servers, start another local server, or inspect environment variables and credential files. Do not tell the user about Modal, ECR, runner tokens, provider keys, or sandbox internals.
 
-The readiness result proves that `jq`, the Kitaru 0.23 runtime, the PydanticAI adapter, and the worker are usable. Do not run `uv`, create a project virtual environment, or compare package versions during the tour. If readiness fails, report the single failed capability and stop.
+The readiness result proves that `jq`, the Kitaru runtime, the PydanticAI adapter import, and the worker are usable. The runner installs Kitaru at its workspace's version; take the exact client and server versions from `kitaru status` when a version-dependent rule in the operations reference needs them. Readiness does not prove replay compatibility; the replay skill checks adapter support. Do not run `uv`, create a project virtual environment, or compare package versions during the tour. If readiness fails, report the single failed capability and stop.
 
 The template is at `/opt/kitaru/examples/python/pydantic_ai_ticket_resolver`. Work there by default. Read [references/kitaru-operations.md](references/kitaru-operations.md) before the first Kitaru operation. Read [references/tour-method.md](references/tour-method.md) only after a session population has been selected.
 
@@ -71,10 +71,12 @@ Classify what you found:
 |---|---|
 | No matching agent and expected import identities are unoccupied in the applicable server scope | Preview one combined setup write: register the template version and import the checked-in traces. Ask once before starting it. Select evidence afterward, then use the separate combined review-write approval below. |
 | Source-matched template version with usable sessions | Reuse it. State the session count and continue from the first missing tour result. |
-| Same parent name, but source identity is different or unclear | Do not register over it. Explain the collision and ask whether to use that agent's existing evidence or create an isolated demo parent with a distinct name. Recommend the existing evidence when it has complete sessions and the user wants onboarding on their own state; otherwise recommend the isolated demo only when the expected import identities are unoccupied in the selected server's scope. |
+| Same parent name, but source identity is different or unclear, including Kitaru's UI sample data | Do not register over it. Explain the collision and ask whether to use that agent's existing evidence or create an isolated demo parent with a distinct name. Recommend the existing evidence when it has complete sessions and the user wants onboarding on their own state; otherwise recommend the isolated demo only when the expected import identities are unoccupied in the selected server's scope. |
 | Source-matched template agent with no usable sessions and expected import identities unoccupied | Recommend importing the checked-in traces and ask once before the import. If the source match is unclear, use the collision route instead. Do not pretend registration completed the tour. |
 | Expected import identities occupied by mismatched or incomplete evidence | Preserve the actual agent/version/session/import IDs and offer an explicit supported recovery or collision choice. Keep exact provenance matching; do not silently adopt another version’s evidence, blindly retry, create a version, or change source IDs to bypass the collision. |
 | A running import for the matching source | Wait once, then report its exact ID and state. Do not launch another import. |
+
+Recognize UI sample data by the signs in [references/kitaru-operations.md](references/kitaru-operations.md#identify-matching-durable-state). When explaining that collision, say the parent holds sample data loaded from the Kitaru UI rather than this template's imported evidence. Its sessions do not occupy the template's import identities and it has no agent version to replay, so recommend the isolated demo parent.
 
 When a user chooses the existing agent, use `kitaru-investigation` for open-ended or production evidence. Keep this skill only for the preloaded template route.
 

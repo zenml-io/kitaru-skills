@@ -14,6 +14,8 @@ First resolve the cohort's exact agent ID, then list the installed evaluators an
 | `kitaru/timing-profile@1` | Timing and latency evidence |
 | `kitaru/llm-call-signals@1` | Model-call and token-related signals |
 
+Default installations also register three basic evaluators: `kitaru/cost@1` (total recorded session cost), `kitaru/latency@1` (session wall-clock duration), and `kitaru/tool-call-patterns@1` (repeated calls to the same tool).
+
 These results describe recorded behavior. A retry, slow span, tool error, or missing payload is not automatically an agent-quality failure.
 
 ## Prefer an installed configured rule
@@ -24,9 +26,13 @@ Check whether an evaluator returned by the installed catalog directly expresses 
 |---|---|
 | `kitaru/output-contract@1` | Required or forbidden output shape or content |
 | `kitaru/resource-budget@1` | Cost, token, call, or latency limits |
-| `kitaru/tool-policy@1` | Required, allowed, or forbidden tool use |
+| `kitaru/tool-policy@1` | Required or forbidden tools, per-tool call limits, or numeric limits on recorded tool inputs or outputs |
 | `kitaru/model-policy@1` | Required or forbidden model use |
 | `kitaru/workflow-conformance@1` | Contractual workflow steps or ordering |
+
+Configured rules fail on a recorded violation and pass only for a terminal session whose required evidence is complete. Insufficient evidence leaves `passed` unset: report that HOLD separately, never as a pass, and keep it out of pass rates.
+
+Check `numeric_rules` on `tool-policy` (Kitaru 0.27.4 or later) before writing custom code for a numeric limit such as a refund ceiling. Each named rule selects an exact `tool_name`, a `source` of `inputs` or `outputs`, an RFC 6901 `path`, an `operator` (`lt`, `lte`, `gt`, or `gte`), and a fixed decimal `limit`. An optional `when` compares a Boolean at another pointer on the same call, for example `{"source":"outputs","path":"/accepted","equals":true}`. Every matching call is checked, and each rule emits a result named `numeric_rule.NAME`. A missing pointer, unreadable value, unavailable output, or no matching call produces HOLD. A rule does not sum calls, compare fields across calls, convert units, or take its limit from another tool; use custom code for those criteria. Verify the installed version's params schema before relying on these fields.
 
 Pin the exact evaluator version and parameters. Evaluator-produced rows preserve both, and replay `if_missing` reuse requires the session, version, and parameters to match. The builtin deterministic evaluator scale contract does not emit input or configuration SHA result rows. Reuse relevant cost, timing, resource, model, and tool-policy results as replay protections instead of recreating them.
 

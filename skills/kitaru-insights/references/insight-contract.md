@@ -37,7 +37,7 @@ Store reader-facing context under `metadata["kitaru.insights/v1"]`, using the sa
 | `evidence` | Up to 20 `{"session_id", "node_id", "signal"}` locators. `node_id` is the node's `id` UUID or null; `signal` is at most 80 characters. |
 | `check_first` | Optional, at most 1,000 characters: the first thing a reviewer should verify. |
 
-Do not copy analyzer-only fields such as `eyebrow`, `position`, `coverage`, or `generation`. Their absence tells readers the card did not come from an analyzer.
+Do not copy analyzer-only fields such as `schema_version`, `eyebrow`, `position`, `recommended`, `coverage`, `context`, or `generation`. Their absence tells readers the card did not come from an analyzer.
 
 ## Skill provenance
 

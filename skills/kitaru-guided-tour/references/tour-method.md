@@ -4,7 +4,7 @@ Use this method to create a small prepared lesson from the PydanticAI returns ag
 
 ## Select three teaching moments
 
-Survey all ten imported sessions through existing deterministic evaluation records and session metadata, then read every node and full payload for each candidate. This selection pass is read-only. Do not start new evaluation jobs merely to choose the tour. Select:
+Survey all ten imported sessions through existing deterministic evaluation records and session metadata, then read every candidate whole. When the installed Kitaru provides `kitaru session read` or `kitaru_session_read` (0.27.7 and newer), read the candidates as compact transcripts, up to ten sessions per MCP call, and reread a cut step whole (CLI `--node N --full`, MCP `node` with `full`). Otherwise, or when an annotation or highlight needs an exact payload field, read that session's nodes with full payloads. This selection pass is read-only. Do not start new evaluation jobs merely to choose the tour. Select:
 
 1. **Consequential problem:** a complete trace where recorded policy, tool, or outcome evidence supports a concrete concern.
 2. **Evidence-reading lesson:** a trace where summaries alone are insufficient, such as a difference between a claimed action and a tool result, a missing lookup, or an operational signal that changes the interpretation.

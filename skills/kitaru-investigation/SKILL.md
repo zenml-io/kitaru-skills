@@ -144,19 +144,20 @@ Begin with read-only inspection.
    `standard` mode, `destructive` mode, and a host that has not restarted
    since configuration. Modes are cumulative: a `destructive`-mode server also
    exposes every `standard` write tool. Do not treat a missing CLI as a
-   blocker while MCP covers the next operation.
+   blocker while MCP covers the next operation. When host configuration is
+   absent or the mode is too low for the next write, offer `kitaru setup` as
+   the remedy only with approval; the operations reference lists what it
+   changes.
 3. Choose one transport that can complete the next operation and its required
    handoff. Prefer a discovered MCP tool in at least `standard` mode; a
    `destructive`-mode server may perform ordinary writes, while destructive
    actions still require an explicit user request. Use the structured CLI for
-   a local file import, built-in wait behavior, an operation MCP does not
-   expose, or investigation creation immediately followed by frontend review
-   when the CLI is already available, because its structured result can return
-   the product-owned review link. When the CLI is absent but MCP can create the
-   investigation, create it once through MCP and resolve the compatibility URL
-   from the verified `dashboard_url`; do not install the CLI or recreate the
-   investigation solely to obtain a link. Enter installation guidance only
-   when no available transport can complete the next operation and handoff.
+   a local file import, built-in wait behavior, or an operation MCP does not
+   expose. On current servers, investigation creation through either transport
+   can return the product-owned review link; do not install the CLI or
+   recreate the investigation solely to obtain a link. Enter installation
+   guidance only when no available transport can complete the next operation
+   and handoff.
    Before using the CLI, check the selected server with `kitaru status` and
    inspect the installed command schema before giving exact syntax. Explain and
    obtain approval before changing the project environment. If MCP setup
@@ -306,7 +307,8 @@ Afterward, explain what broader review would add and ask whether to continue.
 
 ### Debug a specific behavior
 
-1. Resolve the exact seed session and read its complete nodes and payloads.
+1. Resolve the exact seed session and read it whole. Scan its compact
+   transcript, then read uncut node text or payloads before quoting evidence.
 2. Ask for the suspected behavior in ordinary language if it is not clear.
 3. When comparable sessions exist, select a small worklist containing the seed,
    plausible related sessions, and one deliberately dissimilar counterexample.
@@ -319,8 +321,10 @@ Afterward, explain what broader review would add and ask whether to continue.
 2. Derive explicitly named selection signals directly from the bounded session
    and node data, such as cost, latency, error nodes, loops, repeated calls,
    node count, and tool patterns. Use them to find varied or unusual sessions,
-   not to judge them. This selection step does not start evaluator jobs;
-   consider evaluators only after the user accepts a behavior and exact cohort.
+   not to judge them. When failed sessions are in scope, the read-only failure
+   matrix can show where they first go wrong; treat its cells the same way.
+   This selection step does not start evaluator jobs; consider evaluators only
+   after the user accepts a behavior and exact cohort.
 3. Start with four to six diverse sessions for one review block, combining
    coverage-oriented and seeded-random examples. Expand toward a larger pilot
    only after the first synthesis and the user's agreement.
@@ -346,7 +350,7 @@ Then ask once and create the complete fixed worklist. Do not create an empty
 investigation because sessions cannot be appended later.
 
 After creation, preserve the complete structured result, including
-`links.review` when the CLI returns it. Never retry creation because
+`links.review` when the CLI or MCP returns it. Never retry creation because
 `links.review` is absent. If the result includes a review-link warning, retain
 it while resolving the compatibility route and report it only when URL
 resolution remains blocked. Return only the exact investigation ID,
@@ -359,10 +363,12 @@ technical resumption, not in the conversational lead.
 Prefer one continuous Kitaru frontend review block. Resolve the review URL in
 this order:
 
-1. Use `links.review` from the structured `kitaru investigation create` result
-   when it exists. Do not reconstruct or rewrite that product-owned URL.
-2. Otherwise use only the compatibility route documented from `dashboard_url`,
-   the exact agent ID, and exact investigation ID in
+1. Use `links.review` from the structured CLI or MCP creation result, or from
+   an MCP re-read of the exact investigation, when it exists. Do not
+   reconstruct or rewrite that product-owned URL.
+2. Otherwise, for an older server or client that returns no link, use only the
+   compatibility route documented from the resolved dashboard base URL, the
+   exact agent ID, and exact investigation ID in
    [references/kitaru-operations.md](references/kitaru-operations.md).
 
 If no returned or documented URL reaches the investigation, stop and report a
@@ -485,8 +491,10 @@ checkpoint.
 - If full trace payloads are unavailable, identify the missing evidence and do
   not silently summarize truncated input.
 - If a worker is unavailable, do not imply analyses or evaluations completed.
-- If a mutating response is dropped, read current state before retrying because
-  general request idempotency is not guaranteed.
+- If a mutating response is dropped, read current state before retrying. Reuse
+  the original idempotency key only when retrying a create that carried one;
+  retry a write without a key, such as a verdict or update, only when the
+  re-read shows it is missing.
 - If the user abandons an investigation, leave it incomplete. Do not invent an
   `uncertain` verdict as a skip state or use destructive deletion as
   cancellation.

@@ -37,10 +37,11 @@ Verify the installed signatures and request types. Do not write direct REST
 calls when a method is absent.
 
 Then test whether the project can resolve `@zenml-io/kitaru/adapter` and inspect
-its actual exports. The checked source snapshot exports `RunRecorder`,
-per-run state, normalized step helpers, replay parsing and resolution, and
-tool-policy helpers. Use only the exports present in the installed or explicitly
-approved local package.
+its actual exports. The checked source snapshot exports `RunRecorder`, the
+`AdapterClient` and `AdapterRunState` types, normalized step helpers, replay
+parsing and resolution, tool-policy helpers, cost resolution, bounded-recording
+helpers, and URL-credential redaction helpers. Use only the exports present in
+the installed or explicitly approved local package.
 
 If neither a sufficient public client nor the adapter subpath is available,
 propose an exact published dependency only when installed metadata or an
@@ -53,7 +54,7 @@ The checked TypeScript reference is merged into Kitaru's `develop` branch:
 
 ```text
 branch: origin/develop
-commit: 3675d90e02a690f2bd9a3ff43eba576f0a813515
+commit: 35b1f3ef4e23de983a2ed66f8236912fc16c518f
 core SDK: packages/core/ (@zenml-io/kitaru)
 Mastra adapter: packages/mastra/ (@zenml-io/kitaru-mastra)
 Vercel AI adapter: packages/vercel-ai/ (@zenml-io/kitaru-vercel-ai)
@@ -63,19 +64,28 @@ These packages are published independently from Kitaru's Python distributions.
 Inspect npm and the project's lockfile for the current versions before relying
 on them.
 
-All three packages are ESM-only and require Node `>=22.22.0 <23`. The core
-package exports its public client and types plus `./client`, `./environment`,
-`./errors`, and `./adapter`. The adapter subpath exposes recording, replay,
-normalized-step, and local tool-policy primitives for adapter authors. It is not
-a framework-independent agent or streaming abstraction.
+All three packages are ESM-only and require Node
+`>=22.22.0 <23 || >=24 <25 || >=26 <27`. The core package exports its public
+client and types plus `./client`, `./environment`, `./errors`, `./node`
+(stored-login client creation), `./evaluator`, and `./adapter`. The adapter
+subpath exposes recording, replay, normalized-step, local tool-policy, cost,
+and bounded-recording primitives for adapter authors. It is not a
+framework-independent agent or streaming abstraction.
 
-The Mastra package targets `@mastra/core >=1.51.0 <1.52.0` and wraps
-non-streaming `Agent.generate()` through `KitaruAgent`. The Vercel package
-targets `ai >=7.0.0 <8.0.0` and wraps non-streaming `generateText` through
-`createKitaruGenerateText`. Both support local tools with passthrough, static,
-and history replay policies. Neither supports streaming, provider-executed or
-dynamic tools, LLM tool policy, or TypeScript scorers. Inspect their pinned
-READMEs for additional framework-specific exclusions before offering support.
+The Mastra package targets `@mastra/core >=1.51.0 <1.80.0` and wraps
+`Agent.generate()` through `KitaruAgent`. On Mastra 1.67.x through 1.79.x the
+same wrapper also records and replays consumed `Agent.stream()` calls; it does
+not store token-by-token chunks. Its `./memory` subpath adds an opt-in isolated
+memory replay factory for exact `@mastra/core` and `@mastra/memory` release
+pairs, and the root exports `createMastraEvaluator` to run native Mastra
+scorers as a Kitaru evaluator. The Vercel package targets `ai >=7.0.60 <8.0.0`
+and wraps non-streaming `ToolLoopAgent.generate()` through
+`createKitaruToolLoopAgent` and `generateText` through
+`createKitaruGenerateText`. Its Agent `stream()` is an unrecorded passthrough
+that rejects under replay. Both support local tools with passthrough, static,
+and history replay policies. Neither supports provider-executed or dynamic
+tools or LLM tool policy. Inspect their pinned READMEs for streaming limits and
+additional framework-specific exclusions before offering support.
 
 Replay can execute live passthrough tools and is not a transaction. Require
 approval for those effects. Treat history matches as adapter-specific because
@@ -144,8 +154,10 @@ framework default.
 
 At the checked `develop` revision, `RunRecorder` demonstrates this lifecycle:
 
-1. `create(...)` creates an in-progress session and isolated `RunState`.
-2. `initialize()` upserts the in-progress root at index `0`.
+1. `create(...)` creates an in-progress session and isolated per-run state,
+   exported only as the `AdapterRunState` type.
+2. `initialize()` upserts the in-progress root under `ROOT_NODE_EXTERNAL_ID`
+   (`"run"`).
 3. framework callbacks normalize model and tool steps and enqueue ordered node
    upserts;
 4. `complete(result)` waits for queued steps, replaces the root as completed,
@@ -155,7 +167,7 @@ At the checked `develop` revision, `RunRecorder` demonstrates this lifecycle:
    failed.
 
 Verify the installed implementation and the framework callback lifecycle before
-reusing it. The checked `RunState` does not itself seal `enqueueStep()` when
+reusing it. The checked run state does not itself seal `enqueueStep()` when
 failure finalization begins. The adapter must therefore prove that the framework
 cannot deliver another recording callback after `fail()` starts, or add a local
 closed-state guard. Failure finalization must prevent new writes from entering
@@ -170,10 +182,10 @@ TypeScript client uses `fetch` and does not mirror Python client ownership.
 When implementing against the public client without these primitives, reproduce
 the shared lifecycle invariants from `adapter-method.md`, not the private class
 layout. Keep one run-state instance per invocation, serialize node writes,
-allocate indexes once, and preserve the first failure.
+allocate each node's external id once, and preserve the first failure.
 
 The current client retries node upsert only for a small set of transient server
-statuses. Preserve the same node indexes and payload on a retry. Do not retry
+statuses. Preserve the same node external ids and payload on a retry. Do not retry
 model or tool execution as part of recording recovery.
 
 ## Map framework events
@@ -188,6 +200,13 @@ For model steps, normalize:
 - bounded output and public error;
 - usage, cost, provider, and external ID when exposed;
 - public tool calls and their stable call IDs.
+
+Kitaru does not price calls server-side, so a model node's `cost` stays null
+unless the adapter sends a value. The shipped TypeScript adapters record
+`requested_model`, `model`, `model_provider`, and `tokens`, and compute `cost`
+only through a caller-supplied `costCalculator`. Reuse `resolveCost` and the
+`CostCalculator` type from the installed adapter subpath when present rather
+than inventing a price.
 
 For tools, wrap only public local tool execution paths. Preserve tool schemas,
 validation, context, abort signals, return types, and public failures.
@@ -236,11 +255,13 @@ Before generation:
 
 For history replay, the same public contract applies as in Python. For
 baseline scope, keep one counter per cache key, send it as a zero-based
-`occurrence`, and increment it only on a hit, so repeated identical calls
-replay their own recorded results in baseline order. Never send `occurrence`
-for other scopes, the server rejects it. When the installed API lacks
-`occurrence` or the scope is not baseline, a `found/result` lookup does not
-prove unique cardinality: require a complete preflight that proves unique
+`occurrence`. Advance it on any `match`, completed or failed, and on a null
+`match` with `rejected_candidate` true; keep it on a plain miss. Replay a
+`failed` match as a tool failure with its recorded error. `decideToolCall` from
+`@zenml-io/kitaru/adapter` already implements this; prefer it.
+Never send `occurrence` for other scopes, the server rejects it. When the
+installed API lacks `occurrence` or the scope is not baseline, a lookup does
+not prove unique cardinality: require a complete preflight that proves unique
 baseline keys. Otherwise mark history replay unsupported.
 
 When several tool calls can run concurrently, ensure that a failure in an
@@ -269,6 +290,14 @@ Enforce limits for:
 Reject cycles, non-finite numbers, dangerous prototype keys, functions, symbols,
 and unsupported objects. Decide deliberately whether oversized strings are
 rejected or visibly truncated.
+
+When the installed `@zenml-io/kitaru/adapter` exports them, build on its
+bounded-recording helpers, such as `boundedRecorderJson`,
+`projectRecordedInput`, `normalizeRecordingLimits`, and the `RecordingLimits`
+type, and its credential helpers `isCredentialKeyName`,
+`createSecretKeyClassifier`, `redactUrlCredentials`, and
+`containsUrlCredentials`, instead of reimplementing them. Their key-name
+redaction is a safety net; still define the project-specific field projection.
 
 Always redact or omit authorization, cookies, API keys, passwords, access and
 refresh tokens, client secrets, credential objects, raw requests, URLs when they
@@ -301,7 +330,7 @@ Cover at least:
 - a delayed queued-write rejection during failure finalization, proving that
   finalization waits for the queue, preserves the primary application error,
   and writes the failed root and session afterward;
-- stable node indexes across transient upsert retry;
+- stable node external ids across transient upsert retry;
 - concurrent invocations and concurrent local tools;
 - earlier policy failure blocking later side effects;
 - passthrough side effect followed by recording failure;

@@ -24,7 +24,7 @@ Use provider documentation and at least one representative redacted export. Reco
 | Session or conversation | Session external ID and join key | Is it present on every trace? |
 | Trace or run | Turn identity and node `trace_id` | Does one trace equal one whole session or one turn? |
 | Span or event | Node external ID | Is it stable and unique within the source instance? |
-| Parent relationship | `children` tree | Are missing parents and multiple roots possible? |
+| Parent relationship | `children` tree or `parent_external_id`; extra edges in `links` | Are missing parents and multiple roots possible? |
 | Operation kind | Node type | Does the provider explicitly identify LLM, tool, or subagent work? |
 | Status and error | Node and session status | Which root outcome is authoritative? |
 | Input and output | Session/turn/node payloads | Are values structured, encoded JSON, or absent? |
@@ -79,7 +79,7 @@ A valid group key contains:
 registered provider + source instance/account + project/tenant when present + conversation key
 ```
 
-Built-in patterns may expose native fields such as a session ID or conversation ID. The dedicated `kitaru session import --join-on` option accepts an RFC 6901 JSON Pointer. A custom parser may separately accept a dotted or JSON Pointer path through its documented `--params`; do not imply that the dedicated CLI option accepts dotted paths. Treat every configured path as strict: when a record is expected to contain the selected path but does not, yield an isolated failure rather than silently changing the grouping rule.
+Built-in patterns may expose native fields such as a session ID or conversation ID. The dedicated `kitaru session import --join-on` option accepts an RFC 6901 JSON Pointer and only passes it to the parser as `params["join_on"]`; Kitaru performs no grouping itself. A custom parser that supports the option must read `params["join_on"]` and implement the join (`kitaru.json_pointer.resolve_json_pointer` resolves the pointer), and one that does not should reject the parameter instead of silently ignoring it. A custom parser may separately accept a dotted or JSON Pointer path through its documented `--params`; do not imply that the dedicated CLI option accepts dotted paths. `fetch(query)` does not receive `params`, so a custom join key groups only traces that arrive in the same fetched payload. Treat every configured path as strict: when a record is expected to contain the selected path but does not, yield an isolated failure rather than silently changing the grouping rule.
 
 For implicit provider keys:
 
@@ -103,6 +103,8 @@ Preserve every turn's original trace ID and root tree. Do not fabricate a parent
 
 Before remotely importing joined turns, establish whether the source conversation is closed or can still receive turns. A provider plus session external ID identifies a snapshot within the applicable server deduplication scope, not an append operation. For a growing conversation, wait for a frozen export boundary or use a provider-native immutable segment identity. Do not import an early snapshot under the final conversation identity and expect a later export to extend it; deduplication can preserve the shorter session.
 
+Within one import run, yield each joined session once, from one payload. If a later payload yields the same session `external_id`, Kitaru adds its nodes to the session created first and counts the item as skipped, but keeps the first payload's name, status, inputs, outputs, timestamps, and metadata. Session status and content derived from the last turn can then be stale. A fetcher must therefore hold all traces of a session and yield them together; see [Optional API fetching](importer-contract.md#optional-api-fetching).
+
 ## Build the node tree
 
 Validate topology per native trace before yielding a session:
@@ -113,9 +115,9 @@ Validate topology per native trace before yielding a session:
 - preserve multiple roots with a warning when they represent usable evidence;
 - promote a node with a missing parent to a root, mark graph completeness false, and warn;
 - sort each parent's children deterministically;
-- keep parents before children in the emitted tree.
+- give every node a stable `external_id` that is unique within the session, derived from the source span or event ID.
 
-When the source is a DAG, choose one evidence-backed primary parent and preserve other representable parents through `secondary_parent_indexes`. Use the explicitly indexed flat-node form so every referenced parent precedes the child. Record secondary relations in provider metadata only when the installed contract cannot represent them, and mark that topology loss. Do not duplicate a node to simulate several parents.
+When the source is a DAG, choose one evidence-backed primary parent and preserve other representable parents as `links` entries (`NodeLink(external_id=..., kind=...)`) with a descriptive kind such as `source_parent`. Node order does not need to put parents first, because the server resolves `parent_external_id` and links when reading, but keep the order deterministic. Record secondary relations in provider metadata only when the installed contract cannot represent them, and mark that topology loss. Do not duplicate a node to simulate several parents.
 
 ## Map node semantics
 

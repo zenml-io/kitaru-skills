@@ -60,12 +60,14 @@ def cost_concentration(items: list[dict[str, Any]]) -> dict[str, Any]:
 
 def cache_reads(items: list[dict[str, Any]]) -> dict[str, Any]:
     """Total cache reads, and their share of input under the convention the data shows."""
-    rows = [t for i in items if isinstance(t := i.get("tokens"), dict) and t.get("cached_input_tokens") is not None]
-    input_total = sum(int(t.get("input_tokens") or 0) for t in rows)
+    # Kitaru reports a session total as null when any call lacks it, so a null input total is
+    # unknown, not zero; comparing against it would misread the convention.
+    rows = [t for i in items if isinstance(t := i.get("tokens"), dict) and t.get("cached_input_tokens") is not None and t.get("input_tokens") is not None]
+    input_total = sum(int(t["input_tokens"]) for t in rows)
     cached_total = sum(int(t["cached_input_tokens"]) for t in rows)
     # Sources disagree on whether input_tokens includes cache reads; a session reading more
     # from cache than its input total proves that source counts the two separately.
-    exclusive = any(int(t["cached_input_tokens"]) > int(t.get("input_tokens") or 0) for t in rows)
+    exclusive = any(int(t["cached_input_tokens"]) > int(t["input_tokens"]) for t in rows)
     result: dict[str, Any] = {"sessions_reporting": len(rows), "input_tokens": input_total, "cached_input_tokens": cached_total, "convention": "exclusive" if exclusive else "unknown"}
     if not rows:
         return result
@@ -75,6 +77,13 @@ def cache_reads(items: list[dict[str, Any]]) -> dict[str, Any]:
         result["share_if_inclusive"] = round(cached_total / input_total, 4) if input_total else None
         result["share_if_exclusive"] = round(cached_total / (input_total + cached_total), 4) if input_total + cached_total else None
     return result
+
+
+def cache_writes(items: list[dict[str, Any]]) -> dict[str, Any]:
+    """Total prompt-cache writes over the sessions that report them."""
+    # A null count is unknown, not zero: older Kitaru and many sources never report cache writes.
+    values = [int(t["cache_write_input_tokens"]) for i in items if isinstance(t := i.get("tokens"), dict) and t.get("cache_write_input_tokens") is not None]
+    return {"sessions_reporting": len(values), "sessions_unknown": len(items) - len(values), "cache_write_input_tokens": sum(values) if values else None}
 
 
 def summarize(items: list[dict[str, Any]]) -> dict[str, Any]:
@@ -94,6 +103,7 @@ def summarize(items: list[dict[str, Any]]) -> dict[str, Any]:
         "llm_calls": percentiles([float(i["llm_call_count"]) for i in items if isinstance(i.get("llm_call_count"), int)]),
         "cost": cost_concentration(items),
         "cache": cache_reads(items),
+        "cache_writes": cache_writes(items),
     }
 
 

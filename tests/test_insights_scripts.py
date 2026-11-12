@@ -31,7 +31,7 @@ scope_counts = load("scope_counts")
 to_judgments = load("evaluations_to_judgments")
 
 
-def session(i: int, status: str = "completed", cost: float = 0.01, tools: int = 2, agent: str = "agent") -> dict:
+def session(i: int, status: str = "completed", cost: float | str = 0.01, tools: int = 2, agent: str = "agent") -> dict:
     return {
         "id": f"s{i:03d}",
         "agent_id": agent,
@@ -98,6 +98,15 @@ class PickSampleTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "items array"):
                 pick_sample.load_items([bad])
 
+    def test_picks_out_lists_only_the_picked_sessions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            page, picks = Path(tmp) / "page.json", Path(tmp) / "picked.txt"
+            page.write_text(json.dumps({"items": [session(i) for i in range(50)]}))
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(pick_sample.main([str(page), "--targeted", "2", "--random", "3", "--seed", "7", "--out", str(Path(tmp) / "sample.json"), "--picks-out", str(picks)]), 0)
+            sample = json.loads((Path(tmp) / "sample.json").read_text())
+            self.assertEqual(picks.read_text().split(), [p["session_id"] for p in sample["picks"]])
+
 
 class CondenseTest(unittest.TestCase):
     def test_transcript_uses_selectors_and_keeps_node_ids(self):
@@ -111,7 +120,8 @@ class CondenseTest(unittest.TestCase):
                 self.assertEqual(condense.main([str(export), str(out)]), 0)
             text = (out / "s1.md").read_text()
             self.assertIn("Where is order #48213?", text)
-            self.assertIn(f"[{node_id}]", text)
+            self.assertIn(f"- [0] node {node_id}: tool_call", text)
+            self.assertIn("zero-based", text)
             self.assertIn("error: 404", text)
             manifest = json.loads((out / "manifest.json").read_text())
             self.assertGreater(manifest["estimated_tokens"], 0)
@@ -126,6 +136,44 @@ class CondenseTest(unittest.TestCase):
             self.assertEqual(len(loaded["s2"]["pages"][0][1]), 1)
             (export / "s3.session.json").write_text(json.dumps({"ok": True}))
             with self.assertRaisesRegex(ValueError, "id s3"):
+                condense.load_export(export)
+
+    def test_reads_session_read_json_and_keeps_zero_based_positions(self):
+        session_id, node_id = str(uuid.uuid4()), str(uuid.uuid4())
+        transcript = {
+            "session_id": session_id, "status": "completed", "origin": "imported", "cost": "0.0123", "node_count": 5, "request": "Refund order 7?",
+            "steps": [
+                {"index": 3, "node_id": node_id, "node_type": "tool_call", "name": "check_policy", "status": "completed", "input": '{"order":7}', "output": "window closed… [+812 chars]"},
+                {"index": 4, "node_id": str(uuid.uuid4()), "node_type": "llm_call", "name": "reply", "model": "m", "status": "completed", "system_prompt": "New rules.", "output": "(same as [3])"},
+            ],
+            "final_output": "Refund approved.",
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            export, out = Path(tmp) / "export", Path(tmp) / "out"
+            export.mkdir()
+            (export / "picked.read.json").write_text(json.dumps({"schema_version": "1", "ok": True, "items": [transcript]}))
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(condense.main([str(export), str(out)]), 0)
+            text = (out / f"{session_id}.md").read_text()
+            self.assertIn(f"- [3] node {node_id}: tool_call check_policy status=completed", text)
+            self.assertIn("  result: window closed… [+812 chars]", text)
+            self.assertIn("  system prompt changed: New rules.", text)
+            self.assertIn("cost: 0.0123", text)
+            self.assertIn("## Nodes (2 shown of 5)", text)
+            entry = json.loads((out / "manifest.json").read_text())["sessions"][0]
+            self.assertEqual((entry["node_count"], entry["clipped_fields"], entry["has_nodes"]), (5, 1, True))
+
+    def test_reads_mcp_session_read_and_rejects_double_exports(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            export = Path(tmp)
+            (export / "mcp.read.json").write_text(json.dumps({"schema_version": "1", "ok": True, "data": {"transcripts": [{"session_id": "s4", "steps": []}]}}))
+            self.assertIn("transcript", condense.load_export(export)["s4"])
+            (export / "s4.session.json").write_text(json.dumps({"item": {"id": "s4"}}))
+            with self.assertRaisesRegex(ValueError, "exported twice"):
+                condense.load_export(export)
+            (export / "s4.session.json").unlink()
+            (export / "bad.read.json").write_text(json.dumps({"items": [{"id": "s5"}]}))
+            with self.assertRaisesRegex(ValueError, "session read transcripts"):
                 condense.load_export(export)
 
     def test_clip_keeps_head_and_tail(self):
@@ -249,9 +297,25 @@ class CheckCardsTest(unittest.TestCase):
     def test_valid_card_passes_and_command_round_trips(self):
         batch = [card()]
         self.assertEqual(cards.check_cards(batch), [])
-        argv = shlex.split(cards.build_command(batch, "my agent", "run-batch-1"))
-        self.assertEqual(json.loads(argv[argv.index("--insight") + 1]), batch[0])
-        self.assertEqual(argv[argv.index("--agent") + 1], "my agent")
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "my cards.json"
+            path.write_text(json.dumps(batch))
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                self.assertEqual(cards.main([str(path), "--emit-command", "my agent", "--idempotency-key", "run-batch-1"]), 0)
+            argv = shlex.split(out.getvalue())
+            self.assertEqual(json.loads(Path(argv[argv.index("--insight-file") + 1]).read_text()), batch)
+            self.assertNotIn("--insight", argv)
+            self.assertEqual(argv[argv.index("--agent") + 1], "my agent")
+            self.assertEqual(argv[argv.index("--idempotency-key") + 1], "run-batch-1")
+
+    def test_rejects_non_finite_json_in_the_cards_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "cards.json"
+            path.write_text(json.dumps([card()]).replace('"low": 0.1', '"low": NaN'))
+            with contextlib.redirect_stderr(io.StringIO()) as err:
+                self.assertEqual(cards.main([str(path)]), 1)
+            self.assertIn("NaN", err.getvalue())
 
     def test_rejects_contract_violations(self):
         bad = card(name="-bad", extra=1)
@@ -295,6 +359,21 @@ class ScopeCountsTest(unittest.TestCase):
         items = [session(i, cost=10.0 if i < 2 else 1.0) for i in range(20)]
         self.assertEqual(scope_counts.build(items)["scope"]["cost"]["top_share"], round(20 / 38, 4))
 
+    def test_cost_reads_decimal_strings(self):
+        # Kitaru serializes Decimal cost as a JSON string.
+        items = [session(i, cost="10.00" if i < 2 else "1.00") for i in range(20)]
+        self.assertEqual(scope_counts.build(items)["scope"]["cost"]["top_share"], round(20 / 38, 4))
+
+    def test_cache_writes_keep_unknown_counts_out_of_the_total(self):
+        items = [
+            {**session(1), "tokens": {"input_tokens": 10, "cache_write_input_tokens": 300}},
+            {**session(2), "tokens": {"input_tokens": 10, "cache_write_input_tokens": None}},
+            session(3),
+        ]
+        writes = scope_counts.build(items)["scope"]["cache_writes"]
+        self.assertEqual(writes, {"sessions_reporting": 1, "sessions_unknown": 2, "cache_write_input_tokens": 300})
+        self.assertIsNone(scope_counts.build([session(4)])["scope"]["cache_writes"]["cache_write_input_tokens"])
+
     def test_cache_share_follows_the_convention_the_data_shows(self):
         exclusive = [{**session(1), "tokens": {"input_tokens": 100, "cached_input_tokens": 300}}]
         cache = scope_counts.build(exclusive)["scope"]["cache"]
@@ -302,6 +381,15 @@ class ScopeCountsTest(unittest.TestCase):
         unknown = [{**session(1), "tokens": {"input_tokens": 400, "cached_input_tokens": 100}}]
         cache = scope_counts.build(unknown)["scope"]["cache"]
         self.assertEqual((cache["convention"], cache["share_if_inclusive"], cache["share_if_exclusive"]), ("unknown", 0.25, 0.2))
+
+    def test_cache_share_skips_sessions_with_unknown_input_tokens(self):
+        # Kitaru reports a token total as null when any call in the session lacks it.
+        items = [
+            {**session(1), "tokens": {"input_tokens": None, "cached_input_tokens": 50}},
+            {**session(2), "tokens": {"input_tokens": 1000, "cached_input_tokens": 400}},
+        ]
+        cache = scope_counts.build(items)["scope"]["cache"]
+        self.assertEqual((cache["sessions_reporting"], cache["convention"], cache["share_if_inclusive"]), (1, "unknown", 0.4))
 
     def test_counts_per_agent_version(self):
         items = [{**session(i, status="failed" if i == 0 else "completed"), "agent_version_id": "v1" if i < 3 else "v2"} for i in range(5)]

@@ -16,7 +16,7 @@ Use this reference for exact operations. Inspect `kitaru schema`, command help, 
 
 ## Check what is installed
 
-Confirm the CLI or MCP server can reach the intended server and agent, for example with `kitaru info` and `kitaru agent get AGENT`. Check `kitaru session analyze --help` before offering Quick; when it is missing, say the installed Kitaru predates it, recommend upgrading, and continue with Standard or Deep, which need only read and insight-create operations. MCP `kitaru_failure_matrix` is optional; continue without it in CLI-only hosts.
+Confirm the CLI or MCP server can reach the intended server and agent, for example with `kitaru info` and `kitaru agent get AGENT`. Check `kitaru session analyze --help` before offering Quick. When it is missing, the installed Kitaru predates it: Quick is then available only for a single-import scope through `kitaru import analyze`; recommend upgrading for other scopes. Standard and Deep need only read and insight-create operations. MCP `kitaru_failure_matrix` is optional; continue without it in CLI-only hosts.
 
 ## Resolve and pin the scope
 
@@ -41,20 +41,23 @@ MCP reads sessions with `kitaru_activity_read`: `list` with kind `session`, a `f
 - MCP: `kitaru_review_read` with `list` or `get` and kind `insight`.
 - Filter with `--filter` on `id`, `agent_id`, `import_id` (`eq`, `in`, and `is_null` on servers that support it), `task_id`, `name`, and `type`.
 
-Analyzer cards carry `analyzer_version_id` and, for an import, `import_id`. Cards from earlier skill runs carry the provenance key described in [insight-contract.md](insight-contract.md). Match an earlier run by its provenance `scope`, not by title.
+Analyzer cards carry `analyzer_version_id` and, when they came from an import or `kitaru import analyze`, `import_id`. Cards from `kitaru/openai-session-findings` keep their context under `metadata["kitaru.session-findings/v1"]` instead of `kitaru.insights/v1`: `harm` (`high`, `medium`, or `low`), the `checks` behind the finding, and `contributing_session_ids`. Read them as leads that a model verified per session, not as human verdicts. Cards from earlier skill runs carry the provenance key described in [insight-contract.md](insight-contract.md). Match an earlier run by its provenance `scope`, not by title.
 
 ## Run Quick analysis
 
-`kitaru session analyze --agent AGENT --sessions-file RUN/population_ids.txt --analyzer ANALYZER@VERSION --wait` runs an analyzer over exactly the pinned sessions. `pick_sample.py --ids-out` writes `population_ids.txt`. Other selectors (`--tag`, `--cohort`, `--import-id`, `--started-after`, `--started-before`, `--filter`, or positional IDs) also work and combine as AND.
+`kitaru session analyze --agent AGENT --sessions-file RUN/population_ids.txt --analyzer ANALYZER@VERSION --wait` (Kitaru releases after 0.27.7) runs each selected analyzer once over exactly the pinned sessions, whether they were imported, recorded live, or a mix. `pick_sample.py --ids-out` writes `population_ids.txt`. Other selectors (positional IDs, `--tag`, `--cohort`, `--import-id`, `--started-after`, `--started-before`, `--filter`) also work and combine as AND; with none, every finished session of the agent is analyzed. The server fixes the matching sessions when it creates the job, so a queued job still reads the sessions that matched at creation. Sessions still in progress are left out.
 
-- When every pinned session comes from one import, also pass `--import-id IMPORT_ID`. The cards then record that import and appear in its dashboard view.
-- If the task fails with a validation error about `import_id`, the analyzer's environment runs an older Kitaru that only accepts import-scoped tasks. Retry with `--import-id` when the scope is one import; otherwise report that Quick needs a newer Kitaru on the analyzer side, and continue with Standard or Deep.
-- Choose the analyzer with the user. `kitaru/post-import-insights@latest` needs no model credentials. `kitaru/openai-post-import-insights@latest` needs OpenAI credentials through a connection or the worker, and bills the user's OpenAI account. Pass a connection with `--analyzer-connection ANALYZER@VERSION=CONNECTION`.
-- The server rejects a selection with no finished sessions or more than its limit (1,000 by default). Split a larger scope into batches and report each job. Below an analyzer's own session minimum, its task is recorded as skipped and writes no cards.
+When the installed CLI lacks `session analyze`, Quick is available only when the scope is exactly one import: `kitaru import analyze IMPORT_ID --analyzer ANALYZER@VERSION --wait` runs over every finished session that import created, not over a pinned subset. For any other scope on such a version, say that Quick needs a newer Kitaru and continue with Standard or Deep.
+
+- Choose the analyzer with the user. `kitaru/post-import-insights@latest` needs no model credentials. `kitaru/openai-post-import-insights@latest` needs OpenAI credentials through a connection or the worker, and bills the user's OpenAI account. Pass a connection with `--analyzer-connection ANALYZER@VERSION=CONNECTION` and parameters with `--analyzer-params ANALYZER@VERSION=JSON`.
+- `kitaru/openai-session-findings@latest` (Kitaru 0.27.5 and later) reads the sessions with OpenAI, verifies each problem it finds on every session with OpenAI's Decisions API, and writes at most ten cards, most harmful first. It needs the same OpenAI connection, with Decisions API access on that OpenAI project, and unlike the other two analyzers it sends session content to OpenAI: the system prompt, user messages, tool inputs and outputs, and the final reply. Get the user's agreement to that before selecting it. Its optional `context` parameter takes extra text about the agent, such as a summary of the context brief: `--analyzer-params 'kitaru/openai-session-findings@latest={"context":"..."}'`.
+- The server rejects a selection with no finished session or more than its cap (`KITARU_SERVER_ANALYSIS_SESSION_LIMIT`, 1,000 by default). Split a larger scope into batches and report each job. Below an analyzer's own session minimum, its task is recorded as skipped and writes no cards.
+- Cards from `kitaru session analyze` never record an `import_id`, even when you select with `--import-id`, so they do not appear in an import's dashboard view. To file cards under one import, use `kitaru import analyze IMPORT_ID` instead, which covers that whole import. When every analyzed session came from one import, `kitaru/post-import-insights` cards still name that import in their investigation prompt.
+- The worker that claims the analyzer task must run a compatible Kitaru and analyzer package. A worker on Kitaru 0.27.7 or older fails a `session analyze` task with a validation error saying `import_id` is required, because its task model only knows import-scoped analysis. `kitaru-post-import-insights` 0.4.0 and older fail with "every post-import insight session must have an import ID" when a selected session was recorded live. In either case, report which package to upgrade on the worker; when the scope is one import, `kitaru import analyze` still works, otherwise continue with Standard or Deep.
 - A worker claiming analyzer tasks must be running (`kitaru worker start --claim analyzer`). Without one the job stays queued; report that rather than waiting indefinitely.
-- The terminal receipt lists one task per analyzer; read its cards with `kitaru insight list --filter '{"field":"task_id","op":"in","value":[...]}'`. Cards record an `import_id` only when `--import-id` was given.
-- Each call adds new cards; nothing replaces earlier ones. Confirm before rerunning.
-- MCP: `kitaru_workflow_start` with `operation: "analysis"`, `agent_id`, `analyzers`, and any of `session_ids` (up to 1,000), `tag`, `cohort_version_id`, `import_id`, `started_after`, `started_before`, and `idempotency_key`. It has no raw `filter` field. It returns the queued job; read it with `kitaru_activity_read`.
+- The terminal receipt lists one task per analyzer; read its cards with `kitaru insight list --filter '{"field":"task_id","op":"in","value":[...]}'`.
+- Each call adds new cards; nothing replaces earlier ones. Pass `--idempotency-key` so a retried call after a lost response does not start a second job, and confirm with the user before any deliberate rerun.
+- MCP: `kitaru_workflow_start` with `operation: "analysis"`, `agent_id`, `analyzers` (1 to 20 entries, each with `analyzer` and optional `version`, `params`, `connection_id`, and `min_sessions`), an optional session `filter`, and `idempotency_key`. Express pinned IDs as `{"field":"id","op":"in","value":[...]}` with at most 100 values per `in`, joining batches with `or`; tags, cohort versions, imports, and time windows are filter conditions on `tag`, `cohort_version_id`, `import_id`, and `started_at`. It returns the queued job; read it with `kitaru_activity_read`. Analyzers can also run at import time through `kitaru_session_import` with `analyzers`.
 
 ## Count cheaply
 
@@ -64,20 +67,25 @@ Analyzer cards carry `analyzer_version_id` and, for an import, `import_id`. Card
 
 ## Export sessions
 
-There is no export or transcript command. Export with the CLI, which writes payloads straight to files. For each picked session:
+Export with `kitaru session read` (Kitaru 0.27.7 and later), which fetches every picked session with its nodes in one call and renders each as a compact transcript: each model call's new text only, repeated payloads pointing back at their first appearance, system-prompt changes flagged, node errors kept whole, recognizable credentials masked in structured payloads, and every cut marked `[+N chars]`. Plain text is not redacted, so the transcripts stay as sensitive as the traces. Write the picked IDs with `pick_sample.py --picks-out RUN/picked.txt`, then run:
+
+```bash
+kitaru session read --sessions-file RUN/picked.txt --max-chars 1500 --output json > RUN/export/picked.read.json
+python3 scripts/condense_sessions.py RUN/export RUN/transcripts
+```
+
+The JSON gives each step's `node_id` UUID and its `index`, the zero-based position of the node in the session; the text output shows only `[index]`, so always export JSON. `condense_sessions.py` writes one transcript per session with both on each step line and a `manifest.json` with `estimated_tokens` for balancing readers. `--reasoning` adds the visible reasoning of model calls; add it only when a pattern depends on it, since it grows every transcript. To see one cut node whole, run `kitaru session read SESSION --node N --full`, where `N` is the `[N]` position in the transcript.
+
+When the installed CLI has no `session read`, export the raw records instead. For each picked session:
 
 ```bash
 kitaru session get SESSION_ID --output json > RUN/export/SESSION_ID.session.json
 kitaru session nodes SESSION_ID --include-payloads --size 1000 --output json > RUN/export/SESSION_ID.nodes.json
 ```
 
-When `page.next_cursor` is not null, fetch the next page with `--cursor` into `SESSION_ID.nodes.2.json`, and so on. Then run:
+When `page.next_cursor` is not null, fetch the next page with `--cursor` into `SESSION_ID.nodes.2.json`, and so on, then run the same `condense_sessions.py` command. Its transcripts use the same zero-based `[N]` positions.
 
-```bash
-python3 scripts/condense_sessions.py RUN/export RUN/transcripts
-```
-
-MCP can read the same data (`kitaru_activity_read` `get` with kind `session`, and `list_children` with kind `session_nodes`, `parent_id`, `include_payloads: true`, `size` up to 100), but every payload then passes through the agent's own context, which defeats the run folder. Use MCP export only for a handful of sessions when no CLI is available; the condenser accepts saved MCP results.
+MCP `kitaru_session_read` takes `session_ids` (at most 10) plus `max_chars`, `full`, `reasoning`, and `node`, and returns the transcripts under `data.transcripts`. Every transcript then passes through the agent's own context, which defeats the run folder, so use MCP export only for a handful of sessions when no CLI is available. The condenser accepts a saved `kitaru_session_read` result named `NAME.read.json`, and saved `kitaru_activity_read` session and node results named as above.
 
 ## Measure with the TypeSafe evaluator
 
@@ -92,7 +100,7 @@ Jev measurement runs as an ordinary Kitaru evaluation, so its results are stored
 
 ## Write, replace, and list cards
 
-- CLI: `kitaru insight create --agent AGENT --insight 'JSON' [--insight 'JSON' ...] --idempotency-key KEY`. One call takes 1 to 100 cards. `python3 scripts/check_cards.py RUN/cards.json --emit-command AGENT --idempotency-key KEY` prints a safely quoted command.
+- CLI: `kitaru insight create --agent AGENT --insight-file RUN/cards.json --idempotency-key KEY`. The file holds one card object or an array of 1 to 100 cards; `--insight-file` (Kitaru 0.27.4 and later) replaces repeated `--insight 'JSON'` arguments. `python3 scripts/check_cards.py RUN/cards.json --emit-command AGENT --idempotency-key KEY` checks the file and prints a safely quoted command for it. On older CLIs, write the batch with MCP instead of quoting each card by hand.
 - MCP: `kitaru_review_manage` with `operation: "create_insights"`, `agent_id`, `insights` (1 to 100), and `idempotency_key`.
 - Use the run ID plus a batch number as the idempotency key, so a retried write cannot duplicate the batch.
 - Update wording with `kitaru insight update ID --title ... --description ...` or MCP `update_insight`. Data and metadata cannot be updated; replace the card instead.
@@ -104,5 +112,3 @@ After writing, list the new cards with `kitaru insight list --agent AGENT --filt
 
 - Cards have no first-class session links or provenance fields; this skill stores both in metadata.
 - The server does not group a hand-written batch under a run, so runs over the same agent share one list. The provenance run ID is how agents tell them apart.
-- `--insight` takes inline JSON only; use `check_cards.py --emit-command` or MCP rather than quoting by hand.
-- There is no compact transcript operation; `condense_sessions.py` builds one from exported JSON.

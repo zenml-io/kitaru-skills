@@ -20,7 +20,7 @@ Use three outcomes:
 | Boundary | Examples | Importer behavior |
 |---|---|---|
 | Whole payload is unsafe or uninterpretable | Size/depth/count limit exceeded, invalid encoding, unsupported top-level shape, unsafe serialization, no usable records | Raise a clear parser exception; the task cannot safely continue |
-| One item or source group is invalid | Conflicting identity, parent cycle, no root, conflicting duplicate span, strict join path missing | Yield `ImportFailure` with a source location or line, external ID when known, and actionable error; continue with independent groups |
+| One item or source group is invalid | Conflicting identity, parent cycle, no root, conflicting duplicate span, strict join path missing | Yield `ImportFailure` with the required integer `line`, `external_id` when known, and an actionable `error` that names the source location; continue with independent groups |
 | Session is valid but incomplete | Missing parent, several roots, flat export, missing optional input/output, missing usage/cost, incomplete tool fields, unrepresentable source relation | Yield `ImportedSession`; preserve evidence and report completeness, warnings, and replay readiness |
 
 Do not convert every imperfect trace into a failure. Do not hide an invalid identity or unsafe graph behind a warning merely to maximize import counts.
@@ -40,7 +40,7 @@ Common incomplete cases and honest behavior:
 | Tool name without input/output | Tool node and available fields | Tool not replayable |
 | Implicit tool-like span | Span and source attributes | Tool boundary not established |
 | Missing tokens or cost | `None` | Source did not expose the value |
-| Secondary DAG link | Explicit indexed node plus `secondary_parent_indexes` when the installed contract supports it | Exact preserved parents, or a named topology loss when it cannot be represented |
+| Secondary DAG link | Primary parent via `parent_external_id` or nesting, extra parents as `links` entries with a descriptive `kind` | Exact preserved parents, or a named topology loss when it cannot be represented |
 
 Warnings must identify the affected trace or node where possible. Keep them deterministic and bounded. Do not copy raw prompt or tool content into warning strings.
 
@@ -50,7 +50,7 @@ Treat source payloads and importer code as untrusted until reviewed.
 
 ### Payload limits
 
-Record numeric limits in the source map and test each boundary. Select values from representative provider exports and the worker's memory budget. The current built-in reference importers use whole-payload limits around 50 to 64 MiB; that is precedent, not a universal default.
+Record numeric limits in the source map and test each boundary. Select values from representative provider exports and the worker's memory budget. The released built-in importers no longer impose a whole-payload byte limit; they keep nesting-depth limits such as 64 levels. File uploads are capped by the server's maximum blob size (100 MiB by default) and optionally by `kitaru session import --max-upload-mib`. A custom importer's own byte limit is still reasonable when the worker's memory budget requires it.
 
 Apply limits in this order:
 
@@ -134,7 +134,8 @@ For every parsed session, assert the applicable fields:
 - exact external ID and source-instance scope;
 - status, error, start/end time, session input, output, and framework;
 - original trace IDs and deterministic turn order;
-- exact root order, primary child topology, and secondary parents;
+- exact root order, primary child topology, and secondary parents in `links`;
+- `kitaru.task.importer.flatten_nodes(session.nodes)` succeeds for every parsed session, proving unique node external IDs and no nested cycles;
 - node types, identities, statuses, errors, inputs, and outputs;
 - text, system-prompt, and reasoning selectors when the source exposes them;
 - requested and served model, `model_provider`, usage, cost, tool, and subagent fields;
@@ -143,7 +144,7 @@ For every parsed session, assert the applicable fields:
 - replay-readiness level, counts, booleans, and reasons;
 - stable digest for record reordering and changed digest for semantic changes.
 
-For `ImportFailure`, assert the source line or location, external identity when available, and useful error class without leaking payload content.
+For `ImportFailure`, assert the integer `line`, the `external_id` when available, and an `error` that names the source location and useful error class without leaking payload content.
 
 Check cardinality explicitly. A parser that silently drops a group can otherwise pass type checks.
 
@@ -180,7 +181,7 @@ After registration or import trouble, preserve every identifier before doing any
 - selected server version and verified deduplication scope;
 - logical destination agent ID and requested agent version;
 - created or existing session IDs, provider, external IDs, and actual agent-version provenance;
-- created, skipped, and failed counts;
+- created, skipped, and failed counts, and whether `limit_reached` stopped the import;
 - sampled failures and the total failed count;
 - post-import tag results.
 
@@ -195,10 +196,10 @@ Re-read current state for each provider/external ID across the [applicable serve
 | Incomplete | Session exists but expected nodes or payloads are missing | Stop; use an installed targeted repair path only if one exists |
 | Unrecoverable here | Incomplete state and no safe repair/delete operation exists | Preserve IDs and escalate the product limitation |
 
-Do not infer untouched items merely from the failure sample: the reference receipt stores no more than 20 failures. Use counts, task state, expected identities, and remote reads.
+Do not infer untouched items merely from the failure sample: the reference receipt stores no more than 20 failures. Items after a `limit_reached` cutoff or a server task timeout are untouched unless a remote read shows otherwise. Use counts, task state, expected identities, and remote reads.
 
-A waiter timeout does not cancel the job. Read job state before retrying or creating another job.
+A waiter timeout does not cancel the job. Read job state with `kitaru job get JOB --tasks` or keep waiting with `kitaru job watch JOB` before retrying or creating another job; request cancellation explicitly with `kitaru job cancel JOB` when the job must stop. A completed job can still report failed items, so classify from `stats` and warnings, not from the exit code. Inspect representative sessions with `kitaru session read SESSION...` on Kitaru 0.27.7 and newer, or `kitaru session nodes SESSION --include-payloads`.
 
-A parser may yield valid sessions before crashing. Session creation may also succeed before node ingestion fails. With a stable nonempty registered provider, reruns deduplicate within the applicable server scope, so a direct retry can skip the incomplete session rather than repair it. A new agent version or importer version does not change the key or update existing nodes. Without a provider, do not assume a retry will skip duplicates.
+A parser may yield valid sessions before crashing. On Kitaru 0.27.4 and newer, each session and its initial nodes are committed atomically, so a failed item leaves no session and a same-scope rerun retries it. On older servers, session creation could succeed before node ingestion failed; with a stable nonempty registered provider, reruns deduplicate within the applicable server scope, so a direct retry can skip the incomplete session rather than repair it. A new agent version or importer version does not change the key or update existing nodes. Without a provider, do not assume a retry will skip duplicates.
 
 Patch the importer locally, create a new immutable version after approval, and propose the smallest recovery payload only when the installed product exposes a safe route. Never delete, reimport, or change external IDs merely to bypass a collision without explicit user direction and a documented provenance consequence.

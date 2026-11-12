@@ -23,11 +23,11 @@ Use this reference to choose a level, pick sessions, turn notes into patterns, m
 
 | Level | What runs | Reads | Can claim |
 |---|---|---|---|
-| Quick | `kitaru session analyze` with a server analyzer over the pinned scope | No session text by the user's models | What the analyzer's fixed counters found |
+| Quick | `kitaru session analyze` with a server analyzer over the pinned scope (`kitaru import analyze` for a single import on older Kitaru) | No session text by the user's models; `kitaru/openai-session-findings` sends it to OpenAI | What the analyzer's fixed counters found, or that analyzer's per-session verified findings |
 | Standard | Cheap counts, then readers over about 40 sessions, then grouping | About 40 sessions | Patterns with examples; a rough rate from the random slice only |
 | Deep | Standard, then checker, measurement, and first-failure waves | About 40, then every pattern measured on a fresh random sample of 100 to 200, or on every session in scope with Jev | Patterns that survived a refutation attempt, with a measured rate, and exact first-failure nodes |
 
-Default to Standard. Propose Deep when the user wants numbers they can act on, the scope is large, or Standard found patterns whose rates matter for prioritizing. Propose Quick alone when the user wants a cheap first look or no session text should leave Kitaru.
+Default to Standard. Propose Deep when the user wants numbers they can act on, the scope is large, or Standard found patterns whose rates matter for prioritizing. Propose Quick alone when the user wants a cheap first look or no session text should leave Kitaru; in the second case, leave out `kitaru/openai-session-findings`.
 
 Scale the Standard sample down for a small scope: `pick_sample.py` picks every session when the scope is no larger than the targeted plus random budget (40 by default), and the tally then reports exact counts. Deep's measurement wave adds nothing in that case; skip it.
 
@@ -62,7 +62,7 @@ Use these to aim the sample and to give each pattern a countable proxy when one 
 Run `scripts/pick_sample.py` over the saved session list pages:
 
 ```bash
-python3 scripts/pick_sample.py RUN/scope/*.json --targeted 25 --random 15 --out RUN/sample.json --ids-out RUN/population_ids.txt
+python3 scripts/pick_sample.py RUN/scope/*.json --targeted 25 --random 15 --out RUN/sample.json --ids-out RUN/population_ids.txt --picks-out RUN/picked.txt
 ```
 
 It records a fresh seed unless `--seed` is given. It draws two parts and records why each session was picked:
@@ -98,7 +98,7 @@ For surviving patterns, write `patterns.json` in the format the tally script exp
 Run these after grouping. Each wave reads condensed transcripts from disk and writes JSON lines to disk.
 
 1. **Checker wave.** One checker per pattern. It did not write the pattern, so it judges it more fairly. It reads the members and the counterexample, then tries to refute the pattern: members that do not fit, a definition too vague to apply, or a simpler explanation. Narrow or drop patterns it refutes, and record what changed.
-2. **Measurement wave.** Measure every surviving pattern with Jev over the whole scope when available (see [Measure with Jev](#measure-with-jev)); otherwise use measurement subagents on a sample. For subagents, draw a fresh random sample of 100 to 200 sessions that were not read yet, from the same saved scope pages: `python3 scripts/pick_sample.py RUN/scope/*.json --targeted 0 --random N --exclude RUN/sample.json --out RUN/measure/sample.json`. The rate then describes the sessions not already read, which keeps the sessions that defined each pattern from confirming it. Export and condense them into `RUN/measure/`. Measurement subagents judge each session against every surviving definition: `yes`, `no`, or `unclear`. When a pattern has an exact proxy, count the proxy over the full scope instead and skip judging it.
+2. **Measurement wave.** Measure every surviving pattern with Jev over the whole scope when available (see [Measure with Jev](#measure-with-jev)); otherwise use measurement subagents on a sample. For subagents, draw a fresh random sample of 100 to 200 sessions that were not read yet, from the same saved scope pages: `python3 scripts/pick_sample.py RUN/scope/*.json --targeted 0 --random N --exclude RUN/sample.json --out RUN/measure/sample.json --picks-out RUN/measure/picked.txt`. The rate then describes the sessions not already read, which keeps the sessions that defined each pattern from confirming it. Export and condense them into `RUN/measure/`. Measurement subagents judge each session against every surviving definition: `yes`, `no`, or `unclear`. When a pattern has an exact proxy, count the proxy over the full scope instead and skip judging it.
 3. **First-failure wave.** For each failed or pattern-member session, find the node where things first went wrong and the last node that went right. Use node IDs from the transcript. These become card evidence and can feed `kitaru_failure_matrix` comparisons.
 
 Keep checker and measurement subagents separate from the readers that found the pattern where the host allows it.

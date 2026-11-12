@@ -4,7 +4,7 @@ Use this reference before reading or mutating Kitaru state. Inspect the installe
 
 ## Choose a transport
 
-Prefer native Kitaru MCP for bounded reads and writes it exposes in `standard` or `destructive` mode. CLI-only use remains supported. Use the structured CLI for local trace files, built-in waiting, local evaluator code, or investigation creation when it can return the product-owned frontend link.
+Prefer native Kitaru MCP for bounded reads and writes it exposes in `standard` or `destructive` mode. CLI-only use remains supported. Use the structured CLI for local trace files, built-in waiting, or local evaluator code. Both transports return product-owned frontend links where Kitaru can resolve them: CLI and MCP investigation creation and exact MCP investigation reads return `links.review`, and exact MCP session and experiment-run reads return `links.inspect`.
 
 For agent-facing CLI calls, use `--output json --machine --non-interactive --no-browser` when the installed command exposes those flags. Preserve structured results and exact IDs. Do not use direct REST calls to bypass a missing CLI or MCP operation.
 
@@ -14,7 +14,7 @@ After the example directory is verified, inspect the project prerequisites, the 
 
 - Follow `starter-template.md` and the verified example README's frozen environment command when the project environment is missing or incomplete. Explain that this installs the project-local CLI, worker, MCP entrypoint, importer, adapter, and other locked example dependencies, then ask before changing the environment. Use the README's `uv run kitaru ...` form afterward.
 - Treat MCP as preferred, not required. If suitable MCP tools are already configured, use them for bounded operations. If they are absent, say once that the guided tour can continue through the project-local CLI and proceed.
-- When the user asks to install MCP, or the CLI cannot complete the next operation, distinguish package installation from host registration. First verify the example's `kitaru-mcp` entrypoint. Then inspect the configuration scope the current host actually loads and follow the official host-specific Kitaru MCP setup. Do not write `.mcp.json` into a newly cloned project unless that is the project scope the host will reopen. Explain and ask before installing packages or changing host configuration.
+- When the user asks to install MCP, or the CLI cannot complete the next operation, distinguish package installation from host registration. First verify the example's `kitaru-mcp` entrypoint. Then inspect the configuration scope the current host actually loads. Register the server with `uv run kitaru setup --no-skills --mode standard`: it registers `kitaru-mcp` with every detected coding agent, targets the CLI's selected server, and `--no-skills` leaves the installed skills alone. Run from the example directory, it writes project-scoped entries for that example, such as Claude Code's project `.mcp.json` and Cursor's `.cursor/mcp.json`, launched through `uv run --directory`. Do not write such project entries into a newly cloned project unless that is the project scope the host will reopen; otherwise follow the host-specific registration in the Kitaru setup guide. Explain and ask before installing packages or changing host configuration.
 - After adding or changing `.mcp.json` or equivalent host MCP configuration, state plainly that the user must restart or reload the coding-agent host process or IDE. An already-open task does not hot-load the new server. Preserve the exact example path, selected Kitaru server, completed setup, and next action in a compact checkpoint, then stop MCP-dependent work until the restarted host discovers the tools. Restarting only `kitaru-mcp`, refreshing the Kitaru webpage, or proving that a browser can reach `localhost` is not a substitute. If the user chooses not to restart now and the CLI covers the next operation, say that the tour is continuing through CLI only.
 - Do not install or reconfigure MCP solely to replace a working CLI during the short tour. Offer MCP setup after the AHA when it would improve the user's ongoing Kitaru workflow.
 
@@ -35,7 +35,7 @@ Transport and server selection are separate. CLI and MCP may both address the sa
 |---|---|---|
 | Check selected server and worker | `kitaru status`; diagnose with `kitaru doctor` | Use available bounded registry and activity reads |
 | Resolve agent/version | `kitaru agent get`; `kitaru agent version get` | `kitaru_registry_read` |
-| Read sessions and complete nodes | `kitaru session list`; `kitaru session get`; `kitaru session nodes --include-payloads` | `kitaru_activity_read` session and children |
+| Read sessions and complete nodes | `kitaru session list`; `kitaru session read` for compact whole-session transcripts (0.27.7 and newer); `kitaru session nodes --include-payloads` for exact node payload fields | `kitaru_session_read` (0.27.7 and newer, up to ten sessions); `kitaru_activity_read` session and children |
 | Run descriptive evaluators | `kitaru session evaluate ... --wait`; inspect with `kitaru evaluation list` | `kitaru_workflow_start` and bounded activity reads |
 | Create ordinary annotation | `kitaru annotation create --session SESSION --value JSON [--selector JSON]` | `kitaru_review_manage`, `create_annotation` |
 | List annotations | `kitaru annotation list` with a session filter | `kitaru_review_read`, `list` annotations |
@@ -45,8 +45,11 @@ Transport and server selection are separate. CLI and MCP may both address the sa
 | Check and register evaluators | `kitaru evaluator list`; `scaffold`; `test`; `register --agent-id AGENT` for the tour's custom evaluator | Registry reads; writes require the appropriate evaluator tool and existing script blob; use CLI registration when the installed MCP create schema lacks `agent_id` |
 | Evaluate baseline sessions | `kitaru session evaluate ... --wait` | `kitaru_workflow_start`, evaluation |
 | Create and run experiment | `kitaru experiment create`; `kitaru experiment run start ... --wait` | `kitaru_experiments_manage`; `kitaru_workflow_start`, experiment run |
+| Compare settled run results | `kitaru experiment run get RUN --aggregate` for pinned baseline and result evaluation aggregates (0.27.3 and newer) | Not exposed; use the CLI or bounded evaluation reads |
 
 Inspect exact argument names before constructing commands. Prefer exact IDs and versions over display names.
+
+Pass a fresh `--idempotency-key` (MCP `idempotency_key`) to each logical create that accepts one, and reuse that same key only to retry that write after a lost response. `kitaru agent register` and `kitaru evaluator register` take no key; read state before retrying them.
 
 If both `kitaru status` and `kitaru doctor` fail before returning a structured selected-server result, do not inspect credential files or guess at server state. First use a discovered working MCP connection when it identifies a reachable server. Otherwise verify the installed CLI version and explain that no usable server selection can be read. Offer the quickstart example README's local-workspace command as a fallback, not as an automatic recovery, and ask before running it. Re-run `status` afterward before registration or import.
 
@@ -66,7 +69,7 @@ Do not create an investigation-answer annotation for the reviewer. An investigat
 
 Current annotations record an owning account but no typed human, agent, or suggestion provenance. Keep the durable `Agent observation:` prefix. Explain its meaning once in chat and move on.
 
-Before retrying annotation creation, list existing manual annotations for the session and compare selector plus value. General write idempotency is not guaranteed.
+Before retrying annotation creation without the original idempotency key, such as in a resumed tour, list existing manual annotations for the session and compare selector plus value.
 
 ## Create and open the review
 
@@ -77,13 +80,13 @@ Before creating the investigation, inspect the installed name constraint. Under 
 Resolve the review URL in this order:
 
 1. Use `links.review` unchanged from structured investigation creation.
-2. Otherwise use the exact verified `dashboard_url`, agent ID, and investigation ID with the documented compatibility route:
+2. Otherwise use the exact verified top-level `dashboard_url` from `kitaru status`, agent ID, and investigation ID with the documented compatibility route:
 
 ```text
 DASHBOARD_URL/agents/AGENT_ID/investigations/INVESTIGATION_ID/review
 ```
 
-Strip one trailing slash from `dashboard_url`. Do not rewrite its path or add trace contents, questions, or judgments to the URL.
+Strip one trailing slash from `dashboard_url`. Do not rewrite its path or add trace contents, questions, or judgments to the URL. Do not use `server.dashboard_url` from the same result: it is the raw server-reported value and is null when the server serves the bundled UI.
 
 If neither route works, preserve the investigation and report its exact ID, the failed or missing URL, and one retry or bug-report action. Do not recreate the prepared frontend tour in chat.
 
@@ -119,4 +122,4 @@ At each visit, lead with one or two direct links, explain in two or three senten
 
 ## Run the final experiment safely
 
-Use `kitaru-replay-experiment` for the final candidate comparison. Carry the accepted behavior, exact cohort and evaluator versions, one small candidate change, and the requirement to return to the experiment page after settlement. The replay skill owns adapter checks, the explicit tool policy, a concise explanation of the proposed run, approval for remote writes and model work, execution, and interpretation. Do not create or start the experiment before that approval.
+Use `kitaru-replay-experiment` for the final candidate comparison. Carry the accepted behavior, exact cohort and evaluator versions, one small candidate change, and the requirement to return to the experiment page after settlement. After settlement, read the run once with `kitaru experiment run get RUN --aggregate` when the installed CLI supports it, using the run ID rather than the experiment ID, and ground the comparison in those baseline and result aggregates. The replay skill owns adapter checks, the explicit tool policy, a concise explanation of the proposed run, approval for remote writes and model work, execution, and interpretation. Do not create or start the experiment before that approval.
