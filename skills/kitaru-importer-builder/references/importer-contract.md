@@ -40,17 +40,24 @@ Confirm the installed parser import path in the active Python environment. Recor
 | Local test | Entrypoint, payload, params, timeout, and code-execution warning, or the project-native isolated test path |
 | Registration | Script/package choice, entrypoint, provider, and version behavior when remote registration is requested |
 | Version registration | Whether an existing importer can receive an immutable new version when that remote action is requested |
-| Session import | Exact importer and agent versions, payload, params, optional RFC 6901 `join_on`, durable tags, and wait behavior when a remote import is requested |
+| Session import | Exact importer and agent versions, payload, params, optional RFC 6901 `join_on`, `--max-sessions`, durable tags, and wait behavior when a remote import is requested |
 
 Stop only when a capability required by the requested outcome is absent. Parser types are required to author against the installed contract. Missing scaffold or local-test helpers may use explicit file creation and project-native isolated tests when those paths still exercise the installed parser contract. Missing registration or session-import capabilities limit remote actions; they do not prevent completing a locally validated importer. Do not upgrade Kitaru or substitute draft syntax without the user's separate direction.
 
 Before authoring a parser, distinguish a static export from a live provider
 entrypoint. Langfuse, Braintrust, LangSmith, Logfire, and Arize Phoenix ship
-importer-backed adapters in their importer packages behind an `adapter` extra
-for Kitaru 0.24 or newer. They wrap an already instrumented Python entrypoint
+importer-backed adapters in their importer packages behind an `adapter` extra;
+check the installed package's pinned `kitaru` requirement, which newer releases
+raise. They wrap an already instrumented Python entrypoint
 and use the provider trace after its run; they are neither parser entrypoints
 nor standalone adapter distributions. Route that request to
 `kitaru-adapter-builder` before scaffolding a custom importer.
+
+### Built-in importer catalog
+
+Kitaru servers register a default importer catalog at startup. On current Kitaru it contains `kitaru/braintrust`, `kitaru/langfuse`, `kitaru/logfire`, `kitaru/langsmith`, `kitaru/mlflow`, and `kitaru/phoenix`, which parse exports and fetch from the provider API through a connection, plus `kitaru/kitaru-jsonl`, which parses the Kitaru JSONL contract only. Older servers may lack entries; `kitaru/mlflow` arrived in Kitaru 0.27.2. Confirm exact versions with `kitaru importer list` or `kitaru importer version list IMPORTER` when a connection is configured. Without one, do not rebuild a parser for these sources; the matching `kitaru-<provider>-importer` package parses their exports locally.
+
+The Kitaru repository also contains `elevenlabs-importer` (parse and API fetch) and `mastra-importer` (parse only) under `plugins/packages/`. Their READMEs describe them as development packages outside the default catalog: the Mastra README registers its single-file parser with `--script`, and the ElevenLabs README registers a locally built wheel with `--package` for a worker that can resolve it. Start from those packages for ElevenLabs Agents or Mastra sources before writing a new parser, and register one only through the gated registration below.
 
 ## Parser contract
 
@@ -121,6 +128,8 @@ Older Kitaru releases before 0.27.0 used positional `index`, `parent_index`, and
 
 Keep a parser-only callable for uploads when that meets the goal. Parsers may return either `Iterator[ImportedSession | ImportFailure]` or `AsyncIterator[ImportedSession | ImportFailure]`. For API imports, register an object exposing both `parse(payload, params)` and `fetch(query)`. The fetch method returns a sync or async iterator of `bytes`; Kitaru passes each yielded payload to the parser. Register the object attribute, not its class or only its `parse` method.
 
+The task ingests each yielded payload before pulling the next one. When a later payload yields a session `external_id` that this run already created, Kitaru adds its nodes to that session, replacing nodes with the same `external_id`, and counts the item as skipped; the later payload's name, status, inputs, outputs, timestamps, and metadata are not applied. Keep every trace of a session in one payload whenever `parse` derives session fields from all of its traces. The built-in fetchers resolve session keys from the provider listing, hold a session until all of its traces are fetched, and yield complete sessions in batches, oldest first. They use the async helpers `stream_bounded`, `gather_bounded`, and `retry_rate_limited` from `kitaru.task.importer`; bounded concurrency through these helpers requires an async-generator `fetch`. The task closes `fetch` early when the import stops, for example at `--max-sessions`, so put request cleanup in a `finally` block.
+
 The runtime protocols are `Importer` and `FetchingImporter` from `kitaru.task.importer`. The `Fetcher` callable accepts one `dict[str, Any]` query. Keep credentials out of query and parser parameters. Use the resolved connection values made available to the task environment. Read credentials during fetching rather than module import so offline parser tests need none.
 
 Before implementing fetching, inspect the installed provider package and exact registered entrypoint. A known provider name alone does not prove that an older installed version supports API imports. Reuse existing support when it meets the selection and fidelity requirements.
@@ -139,6 +148,7 @@ kitaru session import \
   --agent AGENT@VERSION \
   --connection CONNECTION \
   --trace-id TRACE_ID \
+  --max-sessions 5 \
   --tag 'kitaru-importer-smoke:provider-unique-id' \
   --wait
 ```
@@ -169,6 +179,7 @@ Consequences:
 
 - rerunning an occupied key in the applicable server scope is expected to count as skipped;
 - a conflict with a session from an earlier import skips it without updating its session, nodes, or agent-version provenance;
+- a session `external_id` yielded again within the same run adds its nodes to the session created first and counts as skipped, without applying the repeated item's session-level fields;
 - changing the agent version or importer version does not repair or replace an occupied key;
 - a source instance fallback such as a filename is weaker and must be reported.
 
@@ -251,7 +262,7 @@ kitaru importer version register IMPORTER \
   --entrypoint parse
 ```
 
-Registration creates executable remote state. The first registration may create the importer parent, upload a source blob, and then create the first immutable version. Preserve every returned identifier. If the parent exists after a later step fails, resolve it and use version registration rather than blindly recreating it.
+Registration creates executable remote state. The first registration may create the importer parent, upload a source blob, and then create the first immutable version. Preserve every returned identifier. If the parent exists after a later step fails, resolve it and use version registration rather than blindly recreating it. `kitaru importer version register` accepts `--idempotency-key`: retrying the exact invocation with the same key returns the original result instead of creating a second version. `kitaru importer register` has no such option, so check `kitaru importer get NAME` before repeating it.
 
 Reference bounded import:
 
@@ -260,9 +271,12 @@ kitaru session import path/to/redacted-export.json \
   --importer IMPORTER@VERSION \
   --agent AGENT@VERSION \
   --params '{"source_instance":"workspace"}' \
+  --max-sessions 5 \
   --tag 'kitaru-importer-smoke:provider-unique-id' \
   --wait
 ```
+
+`--max-sessions N` (Kitaru 0.26.0 and newer) stops the import after it creates N sessions; skipped duplicates and failed items do not count toward the limit. An API import stops fetching at the limit (0.27.0 and newer). When the import stops there, `stats.limit_reached` is true and the CLI adds a warning. Items after the cutoff were never ingested, so treat them as untouched rather than failed.
 
 For an eligible per-turn export, add the dedicated join option only when the installed schema exposes it and the mapping establishes a strict conversation key:
 
@@ -270,9 +284,11 @@ For an eligible per-turn export, add the dedicated join option only when the ins
   --join-on '/conversation/id'
 ```
 
-The CLI `--join-on` value is an RFC 6901 JSON Pointer. Dotted paths, when a particular parser supports them, belong in that parser's documented `--params` instead of this dedicated option.
+The CLI `--join-on` value is an RFC 6901 JSON Pointer. The CLI only validates the pointer syntax and passes it to the parser as `params["join_on"]`, and it rejects a command that also sets `join_on` in `--params`. Kitaru does not group traces itself, so a custom parser that accepts this option must read `params["join_on"]` and implement the join, for example by resolving it with `kitaru.json_pointer.resolve_json_pointer(record, pointer)`, which returns `(found, value)`. A parser that does not support joining should reject a `join_on` parameter rather than ignore it, because an ignored option silently imports every trace as its own session. Dotted paths, when a particular parser supports them, belong in that parser's documented `--params` instead of this dedicated option; the built-in Braintrust, Langfuse, and LangSmith importers accept a dotted path or a JSON Pointer as `join_on`.
 
-Use exact importer and agent versions. File import uploads the payload; API import fetches it in the task. Both create a job and may create persistent sessions. A local timeout ends waiting, not the remote job. Tags may be applied after import and can fail separately; preserve the session and job receipt before attempting follow-on mutations.
+`fetch(query)` never receives `params`, so a fetcher cannot batch traces by a custom join key. A parser can join only traces inside one fetched payload; a session repeated in a later payload keeps the first payload's session fields. The built-in fetchers batch by the provider's default session key, so an API import with a custom `join_on` groups only traces that also share that key.
+
+Use exact importer and agent versions. File import uploads the payload; API import fetches it in the task. Both create a job and may create persistent sessions. A local timeout ends waiting, not the remote job; follow it with `kitaru job watch JOB`, or stop it with `kitaru job cancel JOB`, which requests cancellation without waiting. `kitaru session import` also accepts `--idempotency-key`, so a retried invocation with the same key returns the original job instead of creating another. With `--wait`, the exit status reflects only the job: a completed job whose items failed still succeeds and reports them as warnings (`N item(s) failed to import.` plus samples). Read `stats.created`, `stats.skipped`, `stats.failed`, `stats.limit_reached`, and the warnings rather than relying on the exit code. Use `kitaru import get IMPORT_ID` or `kitaru import list` to re-read an import, and `kitaru session read SESSION...` (Kitaru 0.27.7 and newer) to inspect imported sessions as compact transcripts. Tags may be applied after import and can fail separately; preserve the session and job receipt before attempting follow-on mutations.
 
 Before each action, confirm the active principal, tenant or project, least-privilege permissions, exact source or payload, and expected persistence. Never reuse an earlier approval for the second action.
 
@@ -284,11 +300,12 @@ Registration and import are multi-step flows. Possible durable states include:
 - source blob exists without a completed version;
 - payload blob exists without a job;
 - job exists and continues after the local waiter times out;
+- the server ended the import task at its timeout, which defaults to 1200 seconds since Kitaru 0.27.7 (`KITARU_SERVER_IMPORTER_TASK_TIMEOUT_SECONDS`), and sessions created before the cutoff remain; bound large imports with `--max-sessions` or a narrow time window;
 - earlier sessions exist after a later parser item crashes;
 - on Kitaru older than 0.27.4, a session exists after its initial node ingestion fails;
-- a session repeated within one run received the first payload's nodes but not a later payload's nodes;
+- a session repeated within one run kept the first payload's session fields, and a later payload's nodes are missing when their ingestion failed;
 - import succeeded but post-import tagging failed.
 
-The reference result counts created, skipped, and failed items and retains at most 20 failure samples. The sample list is not a complete failure ledger when the failed count is larger.
+The reference result counts created, skipped, and failed items, records `limit_reached`, and retains at most 20 failure samples. The sample list is not a complete failure ledger when the failed count is larger.
 
 Always re-read current state before retrying. On Kitaru 0.27.4 and newer, each imported session and its initial nodes are committed in one transaction, so a failed item leaves no session behind and a same-scope rerun retries it while skipping the sessions that were created. On older servers, session creation preceded node ingestion, so an incomplete session could occupy the deduplication key and a whole-payload retry could skip it rather than repair it.

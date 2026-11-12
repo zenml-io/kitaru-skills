@@ -79,7 +79,7 @@ A valid group key contains:
 registered provider + source instance/account + project/tenant when present + conversation key
 ```
 
-Built-in patterns may expose native fields such as a session ID or conversation ID. The dedicated `kitaru session import --join-on` option accepts an RFC 6901 JSON Pointer. A custom parser may separately accept a dotted or JSON Pointer path through its documented `--params`; do not imply that the dedicated CLI option accepts dotted paths. Treat every configured path as strict: when a record is expected to contain the selected path but does not, yield an isolated failure rather than silently changing the grouping rule.
+Built-in patterns may expose native fields such as a session ID or conversation ID. The dedicated `kitaru session import --join-on` option accepts an RFC 6901 JSON Pointer and only passes it to the parser as `params["join_on"]`; Kitaru performs no grouping itself. A custom parser that supports the option must read `params["join_on"]` and implement the join (`kitaru.json_pointer.resolve_json_pointer` resolves the pointer), and one that does not should reject the parameter instead of silently ignoring it. A custom parser may separately accept a dotted or JSON Pointer path through its documented `--params`; do not imply that the dedicated CLI option accepts dotted paths. `fetch(query)` does not receive `params`, so a custom join key groups only traces that arrive in the same fetched payload. Treat every configured path as strict: when a record is expected to contain the selected path but does not, yield an isolated failure rather than silently changing the grouping rule.
 
 For implicit provider keys:
 
@@ -102,6 +102,8 @@ Sorting by timestamp and trace ID is not enough when clocks differ, precision cr
 Preserve every turn's original trace ID and root tree. Do not fabricate a parent edge between turn roots merely to make one connected tree.
 
 Before remotely importing joined turns, establish whether the source conversation is closed or can still receive turns. A provider plus session external ID identifies a snapshot within the applicable server deduplication scope, not an append operation. For a growing conversation, wait for a frozen export boundary or use a provider-native immutable segment identity. Do not import an early snapshot under the final conversation identity and expect a later export to extend it; deduplication can preserve the shorter session.
+
+Within one import run, yield each joined session once, from one payload. If a later payload yields the same session `external_id`, Kitaru adds its nodes to the session created first and counts the item as skipped, but keeps the first payload's name, status, inputs, outputs, timestamps, and metadata. Session status and content derived from the last turn can then be stale. A fetcher must therefore hold all traces of a session and yield them together; see [Optional API fetching](importer-contract.md#optional-api-fetching).
 
 ## Build the node tree
 
