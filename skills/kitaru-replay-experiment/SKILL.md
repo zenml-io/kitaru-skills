@@ -69,7 +69,7 @@ For tool-using agents:
 - Use `fail` or `error_result` on a history or static miss unless live execution is deliberate.
 - Treat `on_miss=passthrough` as live passthrough and gate it separately.
 - Warn that cohort-wide or agent-wide history can borrow stale or cross-case state. Matching uses tool name and canonical JSON arguments. Baseline scope replays repeated identical calls in recorded order, wider scopes select the latest match in scope.
-- Treat LLM-generated results as a synthetic condition, not restoration of the historical external world.
+- Do not propose the `llm` tool policy: no shipped adapter executes it, so every replay would fail. If an installed adapter documents support, treat its generated results as a synthetic condition, not restoration of the historical external world.
 - Keep tool execution failures separate from agent-quality failures.
 
 Check whether repeated calls with identical arguments can legitimately return different values. Baseline scope replays each such call with its own recorded result in order, wider scopes answer every one with the latest match. Baseline scope is the narrowest history source, not proof that a stored result remains faithful.

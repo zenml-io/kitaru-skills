@@ -60,12 +60,14 @@ def cost_concentration(items: list[dict[str, Any]]) -> dict[str, Any]:
 
 def cache_reads(items: list[dict[str, Any]]) -> dict[str, Any]:
     """Total cache reads, and their share of input under the convention the data shows."""
-    rows = [t for i in items if isinstance(t := i.get("tokens"), dict) and t.get("cached_input_tokens") is not None]
-    input_total = sum(int(t.get("input_tokens") or 0) for t in rows)
+    # Kitaru reports a session total as null when any call lacks it, so a null input total is
+    # unknown, not zero; comparing against it would misread the convention.
+    rows = [t for i in items if isinstance(t := i.get("tokens"), dict) and t.get("cached_input_tokens") is not None and t.get("input_tokens") is not None]
+    input_total = sum(int(t["input_tokens"]) for t in rows)
     cached_total = sum(int(t["cached_input_tokens"]) for t in rows)
     # Sources disagree on whether input_tokens includes cache reads; a session reading more
     # from cache than its input total proves that source counts the two separately.
-    exclusive = any(int(t["cached_input_tokens"]) > int(t.get("input_tokens") or 0) for t in rows)
+    exclusive = any(int(t["cached_input_tokens"]) > int(t["input_tokens"]) for t in rows)
     result: dict[str, Any] = {"sessions_reporting": len(rows), "input_tokens": input_total, "cached_input_tokens": cached_total, "convention": "exclusive" if exclusive else "unknown"}
     if not rows:
         return result

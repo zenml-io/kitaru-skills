@@ -64,7 +64,7 @@ A tool policy has a required `default` configuration and optional per-tool overr
 - `passthrough`: execute the live tool;
 - `history`: read a recorded call from `baseline`, `cohort_version`, or `agent` scope;
 - `static`: return the first matching exact or subset case;
-- `llm`: generate a synthetic tool result with a named model.
+- `llm`: generate a synthetic tool result with a named model. The API stores this configuration, but no shipped adapter executes it: the PydanticAI, LangGraph, OpenAI Agents, Claude Agent SDK, Mastra, and Vercel AI adapters all reject it, so every replay would fail. Use `static` cases for simulated results unless the installed adapter's documentation says it supports `llm`.
 
 History and static misses support `fail`, `error_result`, or `passthrough`. Omitted experiment tool policy currently resolves to passthrough. Require an explicit policy for a tool-using run.
 

@@ -303,6 +303,15 @@ class ScopeCountsTest(unittest.TestCase):
         cache = scope_counts.build(unknown)["scope"]["cache"]
         self.assertEqual((cache["convention"], cache["share_if_inclusive"], cache["share_if_exclusive"]), ("unknown", 0.25, 0.2))
 
+    def test_cache_share_skips_sessions_with_unknown_input_tokens(self):
+        # Kitaru reports a token total as null when any call in the session lacks it.
+        items = [
+            {**session(1), "tokens": {"input_tokens": None, "cached_input_tokens": 50}},
+            {**session(2), "tokens": {"input_tokens": 1000, "cached_input_tokens": 400}},
+        ]
+        cache = scope_counts.build(items)["scope"]["cache"]
+        self.assertEqual((cache["sessions_reporting"], cache["convention"], cache["share_if_inclusive"]), (1, "unknown", 0.4))
+
     def test_counts_per_agent_version(self):
         items = [{**session(i, status="failed" if i == 0 else "completed"), "agent_version_id": "v1" if i < 3 else "v2"} for i in range(5)]
         by_version = scope_counts.build(items)["by_version"]

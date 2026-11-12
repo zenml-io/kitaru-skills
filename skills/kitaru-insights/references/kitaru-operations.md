@@ -16,7 +16,7 @@ Use this reference for exact operations. Inspect `kitaru schema`, command help, 
 
 ## Check what is installed
 
-Confirm the CLI or MCP server can reach the intended server and agent, for example with `kitaru info` and `kitaru agent get AGENT`. Check `kitaru session analyze --help` before offering Quick; when it is missing, say the installed Kitaru predates it, recommend upgrading, and continue with Standard or Deep, which need only read and insight-create operations. MCP `kitaru_failure_matrix` is optional; continue without it in CLI-only hosts.
+Confirm the CLI or MCP server can reach the intended server and agent, for example with `kitaru info` and `kitaru agent get AGENT`. Check `kitaru import analyze --help` before offering Quick, which needs a scope of exactly one import. Standard and Deep need only read and insight-create operations. MCP `kitaru_failure_matrix` is optional; continue without it in CLI-only hosts.
 
 ## Resolve and pin the scope
 
@@ -45,16 +45,14 @@ Analyzer cards carry `analyzer_version_id` and, for an import, `import_id`. Card
 
 ## Run Quick analysis
 
-`kitaru session analyze --agent AGENT --sessions-file RUN/population_ids.txt --analyzer ANALYZER@VERSION --wait` runs an analyzer over exactly the pinned sessions. `pick_sample.py --ids-out` writes `population_ids.txt`. Other selectors (`--tag`, `--cohort`, `--import-id`, `--started-after`, `--started-before`, `--filter`, or positional IDs) also work and combine as AND.
+Server analyzers currently run only over one import. `kitaru import analyze IMPORT_ID --analyzer ANALYZER@VERSION --wait` runs each selected analyzer once over every finished session that import created, not over a pinned subset. Offer Quick only when the scope is exactly one import's sessions; for any other scope, say that Quick is unavailable and continue with Standard or Deep. A planned `kitaru session analyze` command for arbitrary session sets is not in any release yet; use it only if the installed CLI lists it, after reading its `--help`.
 
-- When every pinned session comes from one import, also pass `--import-id IMPORT_ID`. The cards then record that import and appear in its dashboard view.
-- If the task fails with a validation error about `import_id`, the analyzer's environment runs an older Kitaru that only accepts import-scoped tasks. Retry with `--import-id` when the scope is one import; otherwise report that Quick needs a newer Kitaru on the analyzer side, and continue with Standard or Deep.
-- Choose the analyzer with the user. `kitaru/post-import-insights@latest` needs no model credentials. `kitaru/openai-post-import-insights@latest` needs OpenAI credentials through a connection or the worker, and bills the user's OpenAI account. Pass a connection with `--analyzer-connection ANALYZER@VERSION=CONNECTION`.
-- The server rejects a selection with no finished sessions or more than its limit (1,000 by default). Split a larger scope into batches and report each job. Below an analyzer's own session minimum, its task is recorded as skipped and writes no cards.
+- Choose the analyzer with the user. `kitaru/post-import-insights@latest` needs no model credentials. `kitaru/openai-post-import-insights@latest` needs OpenAI credentials through a connection or the worker, and bills the user's OpenAI account. Pass a connection with `--analyzer-connection ANALYZER@VERSION=CONNECTION` and parameters with `--analyzer-params ANALYZER@VERSION=JSON`.
+- Below an analyzer's own session minimum, its task is recorded as skipped and writes no cards. An import with no finished sessions also completes with a skipped result.
 - A worker claiming analyzer tasks must be running (`kitaru worker start --claim analyzer`). Without one the job stays queued; report that rather than waiting indefinitely.
-- The terminal receipt lists one task per analyzer; read its cards with `kitaru insight list --filter '{"field":"task_id","op":"in","value":[...]}'`. Cards record an `import_id` only when `--import-id` was given.
-- Each call adds new cards; nothing replaces earlier ones. Confirm before rerunning.
-- MCP: `kitaru_workflow_start` with `operation: "analysis"`, `agent_id`, `analyzers`, and any of `session_ids` (up to 1,000), `tag`, `cohort_version_id`, `import_id`, `started_after`, `started_before`, and `idempotency_key`. It has no raw `filter` field. It returns the queued job; read it with `kitaru_activity_read`.
+- The terminal receipt lists one task per analyzer; read its cards with `kitaru insight list --filter '{"field":"task_id","op":"in","value":[...]}'`. Cards from an import analysis always record that `import_id`.
+- Each call adds new cards; nothing replaces earlier ones. Pass `--idempotency-key` so a retried call after a lost response does not start a second job, and confirm with the user before any deliberate rerun.
+- MCP has no operation that starts or reruns analysis; `kitaru_workflow_start` starts only evaluations and experiment runs. Analyzers can also run at import time through `kitaru_session_import` with `analyzers`. In an MCP-only host, say Quick needs the CLI.
 
 ## Count cheaply
 

@@ -10,7 +10,7 @@ This workflow uses released Kitaru investigation and evaluation operations. Chec
 |---|---|---|
 | Read investigation and all linked sessions | `investigation get`, `investigation session list` | `kitaru_review_read`: `get`, `list_sessions` |
 | Create fixed review worklist | `investigation create` with repeated `--session` and `--session-question` | `kitaru_review_manage`: `create_investigation` |
-| Read exact evaluator/version and scope | `evaluator get`, `evaluator version get` | `kitaru_evaluators_read` |
+| Read exact evaluator/version and scope | `evaluator get`, `evaluator version get` | `kitaru_registry_read`: `get`, `get_version` with kind `evaluator` |
 | Evaluate selected sessions | `session evaluate` with exact `--evaluator` and params, optionally `--wait` | `kitaru_workflow_start`: `evaluation` |
 | Recover a run and its results | `job get --tasks`, `job watch`, `evaluation list`, `evaluation get` | `kitaru_activity_read` |
 

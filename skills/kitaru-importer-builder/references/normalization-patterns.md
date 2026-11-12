@@ -24,7 +24,7 @@ Use provider documentation and at least one representative redacted export. Reco
 | Session or conversation | Session external ID and join key | Is it present on every trace? |
 | Trace or run | Turn identity and node `trace_id` | Does one trace equal one whole session or one turn? |
 | Span or event | Node external ID | Is it stable and unique within the source instance? |
-| Parent relationship | `children` tree | Are missing parents and multiple roots possible? |
+| Parent relationship | `children` tree or `parent_external_id`; extra edges in `links` | Are missing parents and multiple roots possible? |
 | Operation kind | Node type | Does the provider explicitly identify LLM, tool, or subagent work? |
 | Status and error | Node and session status | Which root outcome is authoritative? |
 | Input and output | Session/turn/node payloads | Are values structured, encoded JSON, or absent? |
@@ -113,9 +113,9 @@ Validate topology per native trace before yielding a session:
 - preserve multiple roots with a warning when they represent usable evidence;
 - promote a node with a missing parent to a root, mark graph completeness false, and warn;
 - sort each parent's children deterministically;
-- keep parents before children in the emitted tree.
+- give every node a stable `external_id` that is unique within the session, derived from the source span or event ID.
 
-When the source is a DAG, choose one evidence-backed primary parent and preserve other representable parents through `secondary_parent_indexes`. Use the explicitly indexed flat-node form so every referenced parent precedes the child. Record secondary relations in provider metadata only when the installed contract cannot represent them, and mark that topology loss. Do not duplicate a node to simulate several parents.
+When the source is a DAG, choose one evidence-backed primary parent and preserve other representable parents as `links` entries (`NodeLink(external_id=..., kind=...)`) with a descriptive kind such as `source_parent`. Node order does not need to put parents first, because the server resolves `parent_external_id` and links when reading, but keep the order deterministic. Record secondary relations in provider metadata only when the installed contract cannot represent them, and mark that topology loss. Do not duplicate a node to simulate several parents.
 
 ## Map node semantics
 

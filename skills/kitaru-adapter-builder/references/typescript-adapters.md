@@ -145,7 +145,8 @@ framework default.
 At the checked `develop` revision, `RunRecorder` demonstrates this lifecycle:
 
 1. `create(...)` creates an in-progress session and isolated `RunState`.
-2. `initialize()` upserts the in-progress root at index `0`.
+2. `initialize()` upserts the in-progress root under `ROOT_NODE_EXTERNAL_ID`
+   (`"run"`).
 3. framework callbacks normalize model and tool steps and enqueue ordered node
    upserts;
 4. `complete(result)` waits for queued steps, replaces the root as completed,
@@ -170,10 +171,10 @@ TypeScript client uses `fetch` and does not mirror Python client ownership.
 When implementing against the public client without these primitives, reproduce
 the shared lifecycle invariants from `adapter-method.md`, not the private class
 layout. Keep one run-state instance per invocation, serialize node writes,
-allocate indexes once, and preserve the first failure.
+allocate each node's external id once, and preserve the first failure.
 
 The current client retries node upsert only for a small set of transient server
-statuses. Preserve the same node indexes and payload on a retry. Do not retry
+statuses. Preserve the same node external ids and payload on a retry. Do not retry
 model or tool execution as part of recording recovery.
 
 ## Map framework events
@@ -236,11 +237,13 @@ Before generation:
 
 For history replay, the same public contract applies as in Python. For
 baseline scope, keep one counter per cache key, send it as a zero-based
-`occurrence`, and increment it only on a hit, so repeated identical calls
-replay their own recorded results in baseline order. Never send `occurrence`
-for other scopes, the server rejects it. When the installed API lacks
-`occurrence` or the scope is not baseline, a `found/result` lookup does not
-prove unique cardinality: require a complete preflight that proves unique
+`occurrence`. Advance it on any `match`, completed or failed, and on a null
+`match` with `rejected_candidate` true; keep it on a plain miss. Replay a
+`failed` match as a tool failure with its recorded error. `decideToolCall` from
+`@zenml-io/kitaru/adapter` already implements this; prefer it.
+Never send `occurrence` for other scopes, the server rejects it. When the
+installed API lacks `occurrence` or the scope is not baseline, a lookup does
+not prove unique cardinality: require a complete preflight that proves unique
 baseline keys. Otherwise mark history replay unsupported.
 
 When several tool calls can run concurrently, ensure that a failure in an
@@ -301,7 +304,7 @@ Cover at least:
 - a delayed queued-write rejection during failure finalization, proving that
   finalization waits for the queue, preserves the primary application error,
   and writes the failed root and session afterward;
-- stable node indexes across transient upsert retry;
+- stable node external ids across transient upsert retry;
 - concurrent invocations and concurrent local tools;
 - earlier policy failure blocking later side effects;
 - passthrough side effect followed by recording failure;

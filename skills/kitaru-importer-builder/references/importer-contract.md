@@ -87,29 +87,35 @@ The worker passes the complete payload as `bytes` and one JSON-compatible parame
 | `started_at`, `ended_at` | Aware timestamps when available |
 | `metadata` | Bounded source and fidelity metadata |
 | `framework` | Source framework when it can be established |
-| `nodes` | Root `ImportedNode` trees or an explicitly indexed flat node list in deterministic order |
+| `nodes` | Root `ImportedNode` trees, a flat node list linked by `parent_external_id`, or a mix, in deterministic order |
 
 ### Imported node fields
 
 Map the installed model rather than copying this list blindly. The reference includes:
 
-- optional `index`, `parent_index`, and `secondary_parent_indexes` for an explicitly indexed flat list;
-- `external_id`, `trace_id`, `node_type`, `name`, and `status`;
+- `external_id`, required and unique within the session, which identifies the node;
+- optional `parent_external_id`, which names the parent of a top-level node in a flat list;
+- optional `links`, a list of `NodeLink(external_id=..., kind=...)` relations to other nodes in the same session;
+- `trace_id`, `node_type`, `name`, and `status`;
 - `error`, `started_at`, and `ended_at`;
 - `input_text_selector`, `output_text_selector`, `system_prompt_selector`, and `reasoning_selectors`, JSON Pointers into `outputs` that select visible reasoning;
 - `inputs`, `outputs`, `attributes`, and bounded `metadata`;
 - `requested_model`, served `model`, `model_provider`, and `model_params`;
 - `tokens`, `cost`, `tool_name`, and `subagent_id`;
-- `children`, which Kitaru flattens depth-first with each primary parent before its children when explicit indexes are not used.
+- `children`, which Kitaru flattens depth-first; a nested child's parent is the node it is nested under.
 
 Reference node types are `llm_call`, `tool_call`, `subagent_call`, and `span`. Do not infer a semantic type merely from a suggestive name when the provider exposes a stronger field.
 
-Use exactly one of the two current topology forms:
+Nodes are identified by `external_id`, not by position. Express the primary hierarchy in either form, or mix them:
 
-- nested root nodes with `children`, which Kitaru flattens depth-first; or
-- a flat list in which every node has an explicit `index`, with `parent_index` and `secondary_parent_indexes` set where applicable.
+- nested nodes with `children`; a nested child must leave `parent_external_id` unset, because its parent is the node it sits under; or
+- top-level nodes that name their parent with `parent_external_id`.
 
-Explicitly indexed nodes cannot have `children`, and every primary or secondary parent index must precede the child index. Preserve source DAG edges with `secondary_parent_indexes` when the installed contract exposes them. Record a topology limitation in metadata only when the source relation cannot be represented by the installed model.
+The server stores `parent_external_id` and `links` as sent and resolves them when reading, so a parent may appear after its children in the list. Order nodes deterministically anyway so repeated parses produce the same projection. Preserve extra source DAG edges, such as a second parent, as `links` entries with a short descriptive `kind` (the Langfuse importer uses `source_parent`). Record a topology limitation in metadata only when a source relation cannot be represented as a parent or a link.
+
+`flatten_nodes` in `kitaru.task.importer` raises `SessionImportError` for a repeated node `external_id` within one session, a cycle in nested `children`, or a nested child that names a parent. That error is not isolated to the item: it fails the whole import task. Deduplicate identical source nodes and yield `ImportFailure` for an item with conflicting duplicates before emitting it. `kitaru importer test` does not run `flatten_nodes`, so call `flatten_nodes(session.nodes)` on every parsed session in a unit test. A node whose `external_id` is empty, or which links to itself, fails model validation inside the parser.
+
+Older Kitaru releases before 0.27.0 used positional `index`, `parent_index`, and `secondary_parent_indexes` fields. They are gone from the importer model, which rejects unknown fields; only the Kitaru JSONL file format still carries `index` fields.
 
 ## Optional API fetching
 
@@ -279,9 +285,10 @@ Registration and import are multi-step flows. Possible durable states include:
 - payload blob exists without a job;
 - job exists and continues after the local waiter times out;
 - earlier sessions exist after a later parser item crashes;
-- a session exists after node ingestion fails;
+- on Kitaru older than 0.27.4, a session exists after its initial node ingestion fails;
+- a session repeated within one run received the first payload's nodes but not a later payload's nodes;
 - import succeeded but post-import tagging failed.
 
 The reference result counts created, skipped, and failed items and retains at most 20 failure samples. The sample list is not a complete failure ledger when the failed count is larger.
 
-Always re-read current state before retrying. Session creation precedes node ingestion, so an incomplete session can occupy the deduplication key and a whole-payload retry can skip it rather than repair it.
+Always re-read current state before retrying. On Kitaru 0.27.4 and newer, each imported session and its initial nodes are committed in one transaction, so a failed item leaves no session behind and a same-scope rerun retries it while skipping the sessions that were created. On older servers, session creation preceded node ingestion, so an incomplete session could occupy the deduplication key and a whole-payload retry could skip it rather than repair it.

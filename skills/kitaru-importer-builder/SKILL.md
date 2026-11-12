@@ -178,10 +178,10 @@ Before proposing any retry, inspect each relevant provider/external ID across th
 | Complete | Session and expected nodes exist |
 | Skipped duplicate | The same nonempty provider/external ID already existed in the applicable scope; retain its actual agent and version |
 | Stale duplicate | Existing digest differs or the local joined export contains more turns |
-| Incomplete | Session exists but expected node ingestion did not finish |
+| Incomplete | Session exists but expected nodes are missing (servers older than 0.27.4, or a session repeated within one run) |
 | Unrecoverable here | Installed Kitaru exposes no safe repair or deletion path |
 
-Remember that session creation can succeed before node ingestion fails. With a stable nonempty registered provider, a direct rerun in the same deduplication scope may then skip the existing external ID instead of repairing the session, even under a new version of the same logical agent or importer. Without one, a rerun may create another session instead. A growing joined conversation can produce a skip while the existing session contains fewer turns. Compare readable digest and trace-count metadata before classifying the skip; if the installed surface cannot expose that metadata, do not use incremental joined-conversation imports. Preserve evidence, patch and version the importer locally if needed, and propose only recovery operations the installed product actually exposes.
+On Kitaru 0.27.4 and newer, a session and its initial nodes are committed together, so a failed item creates nothing and a same-scope rerun with a stable nonempty registered provider retries it while skipping sessions already created. On older servers, session creation could succeed before node ingestion failed; a direct rerun in the same deduplication scope may then skip the existing external ID instead of repairing the session, even under a new version of the same logical agent or importer. Without one, a rerun may create another session instead. A growing joined conversation can produce a skip while the existing session contains fewer turns. Compare readable digest and trace-count metadata before classifying the skip; if the installed surface cannot expose that metadata, do not use incremental joined-conversation imports. Preserve evidence, patch and version the importer locally if needed, and propose only recovery operations the installed product actually exposes.
 
 ## Finish
 

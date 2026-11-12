@@ -146,8 +146,8 @@ immutable configuration and a client factory, but not live run state.
 ```text
 discover
   -> create session in progress
-  -> initialize root node at index 0
-  -> record child nodes with stable increasing indexes
+  -> initialize root node under a fixed root external id
+  -> record child nodes with stable per-node external ids
   -> replace root with completed or failed terminal state
   -> update session to the same terminal state
   -> release resources owned by this invocation
@@ -156,12 +156,14 @@ discover
 Keep these invariants:
 
 - create one session and one root per invocation;
-- write every parent before its child and keep each parent index lower;
-- allocate a node index once and reuse it for idempotent retry;
+- give each node one stable `external_id`, unique within the session, and name
+  its parent with `parent_external_id`; parents may arrive after children;
+- derive the external id from a framework event ID when one exists, and reuse
+  it for idempotent retry;
 - preserve confirmed children if a later batch fails;
 - serialize concurrent callbacks through per-run ordering state;
 - wait for queued node writes before declaring completion;
-- replace the in-progress root at its original index;
+- replace the in-progress root by upserting under its original external id;
 - align root and session terminal status when both writes succeed;
 - close only clients and resources the adapter created.
 
@@ -183,7 +185,7 @@ failures as secondary evidence instead of replacing it.
 
 When recording fails after session creation:
 
-- remember the last confirmed write and node indexes;
+- remember the last confirmed write and node external ids;
 - attempt best-effort failed root and session updates;
 - retain the original recording failure if no application failure preceded it;
 - report the trace as partial even if terminal failure writes also fail;

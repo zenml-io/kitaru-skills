@@ -69,8 +69,8 @@ choose fail-fast.
 For every test, assert the framework result or error and the recorded artifact:
 
 - session origin and status;
-- root index, parent, type, status, inputs, outputs, error, and times;
-- child ordering, stable indexes, parentage, and terminal status;
+- root external id, parent, type, status, inputs, outputs, error, and times;
+- child ordering, stable unique external ids, parentage, and terminal status;
 - model and tool identifiers and bounded payloads;
 - last confirmed write when a later write fails;
 - number and ownership of client cleanup calls.
@@ -128,8 +128,9 @@ For history matching, verify logical tool identity, adapter and framework
 version, input schema, canonical validated arguments, occurrence or sequence
 identity, and result completeness. With baseline scope, the public lookup
 accepts a zero-based `occurrence` that provides occurrence identity when the
-adapter counts per cache key and advances only on a hit. Without `occurrence`,
-a `found/result` lookup cannot prove cardinality. Preflight a complete baseline
+adapter counts per cache key and advances on every match and on a miss with
+`rejected_candidate` true. Without `occurrence`, a lookup cannot prove
+cardinality. Preflight a complete baseline
 and reject duplicate keys, or disable history replay.
 
 Report hits, misses, ambiguity, blocked calls, live passthrough, simulated
@@ -310,7 +311,7 @@ Session ID, if created:
 Primary failure:
 Secondary recording or cleanup failures:
 Last confirmed write:
-Confirmed node indexes:
+Confirmed node external ids:
 Root terminal write: confirmed, failed, or not attempted
 Session terminal write: confirmed, failed, or not attempted
 Application outcome:

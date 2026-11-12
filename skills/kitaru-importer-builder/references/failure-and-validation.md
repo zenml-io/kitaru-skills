@@ -40,7 +40,7 @@ Common incomplete cases and honest behavior:
 | Tool name without input/output | Tool node and available fields | Tool not replayable |
 | Implicit tool-like span | Span and source attributes | Tool boundary not established |
 | Missing tokens or cost | `None` | Source did not expose the value |
-| Secondary DAG link | Explicit indexed node plus `secondary_parent_indexes` when the installed contract supports it | Exact preserved parents, or a named topology loss when it cannot be represented |
+| Secondary DAG link | Primary parent via `parent_external_id` or nesting, extra parents as `links` entries with a descriptive `kind` | Exact preserved parents, or a named topology loss when it cannot be represented |
 
 Warnings must identify the affected trace or node where possible. Keep them deterministic and bounded. Do not copy raw prompt or tool content into warning strings.
 
@@ -134,7 +134,8 @@ For every parsed session, assert the applicable fields:
 - exact external ID and source-instance scope;
 - status, error, start/end time, session input, output, and framework;
 - original trace IDs and deterministic turn order;
-- exact root order, primary child topology, and secondary parents;
+- exact root order, primary child topology, and secondary parents in `links`;
+- `kitaru.task.importer.flatten_nodes(session.nodes)` succeeds for every parsed session, proving unique node external IDs and no nested cycles;
 - node types, identities, statuses, errors, inputs, and outputs;
 - text, system-prompt, and reasoning selectors when the source exposes them;
 - requested and served model, `model_provider`, usage, cost, tool, and subagent fields;
@@ -199,6 +200,6 @@ Do not infer untouched items merely from the failure sample: the reference recei
 
 A waiter timeout does not cancel the job. Read job state before retrying or creating another job.
 
-A parser may yield valid sessions before crashing. Session creation may also succeed before node ingestion fails. With a stable nonempty registered provider, reruns deduplicate within the applicable server scope, so a direct retry can skip the incomplete session rather than repair it. A new agent version or importer version does not change the key or update existing nodes. Without a provider, do not assume a retry will skip duplicates.
+A parser may yield valid sessions before crashing. On Kitaru 0.27.4 and newer, each session and its initial nodes are committed atomically, so a failed item leaves no session and a same-scope rerun retries it. On older servers, session creation could succeed before node ingestion failed; with a stable nonempty registered provider, reruns deduplicate within the applicable server scope, so a direct retry can skip the incomplete session rather than repair it. A new agent version or importer version does not change the key or update existing nodes. Without a provider, do not assume a retry will skip duplicates.
 
 Patch the importer locally, create a new immutable version after approval, and propose the smallest recovery payload only when the installed product exposes a safe route. Never delete, reimport, or change external IDs merely to bypass a collision without explicit user direction and a documented provenance consequence.
