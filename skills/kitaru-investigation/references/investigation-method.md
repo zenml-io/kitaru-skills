@@ -75,6 +75,8 @@ Define the population before sampling. Record agent version bounds, time bounds,
 
 Inspect several complete records before deciding which deterministic features can support diversity. Useful candidate-selection signals include cost, latency, node count, repeated calls, loops, tool-call patterns, error presence, and output shape. These are selection aids, not judgments.
 
+Scan candidates as compact session transcripts, then read any cut field uncut before quoting or summarizing it. When failed sessions are in the population, the failure matrix groups them by the last step that went right and the first step that went wrong. Use its cells to pick failures at different steps, not as verdicts or rates, and record the matrix filter and session bound as part of the selection reason. See [kitaru-operations.md](kitaru-operations.md) for both reads.
+
 Start with four to six sessions for one human review block. Combine:
 
 - 60 to 70 percent coverage-oriented representatives across known structural variation;

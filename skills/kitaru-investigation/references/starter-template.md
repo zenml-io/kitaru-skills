@@ -42,7 +42,7 @@ An occupied identity under another version is existing evidence with that actual
 
 1. Inspect the quickstart agent parent and its versions separately. Resolve the exact version whose entrypoint and source identity match the verified checkout.
 2. Inspect recent, active, and completed import jobs relevant to the trace path, exact agent version, or tag.
-3. For a completed matching import, inspect its task and query sessions by the exact import task ID before relying on tags. Confirm the sessions' exact agent-version provenance, evidence identity, and usable trace payloads.
+3. For a completed matching import, inspect its task and filter sessions directly on the exact `import_id` before relying on tags. Confirm the sessions' exact agent-version provenance, evidence identity, and usable trace payloads.
 4. Also query sessions with the `returns-baseline` tag, but treat the tag as an index rather than proof of provenance. Resume only sessions that match the resolved version and checked-in evidence.
 5. If usable matching sessions already exist, skip registration and import and resume from their exact IDs. Repairing a missing tag is a separate approved write, not a reason to re-import.
 6. If a matching import is running, wait once through the supported mechanism and inspect its result before doing anything else. If it is still non-terminal, report the exact job ID, current state, and worker availability, then leave a resumable checkpoint instead of waiting again.
