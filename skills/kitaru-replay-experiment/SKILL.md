@@ -44,7 +44,7 @@ Route to `kitaru-investigation` when no behavior or cohort has been accepted. Us
 
 If an experiment or run already exists, re-read it and resume supervision or interpretation. Experiment configuration freezes after it has runs, so create a new experiment for a materially changed candidate, evaluator set, override, or tool policy.
 
-Re-read every evaluator parent before approval. A scoped evaluator is eligible only when its `agent_id` matches the experiment's agent. A null `agent_id` is only a candidate global scope because deleting a scoped evaluator's agent also clears the field. Use a null-scoped parent only when a trusted creation record or known default-catalog identity establishes deliberate global scope, or after revalidating its criterion, implementation, and intended reuse for the experiment's agent. Reject a mismatched or unverified scope before experiment creation rather than relying on the server error, and carry the verified scope and any global-portability evidence in the resumable technical record.
+Re-read every evaluator parent before approval. A scoped evaluator is eligible only when its `agent_id` matches the experiment's agent. A null `agent_id` means the evaluator was created workspace-global; that makes it eligible, not proof that its criterion fits this agent. Before using a global parent, confirm from its criterion, implementation, and intended reuse that it measures the accepted behavior for the experiment's agent. Reject a mismatched scope before experiment creation rather than relying on the server error, and carry the verified scope and portability evidence in the resumable technical record.
 
 ## Preflight capability and safety
 
@@ -54,10 +54,12 @@ Read `runtime_capabilities` from the candidate version's run spec before
 proposing a configuration. Both fields default to `true`. When `overrides` is
 `false`, stop if the proposed replay has an override. When `tool_policies` is
 `false`, stop unless every policy entry is explicit passthrough. Importer-backed
-adapter versions declare both `false`: they can only run the agent again without
-an override and with live passthrough tools. Name that live-effect risk and
-obtain the required approval; do not offer history, static, or LLM tool results
-as an alternative.
+adapter versions must declare both `false` in their run spec; they can only run
+the agent again without an override and with live passthrough tools. If such a
+version lacks the declaration, the server accepts an override or substituting
+policy and the replay fails at task time, so apply the same restriction
+yourself. Name that live-effect risk and obtain the required approval; do not
+offer history, static, or LLM tool results as an alternative.
 
 Resolve the model provider and credentials required by the candidate process. Verify credential availability to the worker without reading, displaying, or fingerprinting secret values when the environment exposes a safe readiness signal. A credential visible to the coding agent or stored in a project file does not prove that an already-running worker inherited it. If worker readiness is unavailable or cannot be verified, ask the user to configure the credential and restart or provision the worker, then stop before experiment creation or run start.
 
@@ -102,7 +104,7 @@ After approval:
 3. Recheck the candidate run-spec and capabilities hashes internally.
 4. Start one run against the exact cohort version and candidate agent version. Use `baseline_evaluation_mode=if_missing` for the normal comparative case, `force` only when the decision requires freshly recomputed baseline measurements, and `none` only when no baseline comparison is intended.
 5. Watch the asynchronous run until it completes, fails, is canceled, reaches an agreed stop condition, or the local wait times out.
-6. Read the run and all paginated replay jobs needed to account for completed, failed, canceled, and missing cases.
+6. Read the run, then page through its replays filtered by `experiment_run_id` to account for completed, failed, canceled, and missing cases by baseline and result session. Replay jobs carry status but no session identity; read them only for job-level errors. A run settles `failed` when any replay failed or was canceled, so `failed` does not mean no case completed.
 7. Re-read the candidate run spec and capabilities after settlement. Report any observed drift and the residual risk that a transient mutation could not be detected.
 
 Run once by default. Add predeclared matched repetitions only when stochasticity could reverse a consequential or borderline conclusion, and approve the extra work and cost first.
@@ -113,7 +115,7 @@ Cancel only when the user asks or an approved stop condition is met. Cancellatio
 
 For each case, resolve evaluation results tied to the expected evaluator-version ID and parameters. `if_missing` may adopt an existing baseline result only when its session, evaluator version, and parameters match; the replay link records the exact adopted or newly produced measurement used by the run.
 
-Use the run aggregate as a pinned summary: it reads only replay-linked measurements, is not changed by later evaluations of the same sessions, and groups by evaluator version as well as result name and data type. Confirm the experiment's evaluator parameters, then read exact per-session evidence for paired changes, failures, canceled cases, and missingness. Show raw counts and denominators beside every rate. Failed, canceled, and missing results remain outside the quality denominator.
+Use the run aggregate as a pinned summary; read it through the CLI or SDK, because MCP run reads omit it. It reads only replay-linked measurements, is not changed by later evaluations of the same sessions, and groups by evaluator version as well as result name and data type. Confirm the experiment's evaluator parameters, then read exact per-session evidence for paired changes, failures, canceled cases, and missingness. Show raw counts and denominators beside every rate. Failed, canceled, and missing results remain outside the quality denominator.
 
 Check candidate prompts, evaluator prompts, examples, tool fixtures, history scopes, and related trace families for leakage. Warn for exploration. Require resolution or narrow the claim only when the intended use is consequential.
 
