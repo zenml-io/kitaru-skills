@@ -56,7 +56,11 @@ failures. The application failure must remain primary.
 State and test the Kitaru-availability policy:
 
 - **Fail-fast:** a Kitaru recording failure fails the application invocation.
-  Current draft reference adapters follow this policy.
+  The shipped adapters differ: PydanticAI, Vercel AI, and Mastra `generate()`
+  propagate the failure; LangGraph contains failures after the graph starts and
+  logs a warning; OpenAI Agents raises `KitaruRecordingError` carrying the
+  native result; Mastra `stream()` reports through `onRecordingError`. Kitaru's
+  `docs/book/adapters/record-in-production.md` compares them.
 - **Explicit best effort:** the application result may survive, but the adapter
   must expose a machine-detectable degraded recording outcome and must never
   label the trace complete.

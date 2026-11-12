@@ -36,6 +36,9 @@ exposes:
 - `client.sessions.create(...)`;
 - `client.sessions.ingest_nodes(...)`;
 - `client.sessions.update(...)`;
+- `client.sessions.ingest(...)` with a `SessionIngestRequest`, which creates a
+  session and all its initial nodes in one transaction, for a coarse adapter
+  that records a finished run at once;
 - `client.sessions.list_nodes(...)` or `iter_nodes(...)` for inspection;
 - `client.replays.get(...)` and `client.replays.tool_lookup(...)` when replay is
   requested;
@@ -57,18 +60,21 @@ package confirms it. Never copy tokens into code, fixtures, logs, or reports.
 ## Use the current reference carefully
 
 The checked `develop` source at commit
-`3675d90e02a690f2bd9a3ff43eba576f0a813515` contains independently versioned
+`35b1f3ef4e23de983a2ed66f8236912fc16c518f` contains independently versioned
 adapter distributions:
 
 | Framework | Distribution | Checked source | Advertised capability |
 |---|---|---|---|
 | PydanticAI | `kitaru-pydantic-ai` | `plugins/packages/pydantic-ai/` | Recording and replay |
-| LangGraph, LangChain, and Deep Agents | `kitaru-langgraph` | `plugins/packages/langgraph/` | Recording and replay |
+| LangGraph, LangChain, and Deep Agents | `kitaru-langgraph` | `plugins/packages/langgraph/` | Recording; replay depends on graph construction |
 | OpenAI Agents SDK | `kitaru-openai-agents` | `plugins/packages/openai-agents/` | Recording and restricted replay |
+| Claude Agent SDK | `kitaru-claude-agent-sdk` | `plugins/packages/claude-agent-sdk/` | Recording and replay of one-shot `query()`; tool policies for SDK MCP tools only |
 
 Their tests live under `plugins/tests/adapters/pydantic_ai/`,
-`plugins/tests/adapters/langgraph/`, and
-`plugins/tests/adapters/openai_agents/`. Adapter distributions are installed by
+`plugins/tests/adapters/langgraph/`, `plugins/tests/adapters/openai_agents/`,
+and `plugins/tests/adapters/claude_agent_sdk/`. The Claude Agent SDK entrypoint
+is `kitaru_claude_agent_sdk.KitaruClaudeRunner`, and the checked source supports
+`claude-agent-sdk>=0.2.149,<0.3`. Adapter distributions are installed by
 agent projects rather than bundled into the core Kitaru wheel. They are
 published independently from Kitaru core, so inspect PyPI and the project's
 lockfile for the current version. This inventory describes the checked source
@@ -77,8 +83,11 @@ tree, not what is installed in the user's project.
 ### Importer-backed adapters
 
 For an already instrumented Python entrypoint, these provider importer packages
-also ship an adapter behind their `adapter` extra. They require Kitaru 0.24 or
-newer. They are not standalone adapter distributions.
+also ship an adapter behind their `adapter` extra. They subclass
+`ImporterBackedAdapter`, which shipped in Kitaru 0.25.0, and each package
+declares its own `kitaru` floor (`kitaru>=0.27.7` in the checked source); check
+the installed package's requirement. They are not standalone adapter
+distributions.
 
 | Provider | Install | Import |
 |---|---|---|
@@ -96,14 +105,29 @@ than copying credentials into project files or commands. `adapter.run(...)` or
 imports the provider trace. It does not intercept model or tool calls. Register
 its run spec with
 `runtime_capabilities.overrides: false` and `tool_policies: false`; the default
-`true` values remain appropriate for native recording adapters.
+`true` values remain appropriate for native recording adapters. Register the
+version with `kitaru agent version register AGENT --spec version.yaml`, or with
+the async `KitaruClient` methods `register_agent(name, RunSpec(...))` and
+`register_agent_version(agent, RunSpec(...))`.
 
 Check the project's installed distributions and current Kitaru documentation
 before designing a custom adapter. When one of these packages supports the
 installed framework version and requested invocation mode, use it instead of
-building a duplicate. Otherwise record the exact missing boundary. Kitaru still
-exposes no general adapter base in the core wheel, so do not import repository
-source into a user project or copy a package wholesale.
+building a duplicate. Otherwise record the exact missing boundary.
+
+When the provider has a Kitaru importer but no `adapter` extra, as with the
+MLflow importer, check whether the installed core wheel exports
+`kitaru.importer_adapter.ImporterBackedAdapter`. A project-local subclass
+passes the provider name and the importer's parser to the constructor,
+implements `open_trace()`, `wait_until_complete(external_id)`, and
+`fetch(external_id)`, and inherits `run`, `run_async`, replay preflight, and the
+completeness timeout. The same worker-task and run-spec rules apply. Prefer it
+to custom session-node code when after-the-fact recording without replay
+control meets the goal.
+
+Kitaru exposes no general base for native recording adapters in the core
+wheel, so do not import repository source into a user project or copy a
+package wholesale.
 
 Re-check the source revision before relying on implementation details. If it
 cannot be resolved, report the reference as unavailable and rely only on
@@ -239,6 +263,13 @@ For model events, capture only fields the public hook proves:
 - token usage and cost when the framework exposes them reliably;
 - provider identity and public error;
 - timestamps and stable external call ID when available.
+
+Map these to the node's `requested_model`, `model`, `model_provider`, `tokens`,
+and `cost` fields. Kitaru does not price calls server-side, so `cost` stays null
+unless the adapter computes and sends it. The PydanticAI, LangGraph, and OpenAI
+Agents reference adapters estimate it from token usage with the `genai-prices`
+catalog; use a pricing source the project approves, or leave cost null and say
+so in the report.
 
 For tool events, prefer validated framework arguments. Record the exact public
 tool name, stable call ID, bounded inputs, bounded output or public failure, and
