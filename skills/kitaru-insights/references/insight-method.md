@@ -23,7 +23,7 @@ Use this reference to choose a level, pick sessions, turn notes into patterns, m
 
 | Level | What runs | Reads | Can claim |
 |---|---|---|---|
-| Quick | `kitaru import analyze` with a server analyzer, only when the scope is one import's sessions | No session text by the user's models; `kitaru/openai-session-findings` sends it to OpenAI | What the analyzer's fixed counters found, or that analyzer's per-session verified findings |
+| Quick | `kitaru session analyze` with a server analyzer over the pinned scope (`kitaru import analyze` for a single import on older Kitaru) | No session text by the user's models; `kitaru/openai-session-findings` sends it to OpenAI | What the analyzer's fixed counters found, or that analyzer's per-session verified findings |
 | Standard | Cheap counts, then readers over about 40 sessions, then grouping | About 40 sessions | Patterns with examples; a rough rate from the random slice only |
 | Deep | Standard, then checker, measurement, and first-failure waves | About 40, then every pattern measured on a fresh random sample of 100 to 200, or on every session in scope with Jev | Patterns that survived a refutation attempt, with a measured rate, and exact first-failure nodes |
 
