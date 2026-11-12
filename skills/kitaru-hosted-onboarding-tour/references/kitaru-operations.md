@@ -8,7 +8,7 @@ The hosted runtime contract is fixed: use `kitaru`, `/app/.venv/bin/python`, and
 
 `prepareOnboardingRunner` already establishes the runner, selected cloud workspace, template directory, and worker. Do not repeat those checks unless its result reports a blocker.
 
-Use the status returned by `prepareOnboardingRunner`; rerun it only when that result is missing, failed, or stale. Retain the selected server version separately from the bundled CLI version; if the runner result does not establish the server’s deduplication contract, report that missing capability before proposing an import. Do not run separate version, adapter-import, provider-import, credential, or worker probes. Then make one targeted Kitaru state read:
+Use the status returned by `prepareOnboardingRunner`; rerun it only when that result is missing, failed, or stale. The runner installs Kitaru at the workspace's version when the sandbox is created, but an existing sandbox is not upgraded with its workspace. Retain both `compatibility.client_version` and `compatibility.server_version` from `kitaru status`: the client version decides which commands and flags exist, and the server version decides server contracts such as deduplication scope. If the runner result does not establish the server’s deduplication contract, report that missing capability before proposing an import. Do not run separate version, adapter-import, provider-import, credential, or worker probes. Then make one targeted Kitaru state read:
 
 1. Resolve the `returns-resolver` parent and exact version whose entrypoint and source identity match the bundled template.
 2. Read only relevant active or completed imports and the sessions they produced, including expected provider/external-ID occupancy in the applicable server scope below. A version, task, or tag filter alone cannot establish that an import is missing.
@@ -26,12 +26,12 @@ For CLI calls, request structured JSON and non-interactive behavior only when th
 |---|---|---|
 | Selected server and worker | `kitaru status` | bounded registry/activity read |
 | Agent and version | `kitaru agent get`; `kitaru agent version get` | `kitaru_registry_read` |
-| Sessions and nodes | `kitaru session list`; `kitaru session get`; `kitaru session nodes SESSION_ID --include-payloads` | `kitaru_activity_read` |
+| Sessions and nodes | `kitaru session list`; `kitaru session get`; `kitaru session read` (0.27.7 and newer); `kitaru session nodes SESSION_ID --include-payloads` | `kitaru_session_read` (0.27.7 and newer, up to ten sessions); `kitaru_activity_read` |
 | Annotations and investigation | `kitaru annotation`; `kitaru investigation` | `kitaru_review_read`; `kitaru_review_manage` |
 | Cohort and evaluator | `kitaru cohort`; `kitaru evaluator`; `kitaru session evaluate` | cohort, registry, and workflow tools |
 | Experiment | `kitaru experiment`; `kitaru experiment run` | experiment and workflow tools |
 
-Use exact IDs once resolved. Never retry a write until a read proves it did not land.
+Use exact IDs once resolved. Pass a fresh `--idempotency-key` (MCP `idempotency_key`) to each logical create that accepts one, and reuse that same key only to retry that write after a lost response. `kitaru agent register` and `kitaru evaluator register` take no key: never retry them until a read proves the write did not land. A resumed chat cannot know earlier keys, so read state before any retry there too.
 
 ## Use the bundled-template forms
 
@@ -47,7 +47,13 @@ kitaru agent get PARENT_NAME
 kitaru session list --agent AGENT_ID --tag returns-baseline --origin imported --size 20 -o json
 ```
 
-Kitaru 0.23.0 does not expose `--include-payloads` on `session list`. After the user returns from the required sessions-page handoff, select the three candidate session IDs from the retained bounded JSON listing, then request payloads only for their nodes:
+Keep this population listing payload-free. After the user returns from the required sessions-page handoff, select the three candidate session IDs from the retained bounded JSON listing, then read only those sessions. When the client version is 0.27.7 or newer, read all three in one compact transcript call; it returns each step's node ID and zero-based position, and `--node N --full` shows one cut node whole:
+
+```text
+kitaru session read SESSION_ID SESSION_ID SESSION_ID -o json
+```
+
+Request full node payloads only when a highlight or annotation selector needs an exact payload field, or when the client version predates `session read`:
 
 ```text
 kitaru session nodes SESSION_ID --include-payloads -o json
@@ -61,7 +67,7 @@ kitaru agent register PARENT_NAME --command "/app/.venv/bin/python -m returns_ag
 kitaru session import traces/langfuse-traces.jsonl --importer kitaru/langfuse@latest --agent AGENT_VERSION_REF --tag returns-baseline --params '{"source_instance":"kitaru-quickstart-example"}' --media-type application/x-ndjson --wait
 ```
 
-Read the registration receipt before constructing the import command. After the import receipt reports ten created sessions and no failures, do exactly one filtered session listing. The `--agent` filter is parent-scoped: keep only sessions belonging to the retained agent-version UUID and matching import provenance. Do not inspect any nodes or fixtures in this turn. Navigate to the sessions page and end the turn. Apply the same boundary when the first durable-state read establishes a reusable population. Only after the user returns may you select candidates from the retained session metadata and read full nodes and payloads for the three chosen sessions; do not repeat the population listing.
+Read the registration receipt before constructing the import command. After the import receipt reports ten created sessions and no failures, do exactly one filtered session listing. The `--agent` filter is parent-scoped: keep only sessions belonging to the retained agent-version UUID and matching import provenance. Do not inspect any nodes or fixtures in this turn. Navigate to the sessions page and end the turn. Apply the same boundary when the first durable-state read establishes a reusable population. Only after the user returns may you select candidates from the retained session metadata and read the three chosen sessions as above; do not repeat the population listing.
 
 For ordinary agent observations, `--value` and `--selector` are JSON values. JSON-encode the text and selector rather than hand-escaping an inline shell command:
 
@@ -94,7 +100,7 @@ return EvaluationResult(
 )
 ```
 
-Test the final local evaluator once with `kitaru evaluator test .kitaru-onboarding/evaluators/evaluator.py --entrypoint evaluate` before creating its first remote version. Test its actual reviewed pass, fail, missing, and malformed-evidence behavior locally, not only the load-and-signature command. Only after all four pass, create one cohort from the confirmed reviewed session IDs and register exactly one evaluator version. Do not create a provisional version and do not use `kitaru evaluator version register` to repair the first version: Kitaru 0.23.0 has a known `idempotency_key` bug on that path. Run that exact version once over the same resolved agent's imported `returns-baseline` population, account for completed, failed, and missing results, then navigate to the evaluator page and wait for the user to inspect the results.
+Test the final local evaluator once with `kitaru evaluator test .kitaru-onboarding/evaluators/evaluator.py --entrypoint evaluate` before creating its first remote version. Test its actual reviewed pass, fail, missing, and malformed-evidence behavior locally, not only the load-and-signature command. Only after all four pass, create one cohort from the confirmed reviewed session IDs and register exactly one evaluator version. Do not create a provisional version. If the registered first version later proves wrong, fix the local script, rerun all four local tests, and register exactly one corrected version with `kitaru evaluator version register EVALUATOR_ID --script .kitaru-onboarding/evaluators/evaluator.py --entrypoint evaluate --idempotency-key KEY -o json`; use that version from then on. That command needs client and server 0.24.0 or newer; on 0.23.x it always fails after uploading the source, so report the blocked repair instead. Run that exact version once over the same resolved agent's imported `returns-baseline` population, account for completed, failed, and missing results, then navigate to the evaluator page and wait for the user to inspect the results.
 
 ## Identify matching durable state
 
@@ -106,7 +112,9 @@ A matching template route requires more than the parent name:
 
 A same-name parent without this proof is a collision, not a match.
 
-Before concluding that no usable sessions exist or proposing the initial import, check the checked-in evidence’s expected provider/external-ID identities in the selected server’s deduplication scope. A hosted server at 0.23.0 uses the global `(imported_from, external_id)` pair, so this check must include other agents. Use the selected server version, not the bundled 0.23 CLI version: servers 0.24.0 and newer scope the key to the logical agent across all its versions. See the [version contract](../../kitaru-importer-builder/references/importer-contract.md#identity-and-deduplication); verify unknown or other legacy runtime contracts before relying on a scope. Use supported bounded reads and inspect identity metadata rather than assuming the `returns-baseline` listing proves absence. If those reads cannot establish occupancy, preserve the known IDs and report the blocked recovery decision.
+Sample data loaded from the Kitaru UI (Kitaru 0.23.0 and newer) is one such collision. It creates a `returns-resolver` parent with no agent version, ten imported Langfuse sessions tagged `returns-baseline` whose external IDs start with `kitaru-template:` and whose metadata carries `kitaru_sample_data: true`, and the `returns-discovery` investigation, `returns-regression` cohort, `returns-behavior` evaluator, and `returns-candidate` experiment. The template import uses `kitaru-quickstart-example:` external IDs instead. Never treat sample sessions as the template population or resume the sample investigation, cohort, evaluator, or experiment as tour state.
+
+Before concluding that no usable sessions exist or proposing the initial import, check the checked-in evidence’s expected provider/external-ID identities in the selected server’s deduplication scope. A hosted server at 0.23.0 uses the global `(imported_from, external_id)` pair, so this check must include other agents. Use the selected server version, not the installed client version: servers 0.24.0 and newer scope the key to the logical agent across all its versions. See the [version contract](../../kitaru-importer-builder/references/importer-contract.md#identity-and-deduplication); verify unknown or other legacy runtime contracts before relying on a scope. Use supported bounded reads and inspect identity metadata rather than assuming the `returns-baseline` listing proves absence. If those reads cannot establish occupancy, preserve the known IDs and report the blocked recovery decision.
 
 An occupied key does not prove a reusable population. Retain the session’s actual agent and version, import provenance, and payload completeness. Another version’s evidence still fails the exact-version match above. For occupied keys with mismatched or incomplete evidence, preserve the IDs and ask for an explicit supported recovery or collision choice before any write. A retry or a new agent version will not repair the evidence; on 0.23.0, even an isolated demo parent still collides with the same global source identities. Keep provider and external IDs stable rather than changing them to bypass the collision.
 
@@ -140,9 +148,10 @@ The hosted template uses deterministic local tools against a fresh in-memory sto
 
 Pass these resolved reference forms to the replay skill so it does not rediscover them:
 
-- agent versions use `PARENT@INTEGER`, for example `returns-resolver@1`, never an agent-version UUID;
-- cohort and evaluator inputs use the exact immutable version identifiers returned when they were created;
-- retain the experiment ID returned by creation and reuse it for start and polling;
-- poll the run no more often than once after 45 seconds and once after another 60 seconds.
+- CLI: `experiment create --agent` takes the parent `AGENT_ID` or name; `experiment create --evaluator` takes `EVALUATOR@VERSION`, never a UUID; `experiment run start EXPERIMENT_ID` takes `--agent PARENT@INTEGER`, for example `returns-resolver@1`, and `--cohort-version COHORT_VERSION_ID`, the only UUID version input;
+- MCP: `kitaru_experiments_manage` create takes `agent_id` and evaluator selections of `evaluator_id` plus integer `version`; `kitaru_workflow_start` `experiment_run` takes `experiment_id`, `cohort_version_id`, and the candidate's `agent_version_id` UUID;
+- retain the run ID returned by run start and poll with `kitaru experiment run get RUN_ID` (or `watch RUN_ID`), never the experiment ID;
+- poll the run no more often than once after 45 seconds and once after another 60 seconds;
+- after the run settles, read `kitaru experiment run get RUN_ID --aggregate -o json` (0.27.3 and newer) once for the pinned baseline and result evaluation aggregates; MCP does not return them.
 
 Before asking for paid replay approval, prove the run specification uses `/app/.venv/bin/python -m returns_agent.agent`. The runner readiness result already proves that interpreter imports the adapter. If an older resumed version uses plain `python` or `uv run`, create a corrected immutable agent version as part of the approved replay setup and use its `PARENT@INTEGER` reference. Never start a replay after a runtime probe has failed.

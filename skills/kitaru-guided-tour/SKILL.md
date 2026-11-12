@@ -106,7 +106,9 @@ Begin read-only.
    offer the example's isolated local server when no usable server is selected,
    and ask before starting or selecting it. Then inspect the exact registered
    `returns-resolver` agent version, relevant import jobs, and the complete
-   imported population carrying the `returns-baseline` tag.
+   imported population carrying the `returns-baseline` tag. Treat a same-name
+   parent without a source-matched version, including Kitaru's UI sample data,
+   as a collision and follow its route in `starter-template.md`.
 4. Resume matching durable state. Perform only missing setup steps from the
    verified example README, with one clear explanation and approval before
    environment changes, service starts, registration, or import.
