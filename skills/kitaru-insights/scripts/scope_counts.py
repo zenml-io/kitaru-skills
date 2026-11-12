@@ -79,6 +79,13 @@ def cache_reads(items: list[dict[str, Any]]) -> dict[str, Any]:
     return result
 
 
+def cache_writes(items: list[dict[str, Any]]) -> dict[str, Any]:
+    """Total prompt-cache writes over the sessions that report them."""
+    # A null count is unknown, not zero: older Kitaru and many sources never report cache writes.
+    values = [int(t["cache_write_input_tokens"]) for i in items if isinstance(t := i.get("tokens"), dict) and t.get("cache_write_input_tokens") is not None]
+    return {"sessions_reporting": len(values), "sessions_unknown": len(items) - len(values), "cache_write_input_tokens": sum(values) if values else None}
+
+
 def summarize(items: list[dict[str, Any]]) -> dict[str, Any]:
     """Count one group of sessions."""
     def tally(key: str) -> dict[str, int]:
@@ -96,6 +103,7 @@ def summarize(items: list[dict[str, Any]]) -> dict[str, Any]:
         "llm_calls": percentiles([float(i["llm_call_count"]) for i in items if isinstance(i.get("llm_call_count"), int)]),
         "cost": cost_concentration(items),
         "cache": cache_reads(items),
+        "cache_writes": cache_writes(items),
     }
 
 

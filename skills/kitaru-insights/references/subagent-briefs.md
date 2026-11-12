@@ -25,12 +25,13 @@ RUN/
   rules.json               the agent's own rules, from the context brief
   sample.json              from pick_sample.py
   population_ids.txt       pinned IDs, one per line, from pick_sample.py --ids-out
-  export/                  ID.session.json and ID.nodes.json (or ID.nodes.N.json pages)
+  picked.txt               picked IDs, one per line, from pick_sample.py --picks-out
+  export/                  picked.read.json from `kitaru session read`, or ID.session.json and ID.nodes.json pages
   transcripts/             ID.md plus manifest.json, from condense_sessions.py
   notes/                   reader JSON lines, one NAME.jsonl file per subagent
   patterns.json            grouped patterns, written by the main agent
   checks/                  checker JSON lines, one PATTERN_ID.jsonl each (Deep)
-  measure/                 sample.json, export/, transcripts/, judgments/*.jsonl, evaluations/ (Deep)
+  measure/                 sample.json, picked.txt, export/, transcripts/, judgments/*.jsonl, evaluations/ (Deep)
   failures/                first-failure JSON lines, *.jsonl (Deep)
   tally.json               from tally_notes.py
   cards.json               drafted cards, checked by check_cards.py
@@ -75,7 +76,7 @@ Look for: the first thing that went wrong and its node ID; anything else notable
 - a request outside what the agent was built for.
 [If rules.json exists:] Also check each rule below and record a "problem" observation naming the rule ID for any rule the session breaks:
 [rules, one per line as "R1: quoted rule text"]
-Describe what happened, not why. Use node IDs exactly as written in the transcript.
+Describe what happened, not why. Cite each node by its node ID exactly as written in the transcript, never by its [N] position.
 Do not contact Kitaru, run commands, or open other files.
 Files: [paths]
 ```
@@ -111,7 +112,7 @@ Files: [paths]
 
 ## File formats
 
-Write one JSON object per line. Use session and node IDs exactly as they appear in transcripts.
+Write one JSON object per line. Use session and node IDs exactly as they appear in transcripts. A node ID is the UUID on the step line, not the zero-based `[N]` position before it.
 
 Reader note:
 

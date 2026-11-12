@@ -1,7 +1,7 @@
 """Check drafted insight cards against Kitaru's limits and this skill's contract.
 
-Optionally prints a safely quoted `kitaru insight create` command. This offline
-helper never contacts Kitaru.
+Optionally prints a safely quoted `kitaru insight create --insight-file` command
+for the checked file. This offline helper never contacts Kitaru.
 """
 
 import argparse
@@ -41,6 +41,11 @@ def _finite(value: Any) -> bool:
 
 def _text(value: Any, limit: int | None = None) -> bool:
     return isinstance(value, str) and bool(value.strip()) and (limit is None or len(value) <= limit)
+
+
+def _reject_constant(name: str) -> None:
+    # The file is sent to Kitaru as written, so NaN and Infinity must fail here, not on the server.
+    raise ValueError(f"{name} is not valid JSON")
 
 
 def check_data(data: Any) -> list[str]:
@@ -184,11 +189,9 @@ def check_cards(cards: Any, max_cards: int = MAX_CARDS) -> list[str]:
     return errors
 
 
-def build_command(cards: list[dict[str, Any]], agent: str, idempotency_key: str) -> str:
-    """Return a shell-quoted insight create command for the batch."""
-    parts = ["env", "KITARU_ACTIVE_SKILL=kitaru-insights", "kitaru", "insight", "create", "--agent", agent]
-    for card in cards:
-        parts += ["--insight", json.dumps(card, ensure_ascii=False, separators=(",", ":"), allow_nan=False)]
+def build_command(cards_path: Path, agent: str, idempotency_key: str) -> str:
+    """Return a shell-quoted insight create command that writes the checked cards file."""
+    parts = ["env", "KITARU_ACTIVE_SKILL=kitaru-insights", "kitaru", "insight", "create", "--agent", agent, "--insight-file", str(cards_path.resolve())]
     parts += ["--idempotency-key", idempotency_key, "--output", "json", "--machine", "--non-interactive", "--no-browser"]
     return shlex.join(parts)
 
@@ -202,8 +205,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--idempotency-key", help="required with --emit-command")
     args = parser.parse_args(argv)
     try:
-        cards = json.loads(args.cards.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
+        cards = json.loads(args.cards.read_text(encoding="utf-8"), parse_constant=_reject_constant)
+    except (OSError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
     errors = check_cards(cards, args.max_cards)
@@ -215,7 +218,7 @@ def main(argv: list[str] | None = None) -> int:
         if not args.idempotency_key:
             print("error: --emit-command needs --idempotency-key", file=sys.stderr)
             return 1
-        print(build_command(cards, args.emit_command, args.idempotency_key))
+        print(build_command(args.cards, args.emit_command, args.idempotency_key))
     else:
         print(json.dumps({"cards": len(cards), "ok": True}))
     return 0

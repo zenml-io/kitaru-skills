@@ -130,6 +130,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--include-in-progress", action="store_true")
     parser.add_argument("--out", type=Path, required=True, help="sample.json path")
     parser.add_argument("--ids-out", type=Path, help="write pinned IDs, one per line")
+    parser.add_argument("--picks-out", type=Path, help="write picked IDs, one per line, for kitaru session read --sessions-file")
     parser.add_argument("--exclude", type=Path, help="earlier sample.json whose picks the random draw skips")
     args = parser.parse_args(argv)
     seed = args.seed if args.seed is not None else secrets.randbelow(2**31)
@@ -142,6 +143,8 @@ def main(argv: list[str] | None = None) -> int:
     args.out.write_text(json.dumps(sample, indent=2) + "\n", encoding="utf-8")
     if args.ids_out:
         args.ids_out.write_text("\n".join(sample["population_ids"]) + "\n", encoding="utf-8")
+    if args.picks_out:
+        args.picks_out.write_text("".join(f"{p['session_id']}\n" for p in sample["picks"]), encoding="utf-8")
     random_n = sum(p["random"] for p in sample["picks"])
     print(json.dumps({
         "population_count": sample["population_count"],
