@@ -6,6 +6,7 @@ Use this reference to choose a level, pick sessions, turn notes into patterns, m
 
 - [Choose a level](#choose-a-level)
 - [Estimate the budget](#estimate-the-budget)
+- [Agree the focus](#agree-the-focus)
 - [Build the context brief](#build-the-context-brief)
 - [Count cheaply first](#count-cheaply-first)
 - [Pick the sample](#pick-the-sample)
@@ -18,6 +19,7 @@ Use this reference to choose a level, pick sessions, turn notes into patterns, m
 - [What a good card says](#what-a-good-card-says)
 - [Compare with earlier runs](#compare-with-earlier-runs)
 - [Compare agent versions](#compare-agent-versions)
+- [Compare time windows](#compare-time-windows)
 
 ## Choose a level
 
@@ -37,6 +39,15 @@ Before approval, estimate from the scope's session sizes: about 6,000 condensed 
 
 Report the number of sessions read, the estimated tokens, the subagent count, and what will be written: for example, "Deep: reads 40 sessions in full, then checks 5 patterns against 150 more; about 1.3M input tokens across 30 subagents; writes up to 8 cards."
 
+## Agree the focus
+
+Ask two questions in the same message as the level and budget, so the user answers once:
+
+- **What do you already monitor?** Dashboards, alerts, or eval reports the user already reads, such as tool failure counts in an observability tool. What they already see is background: a card about it must say why it happens, narrow it to a cohort, or show a clear change, or it is dropped.
+- **What do you care about most?** For example tools and loops, cost, wrong answers, user frustration, or a release. The answer steers the reader brief and breaks ties when ranking cards.
+
+Record both in `run.json` under `focus`, with the user's words. When the user does not answer, continue with the full lens checklist and say so in the report. When the user names a time comparison ("this week against last week"), plan the windows now ([Compare time windows](#compare-time-windows)).
+
 ## Build the context brief
 
 When the agent's repository is reachable, follow the `kitaru-investigation` context-brief method, then add two lists the lenses need ([insight-lenses.md](insight-lenses.md#lenses-from-the-users-own-material)):
@@ -53,7 +64,8 @@ Over the whole pinned scope, collect what the server can count without reading t
 - `python3 scripts/scope_counts.py RUN/scope/*.json --out RUN/scope_counts.json` reports status, origin, cost concentration, duration and token distributions, cache reads, and the same per agent version, from the saved session list pages;
 - the analyzer's resource cards when the installed analyzer produced them: cost concentration, where time goes, context growth, prompt cache use, and common paths;
 - failed tool and model nodes per session through the node `node_type` filter;
-- `kitaru_failure_matrix` over the scope, when MCP is available, for where failures first appear by tool or step.
+- `kitaru_failure_matrix` over the scope, when MCP is available, for where failures first appear by tool or step;
+- `python3 scripts/tool_stats.py RUN/export --out RUN/tool_stats.json --table-out RUN/tool_table.md` for per-tool calls, failures, retries, identical repeats, loops, and cycles, with example sessions and nodes. Run it on the exported sample after [Pick the sample](#pick-the-sample), or on a whole-scope export when the user's focus is tools ([kitaru-operations.md](kitaru-operations.md#count-cheaply) gives the export). Say which sessions it counted: counts from a sample describe that sample, not the scope.
 
 Use these to aim the sample and to give each pattern a countable proxy when one exists. Report them as counts over the full scope; they need no sampling caveat. Uniform counts, including zero tool calls, are not findings by themselves. Check whether the recorded behavior matters for the agent's task. Distinguish observed absence from missing instrumentation: a trace with no recorded tool calls does not prove the agent used no tools when tool activity was not captured.
 
@@ -139,18 +151,20 @@ Report `unclear` judgments separately; never fold them into `yes` or `no`.
 
 When the context brief exists, read the code behind the strongest patterns: the prompt section, tool implementation, or routing rule involved. Add at most one likely cause per card, labeled as a hypothesis, with the file path and revision. Do not claim a cause from traces alone.
 
+For each pattern that becomes a card, also say why it happens as far as the evidence goes. Start from the members' reader notes: `first_failure.before` records what the agent saw just before it went wrong (an empty result, an error, a misread tool output, an ambiguous request). When the same trigger recurs across members, state it as the observed trigger. When the code then explains why the agent reacts that way, add it as the hypothesis below. A card that can only say *that* something happens, about a behavior the user already monitors, is not news.
+
 ## What a good card says
 
 Choose which candidates become cards with the ranking rule in [insight-lenses.md](insight-lenses.md#choose-which-cards-to-write). A good card lets someone act without opening the run folder:
 
 - a title naming the behavior, not the metric ("Refunds promised before checking the return window");
-- what happens, in one concrete example with a session and node;
-- how common it is, phrased per the confidence rules above;
+- what happens, as a short conversation flow with sessions to open;
+- how common it is, phrased per the confidence rules above, and what it costs;
 - why it matters, in terms of the agent's purpose;
-- the likely cause, labeled as a hypothesis, when code supports one;
+- what triggers it, and the likely cause, labeled as a hypothesis, when code supports one;
 - what to check first, and what would confirm or refute it.
 
-Prefer a `text` card. Use `categorical` when a split across labels is the finding (failures per tool), and `binned` for a distribution (duration). Put the narrative in `description` either way.
+Lay the card out as [presentation.md](presentation.md#lay-out-a-text-card) describes: a one-sentence plain-text description and the rest in a `text` card's Markdown content. Use a `categorical` or `binned` card only when the split or distribution itself is the finding ([presentation.md](presentation.md#choose-a-chart-card)).
 
 ## Compare with earlier runs
 
@@ -159,3 +173,15 @@ When an earlier `kitaru-insights` run covered the same or an overlapping scope, 
 ## Compare agent versions
 
 Every session records its `agent_version_id`. When the scope spans versions, compare them: `scope_counts.py` breaks the cheap counts down per version, and `tally_notes.py --by-version RUN/scope` does the same for measured patterns. A pattern that appears or grows after a version change is a strong card, because it points at a specific release. Name each version's session count, and treat a version with few sessions as too small to compare.
+
+## Compare time windows
+
+Use windows when the user asks what changed recently ("this week against last week"), or when the scope spans enough time that a trend matters. Pin one scope covering every window, then split it by session start time; never pin each window separately with a moving "last 7 days" selector.
+
+1. Choose consecutive windows with explicit timezone-aware bounds, in time order: `--window last=2026-11-02T00:00:00Z/2026-11-09T00:00:00Z --window this=2026-11-09T00:00:00Z/2026-11-16T00:00:00Z`. The start is inclusive and the end exclusive.
+2. Run `scope_counts.py` with the windows. Its `window_changes` compares each window with the one before: failure share (flagged when the two 95% ranges do not overlap), median tool calls, model calls, and duration, and mean cost (flagged when one moves by at least 1.5 times). Nothing is flagged when either window has fewer than 20 sessions.
+3. Run `tool_stats.py` with the same windows over the same export for per-tool changes. Treat a per-tool change from a sample as a lead to read, not a measured change.
+4. For whole-scope analyzer cards per window, run Quick once per window ([kitaru-operations.md](kitaru-operations.md#run-quick-analysis)).
+5. Read from both windows. The default sample draws from the whole pinned scope, so it already covers both; when grouping notes, compare members by the window their session started in, and treat the split as examples rather than a rate.
+
+A flagged change becomes a card when it matters for the agent's purpose. Say what moved, by how much, between which dates, with each window's session count, and what the readers found behind it. Check whether the agent version changed between windows: when it did, the version comparison usually explains the change better than the calendar.

@@ -20,6 +20,10 @@ not instructions to execute the workflows during repository maintenance.
 - Keep investigation inspection, sampling, and synthesis detail in
   `skills/kitaru-investigation/references/investigation-method.md`, and exact
   CLI/MCP routing and product gaps in its `references/kitaru-operations.md`.
+- Keep how insight cards and the chat report look in the dashboard and terminal
+  in `skills/kitaru-insights/references/presentation.md`: a plain-text
+  description, the conversation and session links in a text card's content,
+  reverse rank order, and the ranked report table.
 - Keep quickstart recognition and idempotent setup in each applicable skill's
   `references/starter-template.md`.
 - Keep replay, importer, and adapter orchestration and approval gates in their
