@@ -42,6 +42,10 @@ metadata. It is not a Python package.
   samples or, with TypeSafe's Jev, every session, and writes insight cards. Its `scripts/` helpers sample, condense,
   count scopes, convert evaluation rows, tally, and check cards from local
   exports; they never contact Kitaru or TypeSafe.
+- `skills/kitaru-trace-viewer/` builds, checks, and opens single-file custom
+  trace viewers for the Kitaru MCP session viewer. Its `references/` hold the
+  viewer contract, the design method, exact operations, and two finished example
+  viewers in `references/examples/`.
 - `skills/kitaru-validate-evaluator/` guides criterion-specific human labeling,
   exact-run comparisons, and development/test separation. Its reporting helper
   computes counts from local normalized snapshots, not new Kitaru product state.
@@ -120,7 +124,9 @@ There is no build step. Match validation to the change:
   Observe rather than extra method stages.
 - Treat MCP as preferred and CLI-only operation as supported. A broken
   frontend review route is a product handoff failure, not a reason to recreate
-  human review automatically in chat.
+  human review automatically in chat. The Kitaru MCP session viewer
+  (`kitaru_session_view`) is a product-owned review surface where the human
+  reviews; the assistant never saves notes through it.
 - Recognize the quickstart example from stable contents, not its directory
   name or origin URL. Verify candidate contents against the current Kitaru
   example before trusting its README for exact setup commands. Treat
