@@ -41,6 +41,35 @@ def load_items(paths: list[Path]) -> list[dict[str, Any]]:
     return list(rows.values())
 
 
+def parse_time(value: Any) -> datetime | None:
+    """Parse a timezone-aware ISO 8601 time, or return None."""
+    if not isinstance(value, str):
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else None
+
+
+def parse_window(spec: str) -> tuple[str, datetime, datetime]:
+    """Parse NAME=START/END with timezone-aware ISO 8601 bounds; START is inclusive, END exclusive."""
+    name, _, bounds = spec.partition("=")
+    start, _, end = bounds.partition("/")
+    started, ended = parse_time(start), parse_time(end)
+    if not name or started is None or ended is None or started >= ended:
+        raise ValueError(f"window {spec!r}: expected NAME=START/END with timezone-aware ISO 8601 times, START before END")
+    return name, started, ended
+
+
+def parse_windows(specs: list[str]) -> list[tuple[str, datetime, datetime]]:
+    """Parse window specs and reject duplicate names."""
+    windows = [parse_window(spec) for spec in specs]
+    if len({name for name, _, _ in windows}) != len(windows):
+        raise ValueError("window names must be unique")
+    return windows
+
+
 def _duration(item: dict[str, Any]) -> float | None:
     start, end = item.get("started_at"), item.get("ended_at")
     if not isinstance(start, str) or not isinstance(end, str):
