@@ -7,7 +7,7 @@ for contributor scope, validation, accuracy, distribution, and release rules.
 
 Claude Code exposes the skills as `/kitaru-hosted-onboarding-tour`,
 `/kitaru-guided-tour`, `/kitaru-investigation`, `/kitaru-insights`,
-`/kitaru-validate-evaluator`,
+`/kitaru-trace-viewer`, `/kitaru-validate-evaluator`,
 `/kitaru-replay-experiment`,
 `/kitaru-importer-builder`, and `/kitaru-adapter-builder`, and may also select
 them automatically from their frontmatter descriptions.
@@ -41,6 +41,9 @@ not instructions to execute the workflows during repository maintenance.
   complete outcome; publication is optional.
 - Check supported adapters, importer-backed adapters, importers, and OTLP before
   custom adapter development. A project-local adapter is a complete outcome.
+- Keep the trace viewer's anchor rules and runtime API in
+  `skills/kitaru-trace-viewer/references/viewer-contract.md`, and its rule that
+  the reviewer, never the assistant, saves notes through the viewer.
 
 ## Local Claude Code testing
 
@@ -52,6 +55,7 @@ cp -R skills/kitaru-importer-builder .claude/skills/
 cp -R skills/kitaru-adapter-builder .claude/skills/
 cp -R skills/kitaru-investigation .claude/skills/
 cp -R skills/kitaru-insights .claude/skills/
+cp -R skills/kitaru-trace-viewer .claude/skills/
 cp -R skills/kitaru-validate-evaluator .claude/skills/
 cp -R skills/kitaru-replay-experiment .claude/skills/
 ```
