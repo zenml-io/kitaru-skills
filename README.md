@@ -34,6 +34,7 @@ improvement, and compare the result.
 | [`kitaru-validate-evaluator`](skills/kitaru-validate-evaluator/SKILL.md) | Check a judge against criterion-specific human verdicts, inspect disagreements with visual summaries, and assess untouched cases without confusing abstentions or errors with quality. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
 | [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with optional API fetching, conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
+| [`kitaru-workspace-push`](skills/kitaru-workspace-push/SKILL.md) | Move a local Kitaru workspace to a managed one: preview with a dry run, copy agents, connections, sessions, and insights with `kitaru workspace push`, verify the destination, and hand the user the steps the command cannot do, such as re-entering connection secrets. |
 | [`kitaru-adapter-builder`](skills/kitaru-adapter-builder/SKILL.md) | Select a supported provider-backed adapter or build a project-local Python or TypeScript adapter for an unsupported agent framework, with explicit recording and replay boundaries, partial-trace handling, side-effect controls, and separately approved upstream contribution. |
 
 The workflow keeps human observations separate from agent suggestions. It uses
@@ -172,7 +173,8 @@ You can then invoke
 `/kitaru-hosted-onboarding-tour`, `/kitaru-guided-tour`,
 `/kitaru-investigation`, `/kitaru-insights`, `/kitaru-validate-evaluator`,
 `/kitaru-replay-experiment`,
-`/kitaru-importer-builder`, or `/kitaru-adapter-builder` explicitly.
+`/kitaru-importer-builder`, `/kitaru-adapter-builder`, or
+`/kitaru-workspace-push` explicitly.
 
 ### Manual installation
 

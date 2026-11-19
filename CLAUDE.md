@@ -9,7 +9,8 @@ Claude Code exposes the skills as `/kitaru-hosted-onboarding-tour`,
 `/kitaru-guided-tour`, `/kitaru-investigation`, `/kitaru-insights`,
 `/kitaru-validate-evaluator`,
 `/kitaru-replay-experiment`,
-`/kitaru-importer-builder`, and `/kitaru-adapter-builder`, and may also select
+`/kitaru-importer-builder`, `/kitaru-adapter-builder`, and
+`/kitaru-workspace-push`, and may also select
 them automatically from their frontmatter descriptions.
 
 ## Additional skill editing guidance
@@ -54,6 +55,7 @@ cp -R skills/kitaru-investigation .claude/skills/
 cp -R skills/kitaru-insights .claude/skills/
 cp -R skills/kitaru-validate-evaluator .claude/skills/
 cp -R skills/kitaru-replay-experiment .claude/skills/
+cp -R skills/kitaru-workspace-push .claude/skills/
 ```
 
 For marketplace testing:
