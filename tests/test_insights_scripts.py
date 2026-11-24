@@ -29,6 +29,7 @@ tally = load("tally_notes")
 cards = load("check_cards")
 scope_counts = load("scope_counts")
 to_judgments = load("evaluations_to_judgments")
+tool_stats = load("tool_stats")
 
 
 def session(i: int, status: str = "completed", cost: float | str = 0.01, tools: int = 2, agent: str = "agent") -> dict:
@@ -286,7 +287,7 @@ def card(**overrides) -> dict:
         "data": {"type": "text", "content": "Body."},
         "metadata": {
             "kitaru.insights/v1": {"investigation_prompt": "Use the kitaru-investigation skill.", "cta_label": "Investigate early refunds", "contributing_session_ids": [sid], "evidence": [{"session_id": sid, "node_id": None, "signal": "refund before policy"}]},
-            "kitaru.insights.skill/v1": {"schema_version": 1, "run_id": str(uuid.uuid4()), "level": "standard", "scope": {"population_count": 10, "population_sha256": "a" * 64}, "sample": {}, "pattern": {"kind": "finding"}, "rate": {"basis": "measurement", "method": "subagents", "low": 0.1, "high": 0.5}},
+            "kitaru.insights.skill/v1": {"schema_version": 1, "run_id": str(uuid.uuid4()), "level": "standard", "scope": {"population_count": 10, "population_sha256": "a" * 64}, "sample": {}, "pattern": {"kind": "finding"}, "rate": {"basis": "measurement", "method": "subagents", "low": 0.1, "high": 0.5}, "rank": 1, "impact": {"summary": "41 sessions, about 492k wasted tokens", "sessions": 41, "amount": 492000, "unit": "tokens"}},
         },
     }
     base.update(overrides)
@@ -346,6 +347,48 @@ class CheckCardsTest(unittest.TestCase):
         many = [card(name=f"kitaru-insights-p{i}") for i in range(9)]
         self.assertTrue(any("at most 8" in e for e in cards.check_cards(many)))
 
+    def test_description_is_one_plain_line(self):
+        for bad in ("Calls `search` twice.", "**Bold** claim.", "Line one.\nLine two.", "- a list item", "See [this](https://x)", "x" * 241, ""):
+            errors = "\n".join(cards.check_cards([card(description=bad)]))
+            self.assertIn("description:", errors, bad)
+        self.assertEqual(cards.check_cards([card(description="In 41 of 3,228 sessions the agent called search_documents three times in a row.")]), [])
+
+    def test_charts_and_text_stay_readable(self):
+        slices = card(data={"type": "categorical", "values": [{"label": f"t{i}", "value": i} for i in range(9)]})
+        self.assertTrue(any("at most 8" in e for e in cards.check_cards([slices])))
+        bins = card(data={"type": "binned", "bins": [{"lower_bound": i, "upper_bound": i + 1, "count": 1} for i in range(13)]})
+        self.assertTrue(any("at most 12" in e for e in cards.check_cards([bins])))
+        long = card(data={"type": "text", "content": "x" * 2501})
+        self.assertTrue(any("keep it to 2500" in e for e in cards.check_cards([long])))
+
+    def test_ranks_run_down_to_one_so_the_top_card_shows_first(self):
+        first, second = card(name="kitaru-insights-p1"), card(name="kitaru-insights-p2")
+        run = first["metadata"]["kitaru.insights.skill/v1"]["run_id"]
+        for index, item in enumerate((first, second)):
+            item["metadata"]["kitaru.insights.skill/v1"].update(run_id=run, rank=index + 1)
+        self.assertTrue(any("rank 1 is written last" in e for e in cards.check_cards([first, second])))
+        self.assertEqual(cards.check_cards([second, first]), [])
+
+    def test_impact_and_run_details(self):
+        loose = card()
+        loose["metadata"]["kitaru.insights.skill/v1"]["impact"] = {"summary": "x", "sessions": 3, "amount": 5, "unit": None}
+        self.assertTrue(any("set together" in e for e in cards.check_cards([loose])))
+        leaky = card()
+        run = leaky["metadata"]["kitaru.insights.skill/v1"]["run_id"]
+        leaky["data"] = {"type": "text", "content": f"Run {run}."}
+        self.assertTrue(any("contains the run_id" in e for e in cards.check_cards([leaky])))
+
+    def test_dashboard_url_requires_a_link_to_a_contributing_session(self):
+        linked = card()
+        sid = linked["metadata"]["kitaru.insights/v1"]["contributing_session_ids"][0]
+        self.assertTrue(any("needs a Markdown link" in e for e in cards.check_cards([linked], dashboard_url="https://kitaru.example")))
+        linked["data"] = {"type": "text", "content": f"See [the first loop](https://kitaru.example/sessions/{sid})."}
+        self.assertEqual(cards.check_cards([linked], dashboard_url="https://kitaru.example/"), [])
+        elsewhere = card(data={"type": "text", "content": f"See [it](https://kitaru.example/sessions/{uuid.uuid4()})."})
+        self.assertTrue(any("needs a Markdown link" in e for e in cards.check_cards([elsewhere], dashboard_url="https://kitaru.example")))
+        chart = card(data={"type": "categorical", "values": [{"label": "a", "value": 1}]})
+        self.assertEqual(cards.check_cards([chart], dashboard_url="https://kitaru.example"), [])
+
     def test_rejects_mixed_runs_and_duplicate_names(self):
         errors = cards.check_cards([card(), card()])
         self.assertIn("cards: names must be unique within a run", errors)
@@ -398,6 +441,29 @@ class ScopeCountsTest(unittest.TestCase):
         self.assertEqual(by_version["v2"]["sessions"], 2)
 
 
+    def test_compares_windows_and_flags_only_clear_changes(self):
+        def week(day: int, i: int, failed: bool, tools: int) -> dict:
+            return {**session(i, status="failed" if failed else "completed", tools=tools), "started_at": f"2026-11-{day:02d}T10:00:00+00:00", "ended_at": f"2026-11-{day:02d}T10:05:00+00:00"}
+
+        items = [week(3, i, i < 1, 2) for i in range(40)] + [week(10, 100 + i, i < 16, 6) for i in range(40)]
+        windows = pick_sample.parse_windows(["last=2026-11-01T00:00:00Z/2026-11-08T00:00:00Z", "this=2026-11-08T00:00:00Z/2026-11-15T00:00:00Z"])
+        document = scope_counts.build(items, windows)
+        self.assertEqual((document["by_window"]["last"]["sessions"], document["by_window"]["this"]["sessions"]), (40, 40))
+        changes = {c["metric"]: c for c in document["window_changes"]}
+        self.assertTrue(changes["failed_share"]["notable"])
+        self.assertEqual((changes["tool_calls_p50"]["ratio"], changes["tool_calls_p50"]["notable"]), (3.0, True))
+        self.assertFalse(changes["duration_seconds_p50"]["notable"])
+        small = scope_counts.build(items[:5] + items[40:45], windows)["window_changes"]
+        self.assertTrue(all(not c["comparable"] and not c["notable"] for c in small))
+
+    def test_rejects_bad_windows(self):
+        for spec in ("nameless", "a=2026-11-08T00:00:00/2026-11-09T00:00:00Z", "a=2026-11-09T00:00:00Z/2026-11-08T00:00:00Z"):
+            with self.assertRaises(ValueError):
+                pick_sample.parse_window(spec)
+        with self.assertRaisesRegex(ValueError, "unique"):
+            pick_sample.parse_windows(["a=2026-11-01T00:00:00Z/2026-11-02T00:00:00Z"] * 2)
+
+
 class EvaluationsToJudgmentsTest(unittest.TestCase):
     def row(self, session_id: str, name: str, score, value=None) -> dict:
         return {"id": f"{session_id}-{name}", "session_id": session_id, "name": name, "score": score, "value": value, "explanation": "jev"}
@@ -412,6 +478,42 @@ class EvaluationsToJudgmentsTest(unittest.TestCase):
             to_judgments.convert([self.row("s1", "insights.p1", 0.9), {**self.row("s1", "insights.p1", 0.2), "id": "other"}], "insights.", 0.8)
         with self.assertRaisesRegex(ValueError, "no evaluation rows"):
             to_judgments.convert([self.row("s1", "other", 0.9)], "insights.", 0.8)
+
+
+class ToolStatsTest(unittest.TestCase):
+    def step(self, index: int, name: str, status: str = "completed", node_input: str | None = "{}", node_type: str = "tool_call") -> dict:
+        return {"index": index, "node_id": str(uuid.UUID(int=index + 1)), "node_type": node_type, "name": name, "status": status, "input": node_input, "duration_seconds": 1.0 + index}
+
+    def transcript(self, session_id: str, steps: list[dict], started: str = "2026-11-10T10:00:00Z") -> dict:
+        return {"session_id": session_id, "status": "completed", "started_at": started, "steps": steps, "node_count": len(steps)}
+
+    def test_counts_failures_retries_repeats_loops_and_cycles(self):
+        long_query = '{"query": "' + "q" * 80 + '"}'
+        loop = [self.step(0, "chat", node_type="llm_call", node_input="hi"), self.step(1, "search", node_input=long_query), self.step(2, "search", node_input="(same as [1])"), self.step(3, "search", status="failed", node_input='{"query": "other"}'), self.step(4, "search", node_input='{"query": "other"}')]
+        cycle = [self.step(i, "plan" if i % 2 == 0 else "act") for i in range(6)]
+        with tempfile.TemporaryDirectory() as tmp:
+            export, out, table = Path(tmp) / "export", Path(tmp) / "tools.json", Path(tmp) / "tools.md"
+            export.mkdir()
+            (export / "picked.read.json").write_text(json.dumps({"items": [self.transcript("s1", loop), self.transcript("s2", cycle, "2026-11-03T10:00:00Z")]}))
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(tool_stats.main([str(export), "--out", str(out), "--table-out", str(table), "--window", "last=2026-11-01T00:00:00Z/2026-11-08T00:00:00Z", "--window", "this=2026-11-08T00:00:00Z/2026-11-15T00:00:00Z"]), 0)
+            document = json.loads(out.read_text())
+            search = next(r for r in document["scope"]["tools"] if r["tool"] == "search")
+            self.assertEqual((search["calls"], search["failed"], search["retries_after_failure"], search["identical_repeats"], search["loop_sessions"], search["longest_run"]), (4, 1, 1, 2, 1, 4))
+            self.assertEqual(search["examples"]["loop"], [{"session_id": "s1", "node_id": str(uuid.UUID(int=2))}])
+            self.assertEqual(document["scope"]["cycles"][0]["cycle"], "plan → act")
+            self.assertEqual((document["by_window"]["last"]["tool_calls"], document["by_window"]["this"]["tool_calls"]), (6, 4))
+            self.assertIn("| `search` | 4 | 1 | 1 (25.0%) | 1 | 2 | 1 |", table.read_text())
+
+    def test_reads_raw_node_pages(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            export = Path(tmp)
+            (export / "s1.session.json").write_text(json.dumps({"item": {"id": "s1", "started_at": "2026-11-10T10:00:00Z"}}))
+            nodes = [{"id": f"n{i}", "node_type": "tool_call", "tool_name": "lookup", "status": "failed" if i == 0 else "completed", "inputs": {"id": 1}, "started_at": "2026-11-10T10:00:00Z", "ended_at": "2026-11-10T10:00:02Z"} for i in range(2)]
+            (export / "s1.nodes.json").write_text(json.dumps({"items": nodes}))
+            sid, started, calls = tool_stats.tool_calls(condense.load_export(export)["s1"])
+            stats = tool_stats.count([(sid, calls)], 3, 3)["tools"][0]
+            self.assertEqual((stats["calls"], stats["retries_after_failure"], stats["identical_repeats"], stats["seconds"]["p50"]), (2, 1, 1, 2.0))
 
 
 if __name__ == "__main__":

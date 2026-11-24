@@ -40,8 +40,8 @@ metadata. It is not a Python package.
 - `skills/kitaru-insights/` reads many sessions with the user's coding agent
   and optional subagents, groups recurring patterns, measures them from random
   samples or, with TypeSafe's Jev, every session, and writes insight cards. Its `scripts/` helpers sample, condense,
-  count scopes, convert evaluation rows, tally, and check cards from local
-  exports; they never contact Kitaru or TypeSafe.
+  count scopes and time windows, count tool use, convert evaluation rows, tally,
+  and check cards from local exports; they never contact Kitaru or TypeSafe.
 - `skills/kitaru-trace-viewer/` builds, checks, and opens single-file custom
   trace viewers for the Kitaru MCP session viewer. Its `references/` hold the
   viewer contract, the design method, exact operations, and two finished example
