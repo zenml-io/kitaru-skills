@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gene map</title>
+<!--
+  A trace viewer for a plasmid annotation agent, built for the biologist who
+  checks its work: the agent's feature table drawn over the tools' evidence
+  and the sequence, with the checks a reviewer would run by hand. Selecting
+  bases notes a span of the sequence; "Note" on a selected feature notes that
+  row of the agent's feature table. Both are saved to Kitaru.
+
+  It expects sessions whose input holds `sequence` and whose nodes include
+  `find_orfs`, `scan_motifs`, `homology_search`, and `write_annotation`.
+-->
+<style>
+.gm { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 28px; padding: 14px 16px; }
+@media (max-width: 880px) { .gm { grid-template-columns: minmax(0, 1fr); } .gm-side { position: static !important; max-height: none !important; } }
+.gm-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.gm-side { position: sticky; top: 12px; align-self: start; display: flex; flex-direction: column; gap: 22px; max-height: calc(100vh - 24px); overflow: auto; }
+.gm-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.gm-head h1 { font-size: 16px; font-weight: 650; margin: 0; letter-spacing: -.01em; }
+.gm-meta { color: var(--kv-ink-3); font-size: 12.5px; flex: 1; }
+.gm-request { color: var(--kv-ink-2); font-size: 12.5px; margin-top: 4px; }
+.gm-legend { display: flex; justify-content: flex-end; gap: 10px; font-size: 11.5px; color: var(--kv-ink-3); margin-bottom: 4px; }
+.gm-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
+.gm-label { font-size: 11.5px; color: var(--kv-ink-3); margin-bottom: 6px; }
+.gm-map svg { display: block; width: 100%; overflow: visible; }
+.gm-map text { font: 10.5px var(--kv-sans); fill: var(--kv-ink-3); }
+.gm-map .gm-name { fill: var(--kv-ink); font-weight: 600; font-size: 11px; }
+.gm-map .gm-flag { fill: var(--kv-bad); }
+.gm-map .gm-shape { cursor: pointer; }
+.gm-map .gm-shape:hover polygon { stroke: var(--kv-ink-2); }
+.gm-map .gm-picked polygon, .gm-map .gm-picked rect { stroke: var(--kv-ink); stroke-width: 1.5; }
+.gm-map line { stroke: var(--kv-border); }
+.gm-seq { display: flex; gap: 12px; font: 12px/1.7 var(--kv-mono); max-height: 300px; overflow: auto; padding: 8px 10px; background: var(--kv-subtle); border-radius: 8px; }
+.gm-gutter { color: var(--kv-ink-3); text-align: right; white-space: pre; user-select: none; flex: none; }
+.gm-bases { width: calc(60ch + .5px); flex: none; word-break: break-all; letter-spacing: 0; color: var(--kv-ink-2); }
+.gm-t-CDS { background: color-mix(in srgb, #3b82c4 18%, transparent); color: var(--kv-ink); }
+.gm-t-promoter { background: color-mix(in srgb, #2f9e64 24%, transparent); color: var(--kv-ink); }
+.gm-t-RBS { background: color-mix(in srgb, #a855f7 24%, transparent); color: var(--kv-ink); }
+.gm-t-operator { background: color-mix(in srgb, #d9a400 28%, transparent); color: var(--kv-ink); }
+.gm-t-terminator { background: color-mix(in srgb, #e5484d 22%, transparent); color: var(--kv-ink); }
+.gm-sel { box-shadow: inset 0 -2px 0 var(--kv-ink); }
+.gm-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.gm-table td { padding: 5px 4px; border-top: 1px solid var(--kv-border); }
+.gm-table tr { cursor: pointer; }
+.gm-table tr:hover td { background: var(--kv-subtle); }
+.gm-table tr.gm-picked td { background: var(--kv-brand-soft); }
+.gm-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 8px; }
+.gm-num { font-family: var(--kv-mono); font-size: 11.5px; color: var(--kv-ink-2); white-space: nowrap; }
+.gm-end { text-align: right; white-space: nowrap; }
+.gm-bad { color: var(--kv-bad); }
+.gm-prose { font-size: 13px; line-height: 1.55; }
+.gm-claim { text-decoration: underline wavy var(--kv-bad); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.gm-checks { display: flex; flex-direction: column; }
+.gm-check { display: flex; gap: 8px; align-items: baseline; border: 0; background: none; padding: 4px 0; text-align: left; font-size: 12.5px; color: var(--kv-ink); cursor: pointer; }
+.gm-check:hover { color: var(--kv-brand-ink); }
+.gm-check i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--kv-warn); transform: translateY(-1px); }
+.gm-check.gm-error i { background: var(--kv-bad); }
+.gm-ok { color: var(--kv-good); font-size: 12.5px; }
+.gm-detail { display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; }
+.gm-detail h2 { font-size: 13px; margin: 0; }
+.gm-kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 0; }
+.gm-kv dt { color: var(--kv-ink-3); } .gm-kv dd { margin: 0; }
+.gm-protein { font: 11px/1.5 var(--kv-mono); word-break: break-all; color: var(--kv-ink-2); }
+.gm-issue { color: var(--kv-bad); }
+.gm-empty { padding: 24px; color: var(--kv-ink-2); }
+</style>
+</head>
+<body>
+<div class="gm" id="gm">
+  <main class="gm-main">
+    <header>
+      <div class="gm-head"><h1 id="gm-title"></h1><span class="gm-meta" id="gm-meta"></span><button class="kv-icon" id="gm-full" title="Full screen" aria-label="Full screen">⤢</button></div>
+      <div class="gm-request" id="gm-request"></div>
+    </header>
+    <section class="gm-map"><div class="gm-legend" id="gm-legend"></div><div id="gm-map"></div></section>
+    <section class="gm-seq"><div class="gm-gutter" id="gm-gutter"></div><div class="gm-bases" id="gm-bases"></div></section>
+    <section><table class="gm-table" id="gm-table"></table></section>
+    <section><div class="gm-label">Agent's summary</div><div class="gm-prose" id="gm-summary"></div></section>
+  </main>
+  <aside class="gm-side">
+    <section><div class="gm-label">Checks</div><div class="gm-checks" id="gm-checks"></div></section>
+    <section class="gm-detail" id="gm-detail" hidden></section>
+    <section id="gm-review"></section>
+  </aside>
+</div>
+<script>
+(() => {
+  const TYPES = { CDS: "#3b82c4", promoter: "#2f9e64", RBS: "#a855f7", operator: "#d9a400", terminator: "#e5484d" };
+  const MOTIF_TYPE = { "-35 box": "promoter", "-10 box": "promoter", RBS: "RBS", "lac operator": "operator", terminator: "terminator" };
+  const RESISTANCE = { bla: "ampicillin", aph: "kanamycin", kanR: "kanamycin", nptII: "kanamycin", cat: "chloramphenicol", tetA: "tetracycline", aadA: "spectinomycin" };
+  const ANTIBIOTICS = ["ampicillin", "kanamycin", "chloramphenicol", "tetracycline", "spectinomycin", "gentamicin", "carbenicillin"];
+  const CODE = (() => { const b = "TCAG", aa = "FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG", m = {}; let i = 0; for (const x of b) for (const y of b) for (const z of b) m[x + y + z] = aa[i++]; return m; })();
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  const svg = (tag, attrs = {}) => { const n = document.createElementNS("http://www.w3.org/2000/svg", tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); return n; };
+  const revcomp = (s) => [...s].reverse().map((c) => ({ A: "T", T: "A", G: "C", C: "G" })[c] || "N").join("");
+  const translate = (cds) => { let p = ""; for (let i = 0; i + 3 <= cds.length; i += 3) { const a = CODE[cds.slice(i, i + 3)] || "X"; if (a === "*") return { protein: p, stop: true, end: i + 3 }; p += a; } return { protein: p, stop: false, end: cds.length }; };
+  const fmt = (n) => n.toLocaleString("en-US");
+  const pct = (x) => `${Math.round(x * 100)}%`;
+  let ctx = null, checks = [], picked = null; // picked: { kind: "feature" | "orf" | "motif", index }
+
+  function load(view) {
+    const byName = Object.fromEntries(view.nodes.map((n) => [n.name, n]));
+    const seq = view.session.inputs?.sequence, ann = byName.write_annotation;
+    if (typeof seq !== "string" || !ann) return null;
+    return {
+      view, seq, ann, byName,
+      hits: Object.fromEntries((byName.homology_search?.outputs?.hits || []).map((h) => [h.orf_id, h])),
+      orfs: byName.find_orfs?.outputs?.orfs || [],
+      motifs: byName.scan_motifs?.outputs?.motifs || [],
+      features: ann.outputs?.features || [],
+      summary: kitaru.nodeText(ann, "output"),
+    };
+  }
+  function prepare(c) { c.claims = summaryClaims(c); c.checks = runChecks(c); return c; }
+  const featurePath = (i) => `/outputs/features/${i}`;
+
+  // ---------- The checks a reviewer would run by hand ----------
+  const cdsOf = (c, f, strand) => { const raw = c.seq.slice(f.start - 1, f.end); return strand === "-" ? revcomp(raw) : raw; };
+  function evidenceOrf(c, f) { for (const ref of f.evidence || []) { const m = /^find_orfs:(.+)$/.exec(ref); if (m) return c.orfs.find((o) => o.orf_id === m[1]); } return null; }
+  function runChecks(c) {
+    const out = [];
+    const add = (level, title, detail, at) => out.push({ level, title, detail, ...at });
+    c.features.forEach((f, i) => {
+      if (f.type === "CDS") {
+        const orf = evidenceOrf(c, f);
+        if (orf && orf.strand !== f.strand) add("error", `${f.label} on the wrong strand`, `The table says ${f.strand}; find_orfs found it on ${orf.strand}.`, { feature: i });
+        if (orf && (orf.start !== f.start || orf.end !== f.end)) {
+          const short = orf.strand === "+" ? orf.end - f.end : f.start - orf.start;
+          add("warn", short === 3 ? `${f.label} misses its stop codon` : `${f.label} coordinates differ from find_orfs`, `Table ${f.start}–${f.end}, find_orfs ${orf.start}–${orf.end}.`, { feature: i });
+        } else {
+          const cds = cdsOf(c, f, orf?.strand || f.strand), t = translate(cds);
+          if (!cds.startsWith("ATG") || !t.stop || t.end !== cds.length) add("warn", `${f.label} is not a complete reading frame`, "The sequence at these coordinates lacks an ATG start or an in-frame stop.", { feature: i });
+        }
+        const hit = orf ? c.hits[orf.orf_id] : null;
+        if (f.label && !/hypothetical|orf/i.test(f.label) && (!hit?.best_hit || hit.identity < 0.4 || hit.coverage < 0.6)) add("error", `${f.label} named from weak homology`, hit?.best_hit ? `"${hit.best_hit}": ${pct(hit.identity)} identity over ${pct(hit.coverage)} of the protein (E = ${hit.evalue}).` : "No homology hit supports the name.", { feature: i });
+      } else if (f.type === "RBS") {
+        const next = c.features.filter((g) => g.type === "CDS" && g.strand === f.strand && g.start > f.end).sort((a, b) => a.start - b.start)[0];
+        const gap = next ? next.start - f.end - 1 : null;
+        if (gap != null && (gap < 4 || gap > 12)) add("warn", `RBS spacing ${gap} bp`, `To the ${next.label} start codon; 5–10 bp is typical.`, { feature: i });
+      }
+    });
+    const cited = new Set(c.features.map((f) => evidenceOrf(c, f)?.orf_id).filter(Boolean));
+    c.orfs.forEach((o, j) => { if (!cited.has(o.orf_id)) add("warn", `${o.orf_id} not in the table`, `${o.length_aa} aa on the ${o.strand} strand, ${o.start}–${o.end}.`, { orf: j }); });
+    for (const claim of c.claims) add("error", `Summary: ${claim.said} for ${claim.label}`, `${claim.label} confers ${claim.right} resistance.`, { claim });
+    return out;
+  }
+  function summaryClaims(c) {
+    if (!c.summary) return [];
+    const text = c.summary.text, claims = [];
+    for (const m of text.matchAll(/[^.!?\n]+[.!?]?/g)) {
+      for (const f of c.features) {
+        const right = RESISTANCE[f.label];
+        if (!right || !new RegExp(`\\b${f.label}\\b`).test(m[0])) continue;
+        for (const drug of ANTIBIOTICS) {
+          const at = m[0].toLowerCase().indexOf(drug);
+          if (at >= 0 && drug !== right) claims.push({ start: m.index + at, end: m.index + at + drug.length, label: f.label, said: drug, right, detail: `${f.label} confers ${right} resistance.` });
+        }
+      }
+    }
+    return claims;
+  }
+
+  // ---------- Map ----------
+  // Pack shapes into rows by their on-screen extent, label included.
+  function lanes(extents) {
+    const ends = [], out = new Array(extents.length);
+    extents.map((e, i) => ({ ...e, i })).sort((a, b) => a.x1 - b.x1).forEach((e) => {
+      let lane = ends.findIndex((end) => end < e.x1);
+      if (lane < 0) { lane = ends.length; ends.push(0); }
+      ends[lane] = e.x2; out[e.i] = lane;
+    });
+    return out;
+  }
+  function extent(x1, x2, label, width, pad) {
+    const w = label ? label.length * 6.2 + 6 : 0, cx = Math.min(Math.max((x1 + x2) / 2, pad + w / 2), width - pad - w / 2);
+    return { x1: Math.min(x1, cx - w / 2), x2: Math.max(x2, cx + w / 2), cx };
+  }
+  function arrow(x1, x2, y, h, strand, fill, stroke = "transparent") {
+    const tip = Math.min(7, (x2 - x1) / 2);
+    const pts = strand === "-" ? [[x1, y + h / 2], [x1 + tip, y], [x2, y], [x2, y + h], [x1 + tip, y + h]] : [[x1, y], [x2 - tip, y], [x2, y + h / 2], [x2 - tip, y + h], [x1, y + h]];
+    return svg("polygon", { points: pts.map((p) => p.join(",")).join(" "), fill, stroke, "fill-opacity": fill === "transparent" ? 1 : 0.9 });
+  }
+  function shape(nodeId, path, kind, index) {
+    const g = svg("g", { class: `gm-shape${picked?.kind === kind && picked.index === index ? " gm-picked" : ""}` });
+    kitaru.mark(g, { nodeId, path, kind: "field" });
+    g.addEventListener("click", () => pick({ kind, index }));
+    return g;
+  }
+  function renderMap(c) {
+    const host = $("gm-map");
+    const width = Math.max(host.clientWidth, 420), pad = 6, L = c.seq.length;
+    const x = (p) => pad + ((p - 1) / L) * (width - 2 * pad);
+    const flagged = new Set(checks.filter((k) => k.level === "error" && k.feature != null).map((k) => k.feature));
+    const fullLabel = (f, i) => `${f.label}${kitaru.notesFor({ nodeId: c.ann.id, path: featurePath(i) }).length ? " ✎" : ""}${flagged.has(i) ? " !" : ""}`;
+    // Small features stay unlabeled so they share one row; hover names them.
+    const featureLabel = (f, i) => (x(f.end) - x(f.start) >= fullLabel(f, i).length * 6.2 ? fullLabel(f, i) : flagged.has(i) ? "!" : "");
+    const orfLabel = (o) => `${o.orf_id} ${o.strand} ${o.length_aa} aa`;
+    const fBox = c.features.map((f, i) => extent(x(f.start), x(f.end), featureLabel(f, i), width, pad));
+    const oBox = c.orfs.map((o) => extent(x(o.start), x(o.end), orfLabel(o), width, pad));
+    const fLane = lanes(fBox), oLane = lanes(oBox), rowH = 26;
+    const top = 30, toolTop = top + Math.max(1, ...fLane.map((l) => l + 1)) * rowH + 14, motifTop = toolTop + Math.max(1, ...oLane.map((l) => l + 1)) * rowH;
+    const s = svg("svg", { width, height: motifTop + 22, viewBox: `0 0 ${width} ${motifTop + 22}` });
+    s.append(svg("line", { x1: x(1), x2: x(L), y1: 14, y2: 14 }));
+    const step = L > 4000 ? 1000 : L > 1500 ? 500 : 200;
+    for (let p = step; p < L; p += step) { s.append(svg("line", { x1: x(p), x2: x(p), y1: 11, y2: 17 })); const t = svg("text", { x: x(p), y: 7, "text-anchor": "middle" }); t.textContent = fmt(p); s.append(t); }
+    c.features.forEach((f, i) => {
+      const y = top + fLane[i] * rowH + 8, g = shape(c.ann.id, featurePath(i), "feature", i);
+      g.append(arrow(x(f.start), Math.max(x(f.end), x(f.start) + 4), y, 10, f.strand, TYPES[f.type] || "#8a8580"));
+      const t = svg("text", { x: fBox[i].cx, y: y - 3, "text-anchor": "middle", class: `gm-name${flagged.has(i) ? " gm-flag" : ""}` }); t.textContent = featureLabel(f, i); g.append(t);
+      const tip = svg("title"); tip.textContent = `${fullLabel(f, i)} · ${f.type} ${f.start}–${f.end} ${f.strand}`; g.append(tip);
+      s.append(g);
+    });
+    c.orfs.forEach((o, j) => {
+      const y = toolTop + oLane[j] * rowH + 8, g = shape(c.byName.find_orfs.id, `/outputs/orfs/${j}`, "orf", j);
+      const a = arrow(x(o.start), x(o.end), y, 10, o.strand, "transparent", "var(--kv-ink-3)"); a.setAttribute("stroke-dasharray", "3 2"); g.append(a);
+      const t = svg("text", { x: oBox[j].cx, y: y - 3, "text-anchor": "middle" }); t.textContent = orfLabel(o); g.append(t);
+      s.append(g);
+    });
+    c.motifs.forEach((m, k) => {
+      const g = shape(c.byName.scan_motifs.id, `/outputs/motifs/${k}`, "motif", k);
+      g.append(svg("rect", { x: x(m.start), y: motifTop + (m.strand === "-" ? 7 : 0), width: Math.max(3, x(m.end) - x(m.start)), height: 5, fill: TYPES[MOTIF_TYPE[m.type]] || "#8a8580", rx: 1 }));
+      const tip = svg("title"); tip.textContent = `${m.type} ${m.start}–${m.end} (${m.strand})`; g.append(tip);
+      s.append(g);
+    });
+    host.replaceChildren(s);
+  }
+
+  // ---------- Sequence, table, checks, detail ----------
+  const itemOf = (c, p) => (p.kind === "feature" ? c.features : p.kind === "orf" ? c.orfs : c.motifs)[p.index];
+  function renderSequence(c) {
+    $("gm-gutter").textContent = Array.from({ length: Math.ceil(c.seq.length / 60) }, (_, i) => String(i * 60 + 1)).join("\n");
+    const sel = picked && itemOf(c, picked);
+    const ranges = c.features.map((f) => ({ start: f.start - 1, end: f.end, type: f.type })).concat(sel ? [{ start: sel.start - 1, end: sel.end, sel: true }] : []);
+    const order = ["RBS", "operator", "promoter", "terminator", "CDS"];
+    kitaru.renderText($("gm-bases"), { text: c.seq, path: "/inputs/sequence", ranges, decorate: (span, rs) => {
+      const top = order.find((t) => rs.some((r) => r.type === t));
+      if (top) span.classList.add(`gm-t-${top}`);
+      if (rs.some((r) => r.sel)) span.classList.add("gm-sel");
+    } });
+  }
+  function renderTable(c) {
+    const rows = c.features.map((f, i) => {
+      const tr = el("tr", picked?.kind === "feature" && picked.index === i ? "gm-picked" : "");
+      kitaru.mark(tr, { nodeId: c.ann.id, path: featurePath(i), kind: "field" });
+      const name = el("td"), dot = el("span", "gm-dot"); dot.style.background = TYPES[f.type] || "#8a8580"; name.append(dot, f.label);
+      const issues = checks.filter((k) => k.feature === i), notes = kitaru.notesFor({ nodeId: c.ann.id, path: featurePath(i) }).length;
+      const marks = el("td", `gm-end${issues.some((k) => k.level === "error") ? " gm-bad" : ""}`, [issues.length ? `${issues.length} !` : "", notes ? `${notes} ✎` : ""].filter(Boolean).join("  "));
+      tr.append(name, el("td", "gm-num", f.type), el("td", "gm-num", `${fmt(f.start)}–${fmt(f.end)} ${f.strand}`), marks);
+      tr.addEventListener("click", () => pick({ kind: "feature", index: i }));
+      return tr;
+    });
+    $("gm-table").replaceChildren(...rows);
+  }
+  function renderChecks(c) {
+    const box = $("gm-checks");
+    if (!checks.length) { box.replaceChildren(el("div", "gm-ok", "✓ Agrees with the evidence")); return; }
+    box.replaceChildren(...checks.map((k) => {
+      const b = el("button", `gm-check${k.level === "error" ? " gm-error" : ""}`);
+      b.title = k.detail;
+      b.append(el("i"), el("span", "", k.title));
+      b.addEventListener("click", () => (k.feature != null ? pick({ kind: "feature", index: k.feature }) : k.orf != null ? pick({ kind: "orf", index: k.orf }) : kitaru.reveal({ node_id: c.ann.id, path: c.summary.path })));
+      return b;
+    }));
+  }
+  function renderDetail(c) {
+    const box = $("gm-detail");
+    box.hidden = !picked;
+    if (!picked) return;
+    const item = itemOf(c, picked), dl = el("dl", "gm-kv"), row = (k, v) => dl.append(el("dt", "", k), el("dd", "", v));
+    const nodeId = picked.kind === "feature" ? c.ann.id : picked.kind === "orf" ? c.byName.find_orfs.id : c.byName.scan_motifs.id;
+    const path = picked.kind === "feature" ? featurePath(picked.index) : `/outputs/${picked.kind === "orf" ? "orfs" : "motifs"}/${picked.index}`;
+    const title = picked.kind === "feature" ? item.label : picked.kind === "orf" ? item.orf_id : item.type;
+    row("Location", `${fmt(item.start)}–${fmt(item.end)} ${item.strand} · ${fmt(item.end - item.start + 1)} bp`);
+    const parts = [el("h2", "", title), dl];
+    if (picked.kind === "feature") {
+      if (item.note) row("Agent", item.note);
+      const orf = evidenceOrf(c, item), hit = orf && c.hits[orf.orf_id];
+      if (orf) row("find_orfs", `${orf.orf_id} · ${orf.start}–${orf.end} ${orf.strand} · ${orf.length_aa} aa`);
+      if (hit?.best_hit) row("Homology", `${hit.best_hit} · ${pct(hit.identity)} id · ${pct(hit.coverage)} cov`);
+      if (item.type === "CDS") {
+        const t = translate(cdsOf(c, item, orf?.strand || item.strand));
+        parts.push(el("div", "gm-protein", `${t.protein.slice(0, 80)}${t.protein.length > 80 ? "…" : ""}${t.stop ? " *" : ""}`));
+      }
+      parts.push(...checks.filter((k) => k.feature === picked.index).map((k) => el("div", "gm-issue", k.detail)));
+    } else if (picked.kind === "orf") {
+      row("Frame", `${item.strand}${item.frame} · ${item.length_aa} aa`);
+      const hit = c.hits[item.orf_id]; row("Homology", hit?.best_hit ? `${hit.best_hit} · ${pct(hit.identity)} id` : "none");
+    } else row("Motif", item.sequence);
+    parts.push(...kitaru.notesFor({ nodeId, path }).map((n) => el("div", "kv-note-quote", `✎ ${kitaru.annotationText(n)}`)));
+    const actions = el("div", "kv-row"), close = el("button", "kv-link", "Close");
+    close.addEventListener("click", () => pick(null));
+    actions.append(kitaru.ui.noteButton({ nodeId, path }, { title: `Note on ${title}` }), close);
+    parts.push(actions);
+    box.replaceChildren(...parts);
+  }
+
+  function pick(next) {
+    picked = next; renderAll();
+    if (!next) return;
+    const lineH = parseFloat(getComputedStyle($("gm-bases")).lineHeight) || 20;
+    document.querySelector(".gm-seq").scrollTo({ top: Math.max(0, (Math.floor((itemOf(ctx, next).start - 1) / 60) - 2) * lineH), behavior: "smooth" });
+  }
+  function renderAll() {
+    if (!ctx) return;
+    renderMap(ctx); renderSequence(ctx); renderTable(ctx); renderChecks(ctx); renderDetail(ctx);
+    kitaru.reportSize();
+  }
+  function render(view) {
+    ctx = load(view); picked = null;
+    if (ctx) { prepare(ctx); checks = ctx.checks; }
+    if (!ctx) { $("gm").replaceChildren(el("div", "gm-empty", "This viewer needs a plasmid annotation session: a sequence in the inputs and a write_annotation step. Open it in the default viewer instead.")); return; }
+    const s = view.session;
+    $("gm-title").textContent = s.inputs.construct || s.name;
+    $("gm-meta").textContent = [`${fmt(ctx.seq.length)} bp`, s.inputs.topology].filter(Boolean).join(" · ");
+    $("gm-legend").replaceChildren(...Object.entries(TYPES).map(([k, color]) => { const d = el("span"); const i = el("i"); i.style.background = color; d.append(i, k); return d; }));
+    const request = kitaru.sessionText("input");
+    if (request) kitaru.renderText($("gm-request"), { text: request.text, path: request.path });
+    if (ctx.summary) kitaru.renderText($("gm-summary"), { text: ctx.summary.text, nodeId: ctx.ann.id, path: ctx.summary.path, ranges: ctx.claims, decorate: (span, rs) => { if (rs.length) { span.classList.add("gm-claim"); span.title = rs.map((r) => r.detail).join("\n"); } } });
+    renderAll();
+  }
+
+  $("gm-full").addEventListener("click", () => kitaru.toggleFullscreen());
+  new ResizeObserver(() => ctx && renderMap(ctx)).observe($("gm-map"));
+  kitaru.ui.reviewPanel($("gm-review"));
+  kitaru.ui.enableSelectionNotes({ title: (sel) => (sel.selector.path === "/inputs/sequence" ? `Bases ${fmt(sel.selector.span.start + 1)}–${fmt(sel.selector.span.end)} · ${sel.selector.span.end - sel.selector.span.start} bp` : undefined) });
+  kitaru.onSession(render);
+  kitaru.onAnnotations(renderAll);
+})();
+</script>
+</body>
+</html>

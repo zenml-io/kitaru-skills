@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kitaru Trace Viewer"
+  short_description: "Build domain-specific session viewers that save reviewers' notes to Kitaru"
+  default_prompt: "Use $kitaru-trace-viewer to build a viewer that shows my agent's sessions the way my reviewers read them, then open my investigation in it."
