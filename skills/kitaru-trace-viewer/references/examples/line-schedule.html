@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Line schedule</title>
+<!--
+  A trace viewer for a production scheduling agent, built for the planner who
+  decides whether a plan goes to the shop floor: the released plan and the
+  solver's plan as a Gantt chart, the line's rules applied to them, and the
+  agent's claims checked against them. Clicking a bar notes that assignment;
+  selecting text notes a span of the agent's explanation. Both go to Kitaru.
+
+  It expects sessions whose nodes include `get_open_orders`,
+  `get_machine_calendar`, `solve_schedule`, `finalize_plan`, and optionally
+  `check_constraints`.
+-->
+<style>
+.ls { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 28px; padding: 14px 16px; }
+@media (max-width: 880px) { .ls { grid-template-columns: minmax(0, 1fr); } .ls-side { position: static !important; max-height: none !important; } }
+.ls-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.ls-side { position: sticky; top: 12px; align-self: start; display: flex; flex-direction: column; gap: 22px; max-height: calc(100vh - 24px); overflow: auto; }
+.ls-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ls-head h1 { font-size: 16px; font-weight: 650; margin: 0; letter-spacing: -.01em; }
+.ls-meta { color: var(--kv-ink-3); font-size: 12.5px; flex: 1; }
+.ls-request { color: var(--kv-ink-2); font-size: 12.5px; margin-top: 4px; }
+.ls-toggle { display: inline-flex; border: 1px solid var(--kv-border); border-radius: 7px; overflow: hidden; }
+.ls-toggle button { border: 0; background: transparent; padding: 3px 10px; font-size: 12px; cursor: pointer; color: var(--kv-ink-2); }
+.ls-toggle button[aria-pressed="true"] { background: var(--kv-ink); color: var(--kv-card); }
+.ls-label { font-size: 11.5px; color: var(--kv-ink-3); margin-bottom: 6px; }
+.ls-gantt { display: grid; grid-template-columns: 62px minmax(0, 1fr); row-gap: 4px; font-size: 12px; }
+.ls-axis { position: relative; height: 16px; }
+.ls-tick { position: absolute; transform: translateX(-50%); color: var(--kv-ink-3); font: 10.5px var(--kv-mono); }
+.ls-machine { font-size: 12px; font-weight: 600; display: flex; flex-direction: column; justify-content: center; }
+.ls-machine span { font-weight: 400; color: var(--kv-ink-3); font-size: 10.5px; }
+.ls-lane { position: relative; height: 38px; border-radius: 5px; background: var(--kv-subtle) repeating-linear-gradient(90deg, transparent 0 calc(100% / var(--hours) - 1px), color-mix(in srgb, var(--kv-border) 70%, transparent) calc(100% / var(--hours) - 1px) calc(100% / var(--hours))); }
+.ls-maint { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--kv-ink-3) 26%, transparent) 0 3px, transparent 3px 7px); }
+.ls-op { position: absolute; top: 7px; height: 22px; border-radius: 4px; padding: 0 4px; color: #fff; font-size: 10.5px; font-weight: 600; line-height: 22px; white-space: nowrap; overflow: visible; cursor: pointer; }
+.ls-op b { display: block; overflow: hidden; font-weight: 600; }
+.ls-op:hover { filter: brightness(1.08); }
+.ls-op.ls-moved { outline: 1.5px dashed var(--kv-ink); outline-offset: 1px; }
+.ls-op.ls-conflict { box-shadow: 0 0 0 2px var(--kv-bad); }
+.ls-op.ls-picked { outline: 2px solid var(--kv-ink); outline-offset: 2px; z-index: 2; }
+.ls-op .ls-warn { position: absolute; top: -6px; right: -5px; width: 12px; height: 12px; border-radius: 6px; background: var(--kv-bad); box-shadow: 0 0 0 2px var(--kv-card); }
+.ls-ghost { position: absolute; top: 7px; height: 22px; border-radius: 4px; border: 1px dashed var(--kv-ink-3); pointer-events: none; }
+.ls-gap { position: absolute; top: 31px; height: 5px; border: 1.5px solid var(--kv-bad); border-top: 0; }
+.ls-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; color: var(--kv-ink-3); margin: 8px 0 0 62px; }
+.ls-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
+.ls-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.ls-table td { padding: 5px 4px; border-top: 1px solid var(--kv-border); }
+.ls-mono { font-family: var(--kv-mono); font-size: 11.5px; color: var(--kv-ink-2); white-space: nowrap; }
+.ls-right { text-align: right; }
+.ls-late { color: var(--kv-bad); font-weight: 600; }
+.ls-good { color: var(--kv-good); }
+.ls-swatch { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 8px; }
+.ls-prose { font-size: 13px; line-height: 1.55; }
+.ls-claim { text-decoration: underline wavy var(--kv-bad); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.ls-reason { color: var(--kv-ink-2); }
+.ls-checks { display: flex; flex-direction: column; }
+.ls-check { display: flex; gap: 8px; align-items: baseline; border: 0; background: none; padding: 4px 0; text-align: left; font-size: 12.5px; color: var(--kv-ink); cursor: pointer; }
+.ls-check:hover { color: var(--kv-brand-ink); }
+.ls-check i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--kv-warn); transform: translateY(-1px); }
+.ls-check.ls-error i { background: var(--kv-bad); }
+.ls-ok { color: var(--kv-good); font-size: 12.5px; }
+.ls-detail { display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; }
+.ls-detail h2 { font-size: 13px; margin: 0; }
+.ls-kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 0; }
+.ls-kv dt { color: var(--kv-ink-3); } .ls-kv dd { margin: 0; }
+.ls-empty { padding: 24px; color: var(--kv-ink-2); }
+</style>
+</head>
+<body>
+<div class="ls" id="ls">
+  <main class="ls-main">
+    <header>
+      <div class="ls-head">
+        <h1 id="ls-title"></h1><span class="ls-meta" id="ls-meta"></span>
+        <span class="ls-toggle" role="group" aria-label="Plan"><button data-plan="final" aria-pressed="true">Released</button><button data-plan="solver" aria-pressed="false">Solver</button></span>
+        <button class="kv-icon" id="ls-full" title="Full screen" aria-label="Full screen">⤢</button>
+      </div>
+      <div class="ls-request" id="ls-request"></div>
+    </header>
+    <section><div class="ls-gantt" id="ls-gantt"></div><div class="ls-legend" id="ls-legend"></div></section>
+    <section><div class="ls-label">Agent's explanation</div><div class="ls-prose" id="ls-explanation"></div></section>
+    <section><div class="ls-label">Orders</div><table class="ls-table" id="ls-orders"></table></section>
+    <section id="ls-changes-section"><div class="ls-label">Moved from the solver's plan</div><table class="ls-table" id="ls-changes"></table></section>
+  </main>
+  <aside class="ls-side">
+    <section><div class="ls-label">Checks</div><div class="ls-checks" id="ls-checks"></div></section>
+    <section class="ls-detail" id="ls-detail" hidden></section>
+    <section id="ls-review"></section>
+  </aside>
+</div>
+<script>
+(() => {
+  const PALETTE = ["#3b82c4", "#2f9e64", "#a855f7", "#d97706", "#0e9aa7", "#db2777", "#65a30d", "#7c3aed", "#b45309"];
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  const mins = (t) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+  const clock = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+  let ctx = null, plan = "final", picked = null, found = [];
+
+  function load(view) {
+    const byName = Object.fromEntries(view.nodes.map((n) => [n.name, n]));
+    const fin = byName.finalize_plan, solve = byName.solve_schedule, cal = byName.get_machine_calendar?.outputs;
+    if (!fin || !solve || !cal) return null;
+    const orders = byName.get_open_orders?.outputs?.orders || [];
+    return {
+      view, byName, fin, solve, cal, orders,
+      orderById: Object.fromEntries(orders.map((o) => [o.order_id, o])),
+      color: Object.fromEntries(orders.map((o, i) => [o.order_id, PALETTE[i % PALETTE.length]])),
+      plans: { final: fin.outputs.schedule || [], solver: solve.outputs.assignments || [] },
+      changes: fin.outputs.changes_from_solver || [],
+      check: byName.check_constraints || null,
+      explanation: kitaru.nodeText(fin, "output"),
+    };
+  }
+  const planNode = (c, which) => (which === "final" ? c.fin : c.solve);
+  const planPath = (which, i) => (which === "final" ? `/outputs/schedule/${i}` : `/outputs/assignments/${i}`);
+
+  // ---------- The line's rules, the same ones check_constraints applies ----------
+  function conflicts(c, schedule) {
+    const out = [], rules = c.cal.rules || {}, needed = rules.changeover_minutes_on_material_change ?? 45;
+    const add = (level, rule, ops, title, detail, extra = {}) => out.push({ level, rule, ops, title, detail, ...extra });
+    const byMachine = {};
+    schedule.forEach((a) => (byMachine[a.machine] ||= []).push(a));
+    for (const [machine, items] of Object.entries(byMachine)) {
+      items.sort((a, b) => mins(a.start) - mins(b.start));
+      for (let i = 1; i < items.length; i++) {
+        const before = items[i - 1], after = items[i], gap = mins(after.start) - mins(before.end);
+        if (gap < 0) add("error", "double_booking", [before.op_id, after.op_id], `${machine} double-booked`, `${before.op_id} and ${after.op_id} overlap by ${-gap} min.`);
+        else if ((rules.changeover_machines || []).includes(machine) && before.material !== after.material && gap < needed) add("error", "changeover", [before.op_id, after.op_id], `${machine} changeover ${gap} of ${needed} min`, `${before.material} → ${after.material} between ${before.op_id} and ${after.op_id}.`, { machine, gap });
+      }
+      for (const w of c.cal.maintenance || []) if (w.machine === machine) for (const a of items) if (mins(a.start) < mins(w.end) && mins(a.end) > mins(w.start)) add("error", "maintenance", [a.op_id], `${a.op_id} during ${w.reason}`, `${a.start}–${a.end} overlaps ${machine} ${w.reason} ${w.start}–${w.end}.`);
+    }
+    for (const o of c.orders) {
+      const ops = Object.fromEntries(schedule.filter((a) => a.order_id === o.order_id).map((a) => [a.step, a]));
+      const steps = o.route.filter((s) => ops[s]);
+      for (let i = 1; i < steps.length; i++) if (mins(ops[steps[i]].start) < mins(ops[steps[i - 1]].end)) add("error", "routing", [ops[steps[i - 1]].op_id, ops[steps[i]].op_id], `${ops[steps[i]].op_id} starts too early`, `It starts before ${ops[steps[i - 1]].op_id} ends.`);
+      for (const [step, machines] of Object.entries(o.eligible_machines || {})) if (ops[step] && !machines.includes(ops[step].machine)) add("error", "eligibility", [ops[step].op_id], `${ops[step].op_id} on the wrong machine`, `It needs ${machines.join(" or ")}.`);
+      if (steps.length) { const last = ops[steps.at(-1)], late = mins(last.end) - mins(o.due); if (late > 0) add(o.priority === "rush" ? "error" : "warn", "late", [last.op_id], `${o.order_id} late by ${late} min`, `Finishes ${last.end}, due ${o.due} (${o.customer}).`, { order: o.order_id }); }
+    }
+    return out;
+  }
+  function processChecks(c) {
+    if (!c.check) return [{ level: "warn", title: "Released unchecked", detail: "check_constraints never ran; the agent's instructions require it." }];
+    if (c.check.inputs?.plan === "solver" && c.changes.length) return [{ level: "error", title: "Checked a different plan", detail: `check_constraints ran on the solver's plan; the agent then moved ${c.changes.length} operations.` }];
+    return [];
+  }
+  function claims(c, released) {
+    if (!c.explanation) return [];
+    const text = c.explanation.text, out = [];
+    const hard = released.filter((k) => k.rule !== "late"), late = released.filter((k) => k.rule === "late");
+    const rushLate = late.filter((k) => c.orderById[k.order]?.priority === "rush");
+    const rules = [
+      [/no constraints (?:are|were) violated/gi, hard.length, () => `Broken here: ${hard.map((k) => k.title).join("; ")}.`],
+      [/check_constraints (?:reported|found) no violations/gi, c.check?.inputs?.plan === "solver" && c.changes.length, () => "That check ran on the solver's plan, not this one."],
+      [/every order ships on time|all orders ship on time/gi, late.length, () => late.map((k) => k.title).join("; ")],
+      [/all rush orders (?:now )?ship on time/gi, rushLate.length, () => rushLate.map((k) => k.title).join("; ")],
+    ];
+    for (const [pattern, broken, detail] of rules) if (broken) for (const m of text.matchAll(pattern)) out.push({ start: m.index, end: m.index + m[0].length, detail: detail() });
+    return out;
+  }
+
+  // ---------- Gantt ----------
+  function renderGantt(c) {
+    // Show the hours the plans use, not the whole shift, so short jobs stay readable.
+    const shift = c.cal.shift || { start: "06:00", end: "22:00" };
+    const used = [...c.plans.final, ...c.plans.solver];
+    const t0 = Math.max(mins(shift.start), Math.floor(Math.min(...used.map((a) => mins(a.start))) / 60) * 60);
+    const span = Math.max(Math.min(mins(shift.end), Math.ceil(Math.max(...used.map((a) => mins(a.end))) / 60) * 60) - t0, 8 * 60);
+    const pos = (t) => `${((mins(t) - t0) / span) * 100}%`, width = (a, b) => `${((mins(b) - mins(a)) / span) * 100}%`;
+    const schedule = c.plans[plan], otherById = Object.fromEntries(c.plans[plan === "final" ? "solver" : "final"].map((a) => [a.op_id, a]));
+    const conflictOps = new Set(found.filter((k) => k.level === "error").flatMap((k) => k.ops));
+    const grid = $("ls-gantt");
+    // A bar narrower than its label shows only its color; hover names it.
+    const minLabeled = (span * 38) / Math.max(grid.clientWidth - 62, 300);
+    grid.style.setProperty("--hours", String(span / 60));
+    const axis = el("div", "ls-axis");
+    for (let t = t0; t <= t0 + span; t += 120) { const tick = el("span", "ls-tick", clock(t)); tick.style.left = `${((t - t0) / span) * 100}%`; axis.append(tick); }
+    const rows = [el("div"), axis];
+    for (const machine of c.cal.machines || []) {
+      const name = el("div", "ls-machine", machine.id); name.append(el("span", "", machine.axes ? `${machine.axes}-axis` : machine.kind));
+      const lane = el("div", "ls-lane");
+      for (const w of (c.cal.maintenance || []).filter((w) => w.machine === machine.id && mins(w.start) < t0 + span && mins(w.end) > t0)) { const m = el("div", "ls-maint"); m.style.left = pos(w.start); m.style.width = width(w.start, w.end); m.title = `${w.reason} ${w.start}–${w.end}`; lane.append(m); }
+      schedule.forEach((a, i) => {
+        if (a.machine !== machine.id) return;
+        const prev = otherById[a.op_id];
+        const moved = plan === "final" && prev && (prev.machine !== a.machine || prev.start !== a.start || prev.end !== a.end);
+        if (moved && prev.machine === a.machine) { const g = el("div", "ls-ghost"); g.style.left = pos(prev.start); g.style.width = width(prev.start, prev.end); lane.append(g); }
+        const bar = el("div", ["ls-op", moved && "ls-moved", conflictOps.has(a.op_id) && "ls-conflict", picked === a.op_id && "ls-picked"].filter(Boolean).join(" "));
+        if (mins(a.end) - mins(a.start) >= minLabeled) bar.append(el("b", "", a.order_id));
+        if (conflictOps.has(a.op_id)) bar.append(el("span", "ls-warn"));
+        bar.style.left = pos(a.start); bar.style.width = width(a.start, a.end); bar.style.background = c.color[a.order_id] || "#888";
+        bar.title = `${a.op_id} · ${a.start}–${a.end} · ${a.material}`;
+        kitaru.mark(bar, { nodeId: planNode(c, plan).id, path: planPath(plan, i), kind: "field" });
+        bar.addEventListener("click", () => select(a.op_id));
+        lane.append(bar);
+      });
+      for (const k of found.filter((k) => k.rule === "changeover" && k.machine === machine.id)) {
+        const [a, b] = k.ops.map((id) => schedule.find((x) => x.op_id === id));
+        const g = el("div", "ls-gap"); g.style.left = pos(a.end); g.style.width = `max(8px, ${width(a.end, b.start)})`; g.title = k.title; lane.append(g);
+      }
+      rows.push(name, lane);
+    }
+    grid.replaceChildren(...rows);
+    $("ls-legend").replaceChildren(...c.orders.map((o) => { const d = el("span"); const i = el("i"); i.style.background = c.color[o.order_id]; d.append(i, o.order_id + (o.priority === "rush" ? " rush" : "")); return d; }));
+  }
+
+  // ---------- Panels ----------
+  function renderOrders(c) {
+    const schedule = c.plans[plan];
+    $("ls-orders").replaceChildren(...c.orders.map((o, k) => {
+      const last = schedule.filter((a) => a.order_id === o.order_id).sort((a, b) => mins(b.end) - mins(a.end))[0];
+      const slack = last ? mins(o.due) - mins(last.end) : null;
+      const tr = el("tr");
+      kitaru.mark(tr, { nodeId: c.byName.get_open_orders.id, path: `/outputs/orders/${k}`, kind: "field" });
+      const id = el("td"), sw = el("span", "ls-swatch"); sw.style.background = c.color[o.order_id]; id.append(sw, o.order_id);
+      tr.append(id, el("td", "", `${o.customer} · ${o.part}`), el("td", "ls-mono", `due ${o.due}`), el("td", `ls-mono ls-right ${slack < 0 ? "ls-late" : "ls-good"}`, slack == null ? "—" : `${slack >= 0 ? "+" : ""}${slack} min`));
+      return tr;
+    }));
+  }
+  function renderChanges(c) {
+    $("ls-changes-section").hidden = !c.changes.length;
+    $("ls-changes").replaceChildren(...c.changes.map((ch, i) => {
+      const tr = el("tr"), reason = el("td", "ls-reason");
+      if (ch.reason) kitaru.renderText(reason, { text: ch.reason, nodeId: c.fin.id, path: `/outputs/changes_from_solver/${i}/reason` });
+      tr.append(el("td", "ls-mono", ch.op_id), el("td", "ls-mono", `${ch.from.start} → ${ch.to.start}${ch.from.machine !== ch.to.machine ? ` ${ch.to.machine}` : ""}`), reason);
+      return tr;
+    }));
+  }
+  function renderChecks(c) {
+    const items = [...(plan === "final" ? processChecks(c) : []), ...found];
+    const box = $("ls-checks");
+    if (!items.length) { box.replaceChildren(el("div", "ls-ok", "✓ Keeps every rule, ships on time")); return; }
+    box.replaceChildren(...items.map((k) => {
+      const b = el("button", `ls-check${k.level === "error" ? " ls-error" : ""}`);
+      b.title = k.detail;
+      b.append(el("i"), el("span", "", k.title));
+      b.addEventListener("click", () => k.ops && select(k.ops.at(-1)));
+      return b;
+    }));
+  }
+  function renderDetail(c) {
+    const box = $("ls-detail"), schedule = c.plans[plan], i = schedule.findIndex((a) => a.op_id === picked);
+    box.hidden = i < 0;
+    if (i < 0) return;
+    const a = schedule[i], o = c.orderById[a.order_id] || {};
+    const dl = el("dl", "ls-kv"), row = (k, v) => dl.append(el("dt", "", k), el("dd", "", v));
+    row("When", `${a.machine} · ${a.start}–${a.end}`); row("Order", `${o.customer} · ${o.quantity} ${o.part}`); row("Due", `${o.due}${o.priority === "rush" ? " · rush" : ""}`); row("Material", a.material);
+    const change = plan === "final" && c.changes.find((ch) => ch.op_id === a.op_id);
+    if (change) row("Moved", `from ${change.from.machine} ${change.from.start}`);
+    const target = { nodeId: planNode(c, plan).id, path: planPath(plan, i) };
+    const close = el("button", "kv-link", "Close"); close.addEventListener("click", () => select(null));
+    const actions = el("div", "kv-row"); actions.append(kitaru.ui.noteButton(target, { title: `Note on ${a.op_id}` }), close);
+    box.replaceChildren(el("h2", "", `${a.op_id} · ${plan === "final" ? "released" : "solver"}`), dl,
+      ...found.filter((k) => k.ops.includes(a.op_id)).map((k) => el("div", "ls-late", k.detail)),
+      ...kitaru.notesFor(target).map((n) => el("div", "kv-note-quote", `✎ ${kitaru.annotationText(n)}`)), actions);
+  }
+  function select(opId) { picked = opId; renderAll(); }
+  function renderAll() {
+    if (!ctx) return;
+    found = ctx.conflicts[plan];
+    renderGantt(ctx); renderOrders(ctx); renderChecks(ctx); renderDetail(ctx);
+    kitaru.reportSize();
+  }
+  function render(view) {
+    ctx = load(view); picked = null; plan = "final";
+    // The rules depend only on the session, so apply them once per plan.
+    if (ctx) ctx.conflicts = { final: conflicts(ctx, ctx.plans.final), solver: conflicts(ctx, ctx.plans.solver) };
+    document.querySelectorAll(".ls-toggle button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.plan === plan)));
+    if (!ctx) { $("ls").replaceChildren(el("div", "ls-empty", "This viewer needs a scheduling session with get_machine_calendar, solve_schedule, and finalize_plan steps. Open it in the default viewer instead.")); return; }
+    const s = view.session;
+    $("ls-title").textContent = s.name || `Session #${s.number}`;
+    $("ls-meta").textContent = [`Line ${s.inputs?.line || "?"}`, s.inputs?.date, `${ctx.orders.length} orders`, `${ctx.changes.length} moved`].filter(Boolean).join(" · ");
+    const request = kitaru.sessionText("input");
+    if (request) kitaru.renderText($("ls-request"), { text: request.text, path: request.path });
+    if (ctx.explanation) kitaru.renderText($("ls-explanation"), { text: ctx.explanation.text, nodeId: ctx.fin.id, path: ctx.explanation.path, ranges: claims(ctx, ctx.conflicts.final), decorate: (span, rs) => { if (rs.length) { span.classList.add("ls-claim"); span.title = rs.map((r) => r.detail).join("\n"); } } });
+    renderChanges(ctx);
+    renderAll();
+  }
+
+  document.querySelectorAll(".ls-toggle button").forEach((b) => b.addEventListener("click", () => {
+    plan = b.dataset.plan;
+    document.querySelectorAll(".ls-toggle button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    renderAll();
+  }));
+  $("ls-full").addEventListener("click", () => kitaru.toggleFullscreen());
+  kitaru.ui.reviewPanel($("ls-review"));
+  kitaru.ui.enableSelectionNotes();
+  kitaru.onSession(render);
+  kitaru.onAnnotations(renderAll);
+})();
+</script>
+</body>
+</html>

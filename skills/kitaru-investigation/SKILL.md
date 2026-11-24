@@ -360,8 +360,20 @@ technical resumption, not in the conversational lead.
 
 ## Hand off to frontend review
 
-Prefer one continuous Kitaru frontend review block. Resolve the review URL in
-this order:
+The human reviews in a Kitaru review surface: the Kitaru UI, or the Kitaru MCP
+session viewer inside the chat. Offer the session viewer when the MCP tools
+include `kitaru_session_view` and the host renders MCP Apps and passes the
+viewer's tool calls on, as the ChatGPT desktop app does; Claude Code does not.
+Open it by calling
+`kitaru_session_view` with the exact investigation ID and the `default`
+viewer, or a custom viewer built for this agent with the `kitaru-trace-viewer`
+skill. Saving there needs `standard` mode. In one sentence, say that a text
+box answers the question, the verdict judges the whole session, and a
+selection or a step's note button saves a separate manual annotation; then
+pause until the user returns. The Kitaru UI link below stays available.
+
+For the Kitaru UI, prefer one continuous frontend review block. Resolve the
+review URL in this order:
 
 1. Use `links.review` from the structured CLI or MCP creation result, or from
    an MCP re-read of the exact investigation, when it exists. Do not
@@ -374,7 +386,9 @@ this order:
 If no returned or documented URL reaches the investigation, stop and report a
 broken product handoff. Preserve the investigation and show its exact ID, the
 attempted URL or missing configuration, and one concise retry or bug-report
-action. Do not recreate the review UI or collect investigation answers in chat.
+action. Do not collect investigation answers in chat messages, build another
+review page, or write answers on the reviewer's behalf; the Kitaru UI and the
+Kitaru MCP session viewer are the review surfaces.
 
 When a URL resolves, render only the following three short paragraphs as
 ordinary Markdown. Never put the link in a code block. Substitute the real URL
@@ -414,7 +428,9 @@ or mark a suggestion uncertain before treating it as reviewed evidence.
 
 The API cannot append sessions to an investigation or persist a typed
 suggestion and disposition. Create a bounded follow-up investigation when more
-review is needed. Never store an agent suggestion as a human annotation.
+review is needed. Never store an agent suggestion as a human annotation. In
+particular, never call `kitaru_viewer_write`: it is the session viewer's save
+button, even in a host that shows it to you.
 
 ## Offer one useful insight at a time
 

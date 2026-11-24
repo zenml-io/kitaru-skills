@@ -7,7 +7,7 @@ for contributor scope, validation, accuracy, distribution, and release rules.
 
 Claude Code exposes the skills as `/kitaru-hosted-onboarding-tour`,
 `/kitaru-guided-tour`, `/kitaru-investigation`, `/kitaru-insights`,
-`/kitaru-validate-evaluator`,
+`/kitaru-trace-viewer`, `/kitaru-validate-evaluator`,
 `/kitaru-replay-experiment`,
 `/kitaru-importer-builder`, `/kitaru-adapter-builder`, and
 `/kitaru-workspace-push`, and may also select
@@ -21,6 +21,10 @@ not instructions to execute the workflows during repository maintenance.
 - Keep investigation inspection, sampling, and synthesis detail in
   `skills/kitaru-investigation/references/investigation-method.md`, and exact
   CLI/MCP routing and product gaps in its `references/kitaru-operations.md`.
+- Keep how insight cards and the chat report look in the dashboard and terminal
+  in `skills/kitaru-insights/references/presentation.md`: a plain-text
+  description, the conversation and session links in a text card's content,
+  reverse rank order, and the ranked report table.
 - Keep quickstart recognition and idempotent setup in each applicable skill's
   `references/starter-template.md`.
 - Keep replay, importer, and adapter orchestration and approval gates in their
@@ -42,6 +46,9 @@ not instructions to execute the workflows during repository maintenance.
   complete outcome; publication is optional.
 - Check supported adapters, importer-backed adapters, importers, and OTLP before
   custom adapter development. A project-local adapter is a complete outcome.
+- Keep the trace viewer's anchor rules and runtime API in
+  `skills/kitaru-trace-viewer/references/viewer-contract.md`, and its rule that
+  the reviewer, never the assistant, saves notes through the viewer.
 
 ## Local Claude Code testing
 
@@ -53,6 +60,7 @@ cp -R skills/kitaru-importer-builder .claude/skills/
 cp -R skills/kitaru-adapter-builder .claude/skills/
 cp -R skills/kitaru-investigation .claude/skills/
 cp -R skills/kitaru-insights .claude/skills/
+cp -R skills/kitaru-trace-viewer .claude/skills/
 cp -R skills/kitaru-validate-evaluator .claude/skills/
 cp -R skills/kitaru-replay-experiment .claude/skills/
 cp -R skills/kitaru-workspace-push .claude/skills/
