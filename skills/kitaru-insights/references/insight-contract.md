@@ -1,6 +1,6 @@
 # Insight card contract
 
-Use this reference to draft, check, and replace cards. `scripts/check_cards.py` enforces every limit on this page.
+Use this reference to draft, check, and replace cards. `scripts/check_cards.py` enforces every limit on this page. Lay out each card's visible text as [presentation.md](presentation.md) describes.
 
 ## Contents
 
@@ -19,11 +19,11 @@ Each card is one `InsightInput` object. The server rejects unknown top-level fie
 |---|---|
 | `name` | Letters, digits, `-`, and `_`; starts and ends with a letter or digit; at most 255 characters. Use `kitaru-insights-PATTERN_ID`. |
 | `title` | Non-empty, at most 255 characters. Names the behavior. |
-| `description` | Markdown narrative: example, rate phrasing, why it matters, hypothesis, what to check first. |
-| `data` | `{"type": "text", "content": "..."}`, `{"type": "categorical", "unit": "...", "values": [{"label": "...", "value": 3}]}` with unique labels and non-negative values, or `{"type": "binned", "unit": "...", "bins": [{"lower_bound": 0, "upper_bound": 10, "count": 4}]}` with ascending, contiguous bins. Only the first bin may have a null lower bound and only the last a null upper bound. |
+| `description` | One plain-text sentence of at most 240 characters, with no Markdown or line breaks, stating the claim and its size. The dashboard prints it literally under the title. |
+| `data` | `{"type": "text", "content": "..."}` with Markdown content of at most 2,500 characters in the layout from [presentation.md](presentation.md#lay-out-a-text-card); `{"type": "categorical", "unit": "...", "values": [{"label": "...", "value": 3}]}` with at most eight unique labels and non-negative values; or `{"type": "binned", "unit": "...", "bins": [{"lower_bound": 0, "upper_bound": 10, "count": 4}]}` with at most twelve ascending, contiguous bins. Only the first bin may have a null lower bound and only the last a null upper bound. |
 | `metadata` | Object holding the two keys below. |
 
-Write at most eight cards per run. The dashboard shows a limited page of cards without an import, so a smaller set stays visible longer. Keep names unique within the run.
+Write at most eight cards per run. The dashboard shows cards without an import newest first on one page, so a smaller set stays visible longer. Write them in reverse rank order, so rank 1 is written last and shows first. Keep names unique within the run. Never put the run ID, seed, or scope hash in the title, description, or content.
 
 ## Shared card context
 
@@ -58,6 +58,8 @@ Store how the card was made under `metadata["kitaru.insights.skill/v1"]`:
   "rate": {"basis": "measurement", "method": "subagents", "numerator": 27, "denominator": 150, "low": 0.127, "high": 0.249, "unclear": 4, "unavailable": 0},
   "agreement": null,
   "hypothesis": {"text": "...", "path": "src/tools/orders.py", "revision": "git SHA"},
+  "rank": 1,
+  "impact": {"summary": "41 conversations, about 492,000 wasted tokens", "sessions": 41, "amount": 492000, "unit": "tokens"},
   "caveats": ["..."]
 }
 ```
@@ -70,6 +72,7 @@ Store how the card was made under `metadata["kitaru.insights.skill/v1"]`:
 - `agreement` is null, or the tally's agreement table for a Jev question against reader-based membership: `{"both_yes": 3, "jev_only": 1, "readers_only": 0, "both_no": 6}`.
 - `rate.basis` is `census` (every session in scope was read), `exact_proxy`, `measurement`, `random_slice`, or `targeted_only`. Leave `low` and `high` null except for `measurement` on a sample; a measurement over every session in scope has no sampling interval. Copy the numbers from `tally.json`.
 - `hypothesis` is null when no code supports one.
+- `rank` is the card's position in the run, 1 for the card to read first; ranks run from the number of cards down to 1 in file order. `impact` records what the rank rests on: a `summary` of at most 160 characters, the `sessions` affected or null, and an `amount` with its `unit` (`tokens`, `usd`, `seconds`, `sessions`, or `calls`), both null when the cost is not countable. See [presentation.md](presentation.md#rank-and-order-the-cards).
 - Record model IDs only when the host reports them; otherwise write null.
 
 ## Investigation prompt
@@ -98,8 +101,8 @@ Do not paste trace text into the prompt. Reference sessions and nodes by ID.
 {
   "name": "kitaru-insights-p1",
   "title": "Refunds promised before checking the return window",
-  "description": "In about 18% of sessions (95% interval 13 to 25%, from 150 random sessions) the agent told the customer a refund was approved before calling `check_return_policy`. ...",
-  "data": {"type": "text", "content": "..."},
+  "description": "In about 18% of conversations the agent told the customer a refund was approved before it checked the return policy.",
+  "data": {"type": "text", "content": "**What happens:** Customer asks to return a jacket → agent replies \"your refund is approved\" → agent then calls `check_return_policy` → the item is outside the 30-day window.\n\n**How often:** about 18% of conversations (95% interval 13 to 25%, from 150 random conversations). ...\n\n**Check it yourself:**\n- [Refund promised at step 3](https://kitaru.example.com/sessions/UUID)\n..."},
   "metadata": {
     "kitaru.insights/v1": {
       "investigation_prompt": "Use the kitaru-investigation skill ...",
@@ -108,7 +111,7 @@ Do not paste trace text into the prompt. Reference sessions and nodes by ID.
       "evidence": [{"session_id": "UUID", "node_id": "UUID", "signal": "refund promised before policy check"}],
       "check_first": "Confirm the policy tool was available in these sessions."
     },
-    "kitaru.insights.skill/v1": {"schema_version": 1, "run_id": "UUID", "level": "standard"}
+    "kitaru.insights.skill/v1": {"schema_version": 1, "run_id": "UUID", "level": "standard", "rank": 1, "impact": {"summary": "about 18% of refund conversations", "sessions": 27, "amount": null, "unit": null}}
   }
 }
 ```
