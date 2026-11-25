@@ -36,7 +36,7 @@ RUN/
   measure/                 sample.json, picked.txt, export/, transcripts/, judgments/*.jsonl, evaluations/ (Deep)
   failures/                first-failure JSON lines, *.jsonl (Deep)
   tally.json               from tally_notes.py
-  cards.json               drafted cards, checked by check_cards.py
+  report.json              drafted structured insight report, checked by check_report.py
 ```
 
 ## Choose subagent models

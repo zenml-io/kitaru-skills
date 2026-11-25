@@ -1,86 +1,141 @@
 # Presenting insights
 
-Use this reference to lay out each card for the dashboard, choose between text and chart cards, order the cards, and write the report the user reads in chat. Write for a reader with about 30 minutes who has not seen the run folder. They should find the most important problem first, see the conversation where it happened, and be able to check it themselves.
+Use this reference to lay out a structured insight report, pick the right visualization for each finding, follow the chart limits, choose the grid tile highlight, rank findings, and write the chat report. Write for a reader with about 30 minutes who has not seen the run folder. They should find the most important problem first, see the concrete evidence, and be able to check it themselves.
 
 ## Contents
 
-- [What the dashboard shows](#what-the-dashboard-shows)
-- [Lay out a text card](#lay-out-a-text-card)
-- [Choose a chart card](#choose-a-chart-card)
-- [Rank and order the cards](#rank-and-order-the-cards)
+- [How a report appears in the dashboard](#how-a-report-appears-in-the-dashboard)
+- [Lay out each finding](#lay-out-each-finding)
+- [Choose the right chart](#choose-the-right-chart)
+- [Hard chart limits](#hard-chart-limits)
+- [Charts left out on purpose](#charts-left-out-on-purpose)
+- [Pick the grid tile highlight](#pick-the-grid-tile-highlight)
+- [Rank and order findings](#rank-and-order-findings)
 - [Write the chat report](#write-the-chat-report)
 - [Present Quick results](#present-quick-results)
 
-## What the dashboard shows
+## How a report appears in the dashboard
 
-The agent's Insights tab shows each card as a title, a description, a body, and one button. The body depends on `data.type`.
+One `Insight` record is a complete multi-finding report for an agent. The backend contract supports three connected views (check the installed dashboard version for which views are shipped in the user's deployment):
 
-- `title` is a heading.
-- `description` is printed as **plain text** under the title. Markdown is not rendered there, so `**bold**`, backticks, and list markers show as literal symbols.
-- A `text` card renders `data.content` as Markdown (GitHub-flavored: headings, lists, tables, links, code). Text cards are shown first, full width, highlighted.
-- A `categorical` card draws a small donut chart with a legend listing each label, its value, and its share. The chart has eight colors.
-- A `binned` card draws a bar chart, 112 pixels tall, with the count above each bar.
-- The button copies `investigation_prompt`, labeled with `cta_label`.
-- Nothing else in the metadata is shown. `evidence`, `contributing_session_ids`, `check_first`, and the provenance block are invisible in the dashboard. A session ID becomes clickable only as an explicit Markdown link in a text card's content.
-- Cards without an import, which includes every skill card and every `kitaru session analyze` card, are listed newest first, one page of 100.
+- **Insights grid tile:** Shows `title`, `source_provider`, `coverage.sessions_analyzed`, the finding count, and the single visual selected by `highlight` (`finding_id` + `artifact_index`).
+- **Report view:** Shows `title`, `coverage` (analyzed, available, skipped, failed, and caveats), an optional `next_step` banner and button, and the ordered `findings[]` in natural rank order (`findings[0]` is #1), followed by compact `tier: "secondary"` baseline rows.
+- **Finding body and sidebar:** Each finding shows `title`, badges (`severity`, `kind`, `change_status`), Markdown `body`, its ordered `artifacts[]` (lead visual, optional step story or comparison, clickable `evidence` rows with counterexample, optional code `hypothesis`), its `action` button, and follow-up `suggested_questions[]`.
 
-So the only places a reader can see your evidence are the description sentence and a text card's content. Put the example, the numbers, and the links there.
+Key formatting rules:
 
-## Lay out a text card
+- `report.summary` and `finding.summary` are **plain text** (one line, at most 320 characters, no Markdown). `check_report.py` rejects Markdown symbols and line breaks there.
+- Put narrative Markdown in `finding.body` or a `text` artifact (`body`, `callout`, or `hypothesis`).
+- Use `evidence` artifacts and `contributing_session_ids` for clickable sessions rather than pasting bare UUID lists into prose.
+- Compact tiles and full-width report visuals read the same artifact payload. Always include underlying details (`numerator`, `denominator`, `before_detail`, `after_detail`, `session_id`, `node_id`) so hover tooltips stay exact while compact tiles stay uncluttered.
+- Keep run internals out of every visible field: no run ID, seed, scope hash, run-folder paths, model IDs, or level names. Those belong in `metadata["kitaru.insights.skill/v1"]`.
 
-Use a text card for every finding that has an example conversation. Fill it in this shape:
+## Lay out each finding
 
-- **`title`:** the behavior, in plain words: "Agent repeats the same document search until it gives up". Not a metric name.
-- **`description`:** one plain-text sentence of at most 240 characters, with no Markdown, stating the claim and its size: "In 41 of 3,228 conversations the agent called search_documents three or more times in a row with the same query, about 12,000 wasted tokens each." `check_cards.py` rejects Markdown symbols and line breaks here.
-- **`data.content`:** Markdown of at most 2,500 characters, with these bold labels in this order, each followed by a short paragraph or list:
-  - **What happens:** the conversation as three to five steps, from the user's request to where it went wrong: "User asks for the Q3 contract → agent calls `search_documents` with "Q3 contract" → empty result → calls it again with the same query, four more times → tells the user it cannot find the document." Use the reader note's `flow` field. Name tools and the arguments that matter; never paste user text, personal data, or secrets.
-  - **How often:** the count or rate with its confidence label from [insight-method.md](insight-method.md#tally-and-state-confidence), then the cost of the behavior where it is countable (tokens, money, seconds, extra calls).
-  - **Why:** the likely cause, labeled as a hypothesis, with the file and line when code supports one. Omit this label when nothing supports a cause; do not guess.
-  - **Check it yourself:** two or three Markdown links to sessions that show it, each with the node position to look at, and one counterexample: `- [Loop of five searches, step 7](DASHBOARD/sessions/SESSION_ID)`.
-  - **Next step:** the one move to make: a fix to try, an investigation of the cited sessions, or an experiment.
+Give every primary finding a consistent, scannable shape:
 
-Build each link from the dashboard base URL that `kitaru info` reports (`dashboard_url`) plus `/sessions/SESSION_ID`. Pass the same URL to `check_cards.py --dashboard-url`, which then requires every text card to link at least one contributing session. When `kitaru info` reports no dashboard URL, write the session IDs as inline code instead and say in the report that the dashboard was not reachable.
+1. **`title`:** Name the behavior in plain words ("Refunds skip the policy check when the order was edited"), not a metric name.
+2. **`summary`:** One plain-text sentence (<= 320 chars) stating the claim and its size.
+3. **`body`:** Short Markdown explaining what happens, the observed trigger (`first_failure.before`), how often it happens using the confidence phrasing from [insight-method.md](insight-method.md#tally-and-state-confidence), and the countable cost (tokens, USD, seconds, extra calls). Never paste user secrets or personal data.
+4. **Lead visual (`artifacts[0]`):** Pick the single chart from [Choose the right chart](#choose-the-right-chart) that best proves the finding (for example `rate`, `step_strip`, `tool_cycle`, `categorical`, `comparison`, `time_series`, `binned`, or `table`).
+5. **Supporting flow or comparison (optional):** Add `step_story` for a concrete 3–5 step conversation trace, `session_comparison` for a failing session beside its passing counterexample, `failure_matrix` for last-good × first-wrong transitions, or `session_timeline` for one session's latency waterfall.
+6. **Evidence (`evidence` artifact):** Include `presentation: "table"` (with `step_label`, `signal`, `verdict`, and at least one passing counterexample row with `is_counterexample: true` and `counterexample_note`), or `presentation: "compact"` for lighter proof rows.
+7. **Code hypothesis (optional):** When code supports a likely cause, add a `text` artifact with `style: "hypothesis"`, `label: "Code hypothesis"`, `file_path`, and `revision`. Omit it when no code supports a cause; do not guess.
+8. **`action` and `suggested_questions`:** Set `action` (`label` <= 60 chars, `prompt` briefing `kitaru-investigation`), `check_first`, and 2–3 specific follow-up `suggested_questions`.
 
-Keep run details out of every visible field: no run ID, seed, scope hash, file paths in the run folder, model IDs, or level names. They belong in the provenance metadata. "How often" already says how sure the number is.
+Use `tier: "secondary"` findings for compact baseline context that helps interpret the report without competing with primary findings — for example a 3-part `categorical` (`split_bar`) of how sessions ended, or a `binned` (`micro`) histogram of tool calls per session.
 
-## Choose a chart card
+## Choose the right chart
 
-A chart card makes sense when the shape of the numbers is the finding and the reader would otherwise have to read a list of numbers. Its description is the only text it shows, so it cannot carry an example or a link. Pair it with a text card when the finding also needs a conversation to look at.
+Pick the artifact type from the question the finding answers. Every pairing below follows the Kitaru visualization guide:
 
-| The finding is | Use | Example |
+| Question the finding answers | Use | Do not use |
 |---|---|---|
-| How one count splits across a few labels | `categorical` (donut) with at most eight labels; fold the rest into "Other" | Failed tool calls per tool; where repeated calls happen |
-| How a quantity is spread across sessions | `binned` (bars) with at most twelve contiguous bins | Tool calls per conversation; seconds per session |
-| Several numbers per tool, or two windows side by side | A Markdown table inside a text card | The tool-health table; this week against last week |
-| A behavior with an example conversation | A text card in the layout above | Every finding, bright spot, and opportunity |
+| **How much?** (one number or 1–6 headline counts) | `stat_grid` or `rate` (`share_bar`) | A bar chart with one bar (`categorical` requires >= 2) |
+| **How sure?** (a sampled rate with uncertainty) | `rate` (`presentation: "range"`, with `ci_low`, `ci_high`, `basis`) | A bare percentage |
+| **Share of one total, 2 parts** | `rate` (`presentation: "share_bar"`, with `numerator`/`denominator`) | `donut` |
+| **Share of one total, 3–4 parts** | `categorical` (`presentation: "donut"` or `"split_bar"`) | Pie chart |
+| **Share of one total, 5+ parts** | `categorical` (`presentation: "ranked_bars"`) | `donut` or `split_bar` |
+| **Which is biggest?** | `categorical` (`presentation: "ranked_bars"`, sorted descending, `"Other"` last) | Vertical columns or `donut` |
+| **Subset inside a larger bucket** | `categorical` (`presentation: "focus_bars"`, using `CategoryValue.total`) | Separate charts |
+| **Groups against an overall average** | `categorical` (`presentation: "baseline_bars"`, using `baseline_value`) | Unanchored bars |
+| **Two groups across categories** | `comparison` (`presentation: "dot_plot"`; or `"side_by_side"` if <= 3 rows) | Grouped bars past 3 categories |
+| **How values spread** | `binned` (`"columns"`, `"horizontal"`, or `"micro"`); or `session_dots` when `n <= 100` | Line chart |
+| **Two points in time, one item** | `comparison` (`presentation: "side_by_side"`) | Line with 2 points |
+| **Two points in time, many items** | `comparison` (`presentation: "slopegraph"`) | Grouped bars |
+| **Before and after a fix or replay** | `comparison` (`presentation: "dumbbell"` or `"split_pair"`) | Two separate charts |
+| **Status across imports or runs** | `comparison` (`presentation: "import_status"`, setting `row.status`) | Prose list |
+| **3+ points in time or versions** | `time_series` (`"line"` or `"highlight_line"`; `"ordered_columns"` for versions; `"stacked_columns"` for <= 3 segments) | Area or stacked-area chart |
+| **Inline trend beside a number** | `time_series` (`presentation: "sparkline"`) | A full chart in a row |
+| **Where in a run it went wrong** | `step_strip` (`"rows"` or `"small_multiples"` per agent) or `failure_matrix` across causes | `session_timeline` |
+| **Which path sessions took** | `categorical` (`presentation: "path_bars"`); `flow_sankey` only for <= 3 stages and <= 8 nodes | Sankey for everything |
+| **Repeating tool loop** | `tool_cycle` (`steps`, `repeat_count`, `session_count`) | Prose alone |
+| **One session's failing steps** | `step_story` (`tone: "danger"` on the bad step) | Unstructured wall of text |
+| **Failing session vs passing counterexample** | `session_comparison` (`label: null` + `status: "missing"` marks a skipped step) | Two prose paragraphs |
+| **Where latency went in one session** | `session_timeline` (spans in ms for one session only) | Aggregate failure location |
+| **Which sessions prove it** | `evidence` (`"table"` with counterexample or `"compact"`) | Any chart |
+| **Exact values across several columns** | `table` (use `percent_bar`, `delta`, `badge`, `session_link` formats) | Several separate charts |
 
-- Write at most three chart cards per run, so findings with examples stay the core of the page.
-- Give every chart a `unit` and a description sentence that says what to notice: "Two tools account for 81% of failed calls; create_ticket alone has 58%." A chart with no stated point is a dashboard metric, not an insight; drop it.
-- Prefer a table in a text card over a chart when the reader needs exact numbers or links. `tool_stats.py --table-out` writes the tool-health table in that form.
-- Do not chart a split the user already monitors elsewhere unless it changed or the card explains why it happens.
+Give every chart a clear `unit` (when applicable) and state what to notice in the finding's `summary` and `body`. A chart with no stated point is a dashboard metric, not an insight; drop it.
 
-## Rank and order the cards
+## Hard chart limits
 
-Rank the cards by impact on the agent's purpose once they pass the checks in [insight-lenses.md](insight-lenses.md#choose-which-cards-to-write). Estimate each card's impact and record it in the provenance `impact` field ([insight-contract.md](insight-contract.md#skill-provenance)):
+Both the Kitaru server and `scripts/check_report.py` enforce these 11 limits. When your data exceeds a limit, apply the fallback rather than truncating silently:
+
+1. **Ranked bars / path bars (`categorical` `ranked_bars` / `path_bars`):** At most 8 rows. Fold the rest into `"Other"`, always last.
+2. **Time/version columns (`time_series` `ordered_columns` / `stacked_columns`):** At most 12 buckets (and only for time or versions). Past 12, switch `presentation` to `"line"`.
+3. **Donut (`categorical` `donut`):** Strictly 3–4 parts (total shown in center). For 2 parts use `rate` (`share_bar`); for 5+ use `categorical` (`ranked_bars`).
+4. **Split bar (`categorical` `split_bar`):** 2–4 segments, and every non-zero segment must be at least 2% of the total. Fold smaller segments into `"Other"`.
+5. **Stacked columns (`time_series` `stacked_columns`):** At most 3 segments (and at most 12 buckets). Past 3 segments, switch to `time_series` (`small_multiples`).
+6. **Direct-label line (`time_series` `line`):** At least 3 `x_labels`, single shared `unit`, and at most 5 series. Past 5 series, switch to `highlight_line` with exactly one `focus: true` series and the rest gray.
+7. **Dot plot / slopegraph (`comparison` `dot_plot` / `slopegraph`):** At most 8 items (keep the top 8 by change). Paired `side_by_side` bars allow at most 3 items.
+8. **Failure matrix (`failure_matrix`):** At most 6×6 (`rows` × `cols`). Fold rare steps into `"Other"`.
+9. **Sankey (`flow_sankey`):** Strictly 2–3 stages and at most 8 unique nodes total. Past either limit, switch to `categorical` (`path_bars`).
+10. **Small multiples (`time_series` / `step_strip` `small_multiples`):** At most 6 panels on one shared scale. Keep the top 6.
+11. **Dot strip (`session_dots`):** At most 100 dots. Past 100 sessions, switch to `binned` (2–12 contiguous bins).
+
+## Charts left out on purpose
+
+The schema excludes four chart families on purpose; never try to mimic them:
+
+- **Pie charts** (use `rate` `share_bar`, `split_bar`, or `donut` for 3–4 parts).
+- **3D or decorative gradient bars** (use flat `ranked_bars` or `binned` `columns`).
+- **Area and stacked-area charts** (use `line`, `stacked_columns` <= 3 segments, or `small_multiples`).
+- **Dual-axis line charts** (every `time_series` uses one shared `unit`; split unrelated units into separate artifacts).
+
+## Pick the grid tile highlight
+
+Set `report.highlight` to `{"finding_id": findings[0].id, "artifact_index": 0}` (or the index of that finding's cleanest visual). The Insights grid tile renders best when the highlighted artifact is one of:
+
+- `rate` (`presentation: "range"` or `"share_bar"`) — a single headline percentage or x-of-y count;
+- `tool_cycle` — a repeating tool loop (`search -> fetch_page 14x`);
+- `step_strip` (1 row) — where runs break along a step bar;
+- `stat_grid` (1–4 headline numbers).
+
+Avoid pointing `highlight` at a dense `table`, `failure_matrix`, or long `evidence` block.
+
+## Rank and order findings
+
+Rank primary findings by impact on the agent's purpose once they pass the checks in [insight-lenses.md](insight-lenses.md#choose-which-findings-to-include). Record each primary finding's impact in `metadata["kitaru.insights.skill/v1"]["findings"][finding.id]["impact"]`:
 
 - **Sessions affected:** how many conversations show it, from the count or rate.
 - **Cost:** tokens, money, seconds, or extra calls the behavior wastes, when countable. For a loop, count the repeated calls and the tokens of the model calls around them.
 - **Harm:** what the user of the agent experiences: a wrong answer, a broken promise, a task left undone. Harm outranks cost when the two disagree.
 
-Rank 1 is the card the user should read first. Write the batch in reverse rank order, so rank 1 is the last card in `cards.json`. The dashboard lists cards without an import newest first, so the last card written shows at the top. `check_cards.py` rejects any other order.
+Put rank 1 first in `findings[]` (`findings[0]`), followed by ranks 2..N in descending order of impact, and place any `tier: "secondary"` baseline findings at the end of `findings[]`.
 
 ## Write the chat report
 
 The chat report is what the user reads first, often in a terminal. Keep the order below, and keep everything else in the run folder.
 
 1. **The answer, in three lines:** what was read ("3,228 conversations from the last two weeks; 40 read in full"), the single most important finding, and the next step.
-2. **A ranked table**, one row per card: rank, finding (the title), sessions affected, impact (cost or harm), how sure (the confidence label), next step.
-3. **One short paragraph per card**, in rank order: the description sentence, the "What happens" steps, and one or two session links.
-4. **Changes since last time**, when the run compared windows or versions or matched an earlier run: what is new, what recurs, and what changed clearly.
-5. **How this was made**, in at most three lines at the end: the level, how sessions were picked, what could not be checked, and where the cards are in the dashboard.
+2. **A ranked table**, one row per primary finding: rank, finding (the title), sessions affected, impact (cost or harm), how sure (the confidence label), next step.
+3. **One short paragraph per primary finding**, in rank order: the summary sentence, the conversation flow, and one or two session links (`DASHBOARD_URL/sessions/SESSION_ID` when `kitaru info` reported a dashboard URL, or inline session IDs when it did not).
+4. **Changes since last time**, when the run compared windows or versions or matched an earlier run: what is new, what recurs, what narrowed, and what resolved.
+5. **How this was made**, in at most three lines at the end: the level, how sessions were picked, what could not be checked, and where the report lives in the dashboard.
 
-Show the same table at the approval step before writing, with the draft titles and description sentences. Do not paste card JSON, provenance, run IDs, seeds, hashes, or helper output into the report; offer the run folder path if the user wants details.
+Show the same table at the approval step before writing, with the draft report title, finding titles, summary sentences, and chosen chart types. Do not paste report JSON, provenance, run IDs, seeds, hashes, or helper output into the chat report; offer the run folder path if the user wants details.
 
 ## Present Quick results
 
-Analyzer cards keep their own wording, but report them the same way: a ranked table of the cards the analyzer wrote, with their counts, followed by what the user should look at first. When the user asked about something an analyzer card does not cover, such as loops for one tool, say so and offer Standard, or the tool-health counts from `tool_stats.py`, instead of leaving the gap unmentioned.
+Analyzer reports keep their own wording, but present them the same way in chat: a ranked table of the findings the analyzer wrote, with their counts, followed by what the user should look at first. When the user asked about something an analyzer report does not cover, such as loops for one tool, say so and offer Standard, or the tool-health counts from `tool_stats.py`, instead of leaving the gap unmentioned.

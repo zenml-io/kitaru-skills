@@ -1,6 +1,6 @@
 # Insight lenses
 
-Use this reference to decide where readers look and which findings become cards. A lens is a place to look, not a finding. Every lens names how it is detected, because that decides what a card may claim.
+Use this reference to decide where readers look and which findings earn a place in the report. A lens is a place to look, not a finding. Every lens names how it is detected, because that decides what a finding may claim.
 
 ## Contents
 
@@ -9,7 +9,7 @@ Use this reference to decide where readers look and which findings become cards.
 - [Read lenses](#read-lenses)
 - [Lenses from the user's own material](#lenses-from-the-users-own-material)
 - [Test lenses](#test-lenses)
-- [Choose which cards to write](#choose-which-cards-to-write)
+- [Choose which findings to include](#choose-which-findings-to-include)
 
 ## How each lens is detected
 
@@ -68,12 +68,12 @@ Some questions are "what if" questions: would a stronger model, more context, mo
 
 Flakiness is a test lens too: it means the same input gives different results, and traces usually hold one run per input. Recommend replaying the same inputs several times, or evaluating the component on its own, rather than claiming flakiness from one run each.
 
-## Choose which cards to write
+## Choose which findings to include
 
-Write at most eight cards. Rank candidates by three questions, and drop any that fails one:
+Include at most eight `primary` findings in the report. Rank candidates by three questions, and drop any that fails one:
 
-1. **Is the evidence specific?** A session, a node, and a concrete example conversation the user can open.
-2. **Is it news?** Prefer what the user would not have guessed: silent failures over loud ones, a broken rule over a generic quality complaint, a cause in the code over a metric. Drop a card that restates an analyzer card, a number the dashboard already shows, or something the user said they already monitor, unless it adds why it happens, a narrower cohort, or a clear change over time.
+1. **Is the evidence specific?** A session, a node, and a concrete example conversation the user can open in the finding's `evidence` artifact.
+2. **Is it news?** Prefer what the user would not have guessed: silent failures over loud ones, a broken rule over a generic quality complaint, a cause in the code over a metric. Drop a finding that restates an analyzer report, a number the dashboard already shows, or something the user said they already monitor, unless it adds why it happens, a narrower cohort, or a clear change over time.
 3. **Is there a next step?** A fix to try, a review to run in `kitaru-investigation`, or an experiment to set up.
 
-Then rank by impact on the agent's purpose, as [presentation.md](presentation.md#rank-and-order-the-cards) describes, and put what the user said they care about first among cards of similar impact. Include at most one bright spot, at most two opportunity cards, and at most three chart cards, so findings with examples stay the core of the run. When the user cares about tools, include one tool-health card: a table of the busiest and loudest tools in a text card, with the strongest loop or failure explained in its own card.
+Then rank by impact on the agent's purpose, as [presentation.md](presentation.md#rank-and-order-findings) describes, putting rank 1 first in `findings[]` and putting what the user said they care about first among findings of similar impact. Include at most one `bright_spot` and at most two `opportunity` findings among the primary findings. Add compact `tier: "secondary"` findings at the end only for helpful baseline context (such as a 3-part `split_bar` of session outcomes or a `micro` histogram of tool calls). When the user cares about tools, include a tool-health `table` artifact (with `percent_bar` failure rates) and give the strongest loop or cycle its own finding with a `tool_cycle` artifact.

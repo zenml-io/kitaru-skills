@@ -6,17 +6,17 @@ Use this reference for exact operations. Inspect `kitaru schema`, command help, 
 
 - [Check what is installed](#check-what-is-installed)
 - [Resolve and pin the scope](#resolve-and-pin-the-scope)
-- [Read existing cards](#read-existing-cards)
+- [Read existing reports](#read-existing-reports)
 - [Run Quick analysis](#run-quick-analysis)
 - [Count cheaply](#count-cheaply)
 - [Export sessions](#export-sessions)
 - [Measure with the TypeSafe evaluator](#measure-with-the-typesafe-evaluator)
-- [Write, replace, and list cards](#write-replace-and-list-cards)
+- [Write, update, and replace reports](#write-update-and-replace-reports)
 - [Known gaps](#known-gaps)
 
 ## Check what is installed
 
-Confirm the CLI or MCP server can reach the intended server and agent, for example with `kitaru info` and `kitaru agent get AGENT`. Record the `dashboard_url` that `kitaru info --output json` reports in `run.json`: cards link sessions as `DASHBOARD_URL/sessions/SESSION_ID`. It is null when the deployment serves no dashboard. On a ZenML Pro workspace the session page sits under the workspace path, so confirm one link opens before writing a batch that relies on it. Check `kitaru session analyze --help` before offering Quick. When it is missing, the installed Kitaru predates it: Quick is then available only for a single-import scope through `kitaru import analyze`; recommend upgrading for other scopes. Standard and Deep need only read and insight-create operations. MCP `kitaru_failure_matrix` is optional; continue without it in CLI-only hosts.
+Confirm the CLI or MCP server can reach the intended server and agent, for example with `kitaru info` and `kitaru agent get AGENT`. Record the `dashboard_url` that `kitaru info --output json` reports in `run.json`: the chat report links sessions as `DASHBOARD_URL/sessions/SESSION_ID`. It is null when the deployment serves no dashboard. Check `kitaru insight update --help` (or `kitaru schema`) to confirm the installed Kitaru supports structured insight reports (`--summary`, `--clear-summary`, `--status` on `insight update` and `--status`, `--source-provider` on `insight list`). If the server still uses the legacy single-card `description` + `data` schema, stop and report that writing structured insight reports requires upgrading Kitaru. Check `kitaru session analyze --help` before offering Quick. When it is missing, the installed Kitaru predates it: Quick is then available only for a single-import scope through `kitaru import analyze`; recommend upgrading for other scopes. MCP `kitaru_failure_matrix` is optional; continue without it in CLI-only hosts.
 
 ## Resolve and pin the scope
 
@@ -35,13 +35,13 @@ For an explicit ID list, filter with `{"field":"id","op":"in","value":[...]}`; o
 
 MCP reads sessions with `kitaru_activity_read`: `list` with kind `session`, a `filter`, `size` up to 100, and `cursor`.
 
-## Read existing cards
+## Read existing reports
 
-- CLI: `kitaru insight list --agent AGENT --size 100`, following cursors; `kitaru insight get ID`.
+- CLI: `kitaru insight list --agent AGENT --size 100` (optional `--name`, `--status new|reviewed|archived`, `--source-provider PROVIDER`), following cursors; `kitaru insight get ID`.
 - MCP: `kitaru_review_read` with `list` or `get` and kind `insight`.
-- Filter with `--filter` on `id`, `agent_id`, `import_id` (`eq`, `in`, and `is_null` on servers that support it), `task_id`, `name`, and `type`.
+- Filter with `--filter` on `id`, `agent_id`, `import_id` (`eq`, `in`, and `is_null`), `task_id` (`eq`, `in`, and `is_null`), `name`, `status`, and `source_provider` (`eq`, `in`, and `is_null`).
 
-Analyzer cards carry `analyzer_version_id` and, when they came from an import or `kitaru import analyze`, `import_id`. Cards from `kitaru/openai-session-findings` keep their context under `metadata["kitaru.session-findings/v1"]` instead of `kitaru.insights/v1`: `harm` (`high`, `medium`, or `low`), the `checks` behind the finding, and `contributing_session_ids`. Read them as leads that a model verified per session, not as human verdicts. Cards from earlier skill runs carry the provenance key described in [insight-contract.md](insight-contract.md). Match an earlier run by its provenance `scope`, not by title.
+Analyzer reports carry `analyzer_version_id` and, when they came from an import or `kitaru import analyze`, `import_id`. Structured reports store ranked sections in `findings[]` along with top-level `coverage`, `highlight`, `next_step`, `source_provider`, and `status`. Reports from earlier skill runs carry `metadata["kitaru.insights.skill/v1"]` as described in [insight-contract.md](insight-contract.md) (older runs used `schema_version: 1`). Match an earlier run by its provenance `scope`, not by title.
 
 ## Run Quick analysis
 
@@ -101,17 +101,16 @@ Jev measurement runs as an ordinary Kitaru evaluation, so its results are stored
 - Read the rows: `kitaru evaluation list --filter '{"field":"task_id","op":"in","value":[TASK_IDS]}' --size 1000 --output json`, following cursors, saving each page under `RUN/measure/evaluations/`. Then `python3 scripts/evaluations_to_judgments.py RUN/measure/evaluations/*.json --out RUN/measure/judgments/jev.jsonl`.
 - MCP: `kitaru_workflow_start` with `operation: "evaluation"` takes `session_ids` (at most 100) and `evaluators` (at most 100), so the CLI with `--sessions-file` suits a whole-scope run.
 
-## Write, replace, and list cards
+## Write, update, and replace reports
 
-- CLI: `kitaru insight create --agent AGENT --insight-file RUN/cards.json --idempotency-key KEY`. The file holds one card object or an array of 1 to 100 cards; `--insight-file` (Kitaru 0.27.4 and later) replaces repeated `--insight 'JSON'` arguments. `python3 scripts/check_cards.py RUN/cards.json --emit-command AGENT --idempotency-key KEY` checks the file and prints a safely quoted command for it. On older CLIs, write the batch with MCP instead of quoting each card by hand.
-- MCP: `kitaru_review_manage` with `operation: "create_insights"`, `agent_id`, `insights` (1 to 100), and `idempotency_key`.
-- Use the run ID plus a batch number as the idempotency key, so a retried write cannot duplicate the batch.
-- Update wording with `kitaru insight update ID --title ... --description ...` or MCP `update_insight`. Data and metadata cannot be updated; replace the card instead.
-- Delete with `kitaru insight delete ID --force`, or MCP `kitaru_delete` with kind `insight` when the server runs in destructive mode. Delete only cards whose provenance run ID belongs to an earlier skill run the user chose to replace, list them first, and get explicit confirmation; deletion is permanent.
+- CLI: `kitaru insight create --agent AGENT --insight-file RUN/report.json --idempotency-key KEY`. The file holds one structured `InsightInput` report object (or an array of 1 to 100 reports). `python3 scripts/check_report.py RUN/report.json --emit-command AGENT --idempotency-key KEY` checks the file and prints a safely quoted command for it.
+- MCP: `kitaru_review_manage` with `operation: "create_insights"`, `agent_id`, `insights` (array of 1 to 100 `InsightInput` objects), and `idempotency_key`.
+- Use `RUN_ID-report-1` as the idempotency key so a retried write cannot duplicate the report.
+- Update wording or review state with `kitaru insight update ID --title ... --summary ... --clear-summary --status new|reviewed|archived` or MCP `update_insight` (`title`, `summary`, `clear_summary`, `status`). Findings, coverage, artifacts, and metadata cannot be updated in place; replace the report instead.
+- Delete with `kitaru insight delete ID --force`, or MCP `kitaru_delete` with kind `insight` when the server runs in destructive mode. Delete only reports whose provenance `run_id` belongs to an earlier skill run the user chose to replace, list them first, and get explicit confirmation; deletion is permanent.
 
-After writing, list the new cards with `kitaru insight list --agent AGENT --filter '{"field":"import_id","op":"is_null"}'` and match them by run ID. Servers older than that filter reject `is_null` on `import_id` with HTTP 422; then list by `--agent` alone, following cursors, and match the run ID locally. In the dashboard, skill cards appear under the agent's Insights tab in the view for insights without an import, when the installed dashboard has that view.
+After writing, verify the new report with `kitaru insight get ID` or `kitaru insight list --agent AGENT --filter '{"field":"import_id","op":"is_null"}'` and confirm its `run_id` matches.
 
 ## Known gaps
 
-- Cards have no first-class session links or provenance fields; this skill stores both in metadata.
-- The server does not group a hand-written batch under a run, so runs over the same agent share one list. The provenance run ID is how agents tell them apart.
+- `findings`, `coverage`, `highlight`, `next_step`, `suggested_questions`, and `metadata` are immutable after creation; changing them requires creating a replacement report and optionally deleting the earlier one after confirmation.

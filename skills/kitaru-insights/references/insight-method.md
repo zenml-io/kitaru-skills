@@ -16,7 +16,7 @@ Use this reference to choose a level, pick sessions, turn notes into patterns, m
 - [Measure with Jev](#measure-with-jev)
 - [Tally and state confidence](#tally-and-state-confidence)
 - [Explain with code](#explain-with-code)
-- [What a good card says](#what-a-good-card-says)
+- [What a good finding says](#what-a-good-finding-says)
 - [Compare with earlier runs](#compare-with-earlier-runs)
 - [Compare agent versions](#compare-agent-versions)
 - [Compare time windows](#compare-time-windows)
@@ -37,7 +37,7 @@ Scale the Standard sample down for a small scope: `pick_sample.py` picks every s
 
 Before approval, estimate from the scope's session sizes: about 6,000 condensed tokens per ordinary session is a starting guess. After condensing, use the `estimated_tokens` total that `condense_sessions.py` reports, plus about 1,500 tokens of brief per subagent. Name the reader and measurement model tiers, and say the estimate covers input only.
 
-Report the number of sessions read, the estimated tokens, the subagent count, and what will be written: for example, "Deep: reads 40 sessions in full, then checks 5 patterns against 150 more; about 1.3M input tokens across 30 subagents; writes up to 8 cards."
+Report the number of sessions read, the estimated tokens, the subagent count, and what will be written: for example, "Deep: reads 40 sessions in full, then checks 5 patterns against 150 more; about 1.3M input tokens across 30 subagents; writes one structured insight report with up to 8 primary findings."
 
 ## Agree the focus
 
@@ -111,7 +111,7 @@ Run these after grouping. Each wave reads condensed transcripts from disk and wr
 
 1. **Checker wave.** One checker per pattern. It did not write the pattern, so it judges it more fairly. It reads the members and the counterexample, then tries to refute the pattern: members that do not fit, a definition too vague to apply, or a simpler explanation. Narrow or drop patterns it refutes, and record what changed.
 2. **Measurement wave.** Measure every surviving pattern with Jev over the whole scope when available (see [Measure with Jev](#measure-with-jev)); otherwise use measurement subagents on a sample. For subagents, draw a fresh random sample of 100 to 200 sessions that were not read yet, from the same saved scope pages: `python3 scripts/pick_sample.py RUN/scope/*.json --targeted 0 --random N --exclude RUN/sample.json --out RUN/measure/sample.json --picks-out RUN/measure/picked.txt`. The rate then describes the sessions not already read, which keeps the sessions that defined each pattern from confirming it. Export and condense them into `RUN/measure/`. Measurement subagents judge each session against every surviving definition: `yes`, `no`, or `unclear`. When a pattern has an exact proxy, count the proxy over the full scope instead and skip judging it.
-3. **First-failure wave.** For each failed or pattern-member session, find the node where things first went wrong and the last node that went right. Use node IDs from the transcript. These become card evidence and can feed `kitaru_failure_matrix` comparisons.
+3. **First-failure wave.** For each failed or pattern-member session, find the node where things first went wrong and the last node that went right. Use node IDs from the transcript. These feed `step_strip`, `failure_matrix`, and `evidence` artifacts, and support `kitaru_failure_matrix` comparisons.
 
 Keep checker and measurement subagents separate from the readers that found the pattern where the host allows it.
 
@@ -149,30 +149,28 @@ Report `unclear` judgments separately; never fold them into `yes` or `no`.
 
 ## Explain with code
 
-When the context brief exists, read the code behind the strongest patterns: the prompt section, tool implementation, or routing rule involved. Add at most one likely cause per card, labeled as a hypothesis, with the file path and revision. Do not claim a cause from traces alone.
+When the context brief exists, read the code behind the strongest patterns: the prompt section, tool implementation, or routing rule involved. Add at most one likely cause per finding as a `text` artifact with `style: "hypothesis"`, `file_path`, and `revision`. Do not claim a cause from traces alone.
 
-For each pattern that becomes a card, also say why it happens as far as the evidence goes. Start from the members' reader notes: `first_failure.before` records what the agent saw just before it went wrong (an empty result, an error, a misread tool output, an ambiguous request). When the same trigger recurs across members, state it as the observed trigger. When the code then explains why the agent reacts that way, add it as the hypothesis below. A card that can only say *that* something happens, about a behavior the user already monitors, is not news.
+For each pattern that becomes a finding, also say why it happens as far as the evidence goes. Start from the members' reader notes: `first_failure.before` records what the agent saw just before it went wrong (an empty result, an error, a misread tool output, an ambiguous request). When the same trigger recurs across members, state it as the observed trigger. When the code then explains why the agent reacts that way, add it as the hypothesis artifact below. A finding that can only say *that* something happens, about a behavior the user already monitors, is not news.
 
-## What a good card says
+## What a good finding says
 
-Choose which candidates become cards with the ranking rule in [insight-lenses.md](insight-lenses.md#choose-which-cards-to-write). A good card lets someone act without opening the run folder:
+Choose which candidates become findings with the ranking rule in [insight-lenses.md](insight-lenses.md#choose-which-findings-to-include). A good finding lets someone act without opening the run folder:
 
-- a title naming the behavior, not the metric ("Refunds promised before checking the return window");
-- what happens, as a short conversation flow with sessions to open;
-- how common it is, phrased per the confidence rules above, and what it costs;
-- why it matters, in terms of the agent's purpose;
-- what triggers it, and the likely cause, labeled as a hypothesis, when code supports one;
-- what to check first, and what would confirm or refute it.
-
-Lay the card out as [presentation.md](presentation.md#lay-out-a-text-card) describes: a one-sentence plain-text description and the rest in a `text` card's Markdown content. Use a `categorical` or `binned` card only when the split or distribution itself is the finding ([presentation.md](presentation.md#choose-a-chart-card)).
+- a title naming the behavior, not the metric ("Refunds skip the policy check when the order was edited");
+- a plain-text `summary` sentence and a concise `body` stating what happens, what triggers it, how common it is (phrased per the confidence rules above), and what it costs;
+- the right typed lead artifact from [presentation.md](presentation.md#choose-the-right-chart) (for example `rate`, `step_strip`, `tool_cycle`, `categorical`, `comparison`, `time_series`, `binned`, or `table`), respecting all 11 chart limits;
+- concrete sessions in an `evidence` artifact (with a passing counterexample when one exists), plus optional `step_story` or `session_comparison` when showing the exact flow makes the failure obvious;
+- a `text` (`style: "hypothesis"`) artifact with `file_path` and `revision` when code supports a likely cause;
+- `check_first`, an `action` handoff prompt for `kitaru-investigation`, and 2–3 follow-up `suggested_questions`.
 
 ## Compare with earlier runs
 
-When an earlier `kitaru-insights` run covered the same or an overlapping scope, match patterns by definition, not by name. Label each pattern new, recurring, or no longer seen, and say so on the card. A pattern absent from a later Standard sample is not proven fixed; only a measured rate supports that.
+When an earlier `kitaru-insights` run covered the same or an overlapping scope, match patterns by definition, not by name. Set `change_status` (`new`, `recurring`, `narrowed`, or `resolved`) on each finding and say so in the report. A pattern absent from a later Standard sample is not proven fixed; only a measured rate supports that.
 
 ## Compare agent versions
 
-Every session records its `agent_version_id`. When the scope spans versions, compare them: `scope_counts.py` breaks the cheap counts down per version, and `tally_notes.py --by-version RUN/scope` does the same for measured patterns. A pattern that appears or grows after a version change is a strong card, because it points at a specific release. Name each version's session count, and treat a version with few sessions as too small to compare.
+Every session records its `agent_version_id`. When the scope spans versions, compare them: `scope_counts.py` breaks the cheap counts down per version, and `tally_notes.py --by-version RUN/scope` does the same for measured patterns. A pattern that appears or grows after a version change is a strong finding, because it points at a specific release; visualize 2 versions with `comparison` (`side_by_side`, `slopegraph`, or `dumbbell`) and 3–12 versions with `time_series` (`ordered_columns`). Name each version's session count, and treat a version with few sessions as too small to compare.
 
 ## Compare time windows
 
