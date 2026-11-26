@@ -443,10 +443,15 @@ class CheckReportTest(unittest.TestCase):
         dup = make_report(findings=[make_finding("p1"), make_finding("p1")])
         self.assertTrue(any("duplicate finding id" in e for e in reports.check_report(dup)))
 
+    def test_artifact_title_validation(self):
+        self.assertEqual(reports.check_artifact({"type": "rate", "title": "Skip rate", "rate": 0.14}), [])
+        self.assertTrue(any(".title" in e for e in reports.check_artifact({"type": "rate", "title": "", "rate": 0.14})))
+        self.assertTrue(any(".title" in e for e in reports.check_artifact({"type": "rate", "title": "x" * 121, "rate": 0.14})))
+
     def test_all_17_artifact_types_pass_validation(self):
         sid, sid2, nid = str(uuid.uuid4()), str(uuid.uuid4()), str(uuid.uuid4())
         all_17 = [
-            {"type": "stat_grid", "items": [{"label": "New", "value": 3, "tone": "warn"}]},
+            {"type": "stat_grid", "title": "Run overview", "items": [{"label": "New", "value": 3, "tone": "warn"}]},
             {"type": "rate", "presentation": "share_bar", "rate": 0.24, "numerator": 29, "denominator": 120},
             {"type": "categorical", "presentation": "ranked_bars", "unit": "sessions", "values": [{"label": "Policy", "value": 24}, {"label": "Other", "value": 5}]},
             {"type": "comparison", "presentation": "dumbbell", "before_label": "v1", "after_label": "v2", "unit": "%", "rows": [{"label": "Refund fail", "before": 14, "after": 2, "before_detail": "31/214", "after_detail": "4/214"}]},

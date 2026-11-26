@@ -28,6 +28,7 @@ Key formatting rules:
 - Put narrative Markdown in `finding.body` or a `text` artifact (`body`, `callout`, or `hypothesis`).
 - Use `evidence` artifacts and `contributing_session_ids` for clickable sessions rather than pasting bare UUID lists into prose.
 - Compact tiles and full-width report visuals read the same artifact payload. Always include underlying details (`numerator`, `denominator`, `before_detail`, `after_detail`, `session_id`, `node_id`) so hover tooltips stay exact while compact tiles stay uncluttered.
+- **Artifact block titles (`artifact.title`):** Omit `title` on a single self-explanatory chart where the finding heading already tells the reader what it shows. Set a short `title` (at most 120 characters, for example `"Evidence"`, `"Where failures start by step"`, or `"Breakdown by tool"`) on stacked blocks whenever a finding includes two or more artifacts so the reader can tell each chart apart at a glance.
 - Keep run internals out of every visible field: no run ID, seed, scope hash, run-folder paths, model IDs, or level names. Those belong in `metadata["kitaru.insights.skill/v1"]`.
 
 ## Lay out each finding

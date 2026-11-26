@@ -53,7 +53,7 @@ Each entry in `findings[]` is one ranked section of the report.
 
 ## Artifact types
 
-Every item in `finding.artifacts[]` is a discriminated object keyed by `type`. Compact and full-width dashboard views read the exact same payload, so always populate underlying details (`numerator`, `denominator`, `before_detail`, `after_detail`, `session_id`, `node_id`) when you have them.
+Every item in `finding.artifacts[]` is a discriminated object keyed by `type`, with an optional `title` (1–120 characters) used as the block header above the chart or table when a finding stacks multiple artifacts (omit `title` on a single self-explanatory chart). Compact and full-width dashboard views read the exact same payload, so always populate underlying details (`numerator`, `denominator`, `before_detail`, `after_detail`, `session_id`, `node_id`) when you have them.
 
 | `type` | `presentation` / `style` | Required fields and server limits |
 |---|---|---|

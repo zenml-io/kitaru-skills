@@ -210,7 +210,11 @@ def check_artifact(artifact: Any, where: str = "artifact") -> list[str]:
     checker = ARTIFACT_CHECKERS.get(kind)
     if checker is None:
         return [f"{where}: unknown artifact type {kind!r}"]
-    return checker(artifact, where)
+    errors: list[str] = []
+    if not _opt_text(artifact.get("title"), 120):
+        errors.append(f"{where}.title: non-empty string of at most 120 characters")
+    payload = {k: v for k, v in artifact.items() if k != "title"}
+    return errors + checker(payload, where)
 
 
 def _check_stat_grid(data: dict[str, Any], where: str) -> list[str]:
