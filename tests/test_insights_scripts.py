@@ -26,7 +26,7 @@ def load(name: str):
 pick_sample = load("pick_sample")
 condense = load("condense_sessions")
 tally = load("tally_notes")
-cards = load("check_cards")
+reports = load("check_report")
 scope_counts = load("scope_counts")
 to_judgments = load("evaluations_to_judgments")
 tool_stats = load("tool_stats")
@@ -278,121 +278,240 @@ class TallyTest(unittest.TestCase):
         self.assertAlmostEqual(high, 0.2668, places=3)
 
 
-def card(**overrides) -> dict:
-    sid = str(uuid.uuid4())
+def make_finding(fid: str = "p1", sid: str | None = None, **overrides) -> dict:
+    sid = sid or str(uuid.uuid4())
     base = {
-        "name": "kitaru-insights-p1",
-        "title": "Refunds promised before checking the return window",
-        "description": "Example.",
-        "data": {"type": "text", "content": "Body."},
+        "id": fid,
+        "title": "Refunds skip the policy check when the order was edited",
+        "summary": "In 14% of sessions the agent issued a refund without checking the return policy.",
+        "body": "After an order edit, the agent called `issue_refund` without `check_refund_policy`.",
+        "tier": "primary",
+        "kind": "finding",
+        "severity": "high",
+        "change_status": "narrowed",
+        "artifacts": [
+            {
+                "type": "rate",
+                "presentation": "range",
+                "rate": 0.145,
+                "ci_low": 0.10,
+                "ci_high": 0.20,
+                "numerator": 31,
+                "denominator": 214,
+                "label": "of sessions",
+                "basis": "150 random sessions judged",
+                "tone": "risk",
+            },
+            {
+                "type": "evidence",
+                "presentation": "table",
+                "total_sessions": 31,
+                "rows": [
+                    {"session_id": sid, "step_label": "step 7", "signal": "issue_refund", "verdict": "fail"},
+                    {
+                        "session_id": str(uuid.uuid4()),
+                        "step_label": "step 6",
+                        "signal": "check_refund_policy",
+                        "verdict": "pass",
+                        "is_counterexample": True,
+                        "counterexample_note": "Checked policy after edit",
+                    },
+                ],
+            },
+        ],
+        "contributing_session_ids": [sid],
+        "check_first": "Confirm check_refund_policy was available in the tool schema.",
+        "action": {"label": "Investigate this insight", "prompt": "Use the kitaru-investigation skill."},
+        "suggested_questions": [{"label": "Why is the range this wide?"}],
+    }
+    base.update(overrides)
+    return base
+
+
+def make_report(**overrides) -> dict:
+    finding = make_finding()
+    base = {
+        "name": "kitaru-insights-refunds",
+        "title": "Refunds skip the policy check when the order was edited",
+        "summary": "After an order edit, 31 of 47 sessions skipped check_refund_policy.",
+        "source_provider": "langfuse",
+        "coverage": {
+            "sessions_analyzed": 214,
+            "sessions_available": 250,
+            "skipped": 33,
+            "failed": 3,
+            "started_after": "2026-10-12T00:00:00Z",
+            "started_before": "2026-10-19T00:00:00Z",
+            "caveats": ["Stopped at the 250-trace limit."],
+        },
+        "highlight": {"finding_id": "p1", "artifact_index": 0},
+        "next_step": {
+            "label": "Investigate this insight",
+            "summary": "Run check_refund_policy again after every order edit.",
+            "prompt": "Use the kitaru-investigation skill.",
+        },
+        "findings": [finding],
+        "suggested_questions": [{"label": "Which finding has the highest impact?"}],
         "metadata": {
-            "kitaru.insights/v1": {"investigation_prompt": "Use the kitaru-investigation skill.", "cta_label": "Investigate early refunds", "contributing_session_ids": [sid], "evidence": [{"session_id": sid, "node_id": None, "signal": "refund before policy"}]},
-            "kitaru.insights.skill/v1": {"schema_version": 1, "run_id": str(uuid.uuid4()), "level": "standard", "scope": {"population_count": 10, "population_sha256": "a" * 64}, "sample": {}, "pattern": {"kind": "finding"}, "rate": {"basis": "measurement", "method": "subagents", "low": 0.1, "high": 0.5}, "rank": 1, "impact": {"summary": "41 sessions, about 492k wasted tokens", "sessions": 41, "amount": 492000, "unit": "tokens"}},
+            "kitaru.insights.skill/v1": {
+                "schema_version": 2,
+                "run_id": str(uuid.uuid4()),
+                "level": "deep",
+                "scope": {"population_count": 214, "population_sha256": "a" * 64},
+                "sample": {"seed": 7, "targeted": 25, "random": 15},
+                "findings": {
+                    "p1": {
+                        "pattern": {"definition": "Skips policy check after edit.", "checker_verdict": "holds", "rule_id": None},
+                        "rate": {"basis": "measurement", "method": "subagents", "numerator": 27, "denominator": 150, "low": 0.127, "high": 0.249},
+                        "agreement": None,
+                        "impact": {"summary": "31 sessions with unverified refunds", "sessions": 31, "amount": 492000, "unit": "tokens"},
+                    }
+                },
+                "caveats": [],
+            }
         },
     }
     base.update(overrides)
     return base
 
 
-class CheckCardsTest(unittest.TestCase):
-    def test_valid_card_passes_and_command_round_trips(self):
-        batch = [card()]
-        self.assertEqual(cards.check_cards(batch), [])
+class CheckReportTest(unittest.TestCase):
+    def test_valid_report_passes_and_command_round_trips(self):
+        report = make_report()
+        self.assertEqual(reports.check_payload(report), [])
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "my cards.json"
-            path.write_text(json.dumps(batch))
+            path = Path(tmp) / "my report.json"
+            path.write_text(json.dumps(report))
             out = io.StringIO()
             with contextlib.redirect_stdout(out):
-                self.assertEqual(cards.main([str(path), "--emit-command", "my agent", "--idempotency-key", "run-batch-1"]), 0)
+                self.assertEqual(reports.main([str(path), "--emit-command", "my agent", "--idempotency-key", "run-report-1"]), 0)
             argv = shlex.split(out.getvalue())
-            self.assertEqual(json.loads(Path(argv[argv.index("--insight-file") + 1]).read_text()), batch)
-            self.assertNotIn("--insight", argv)
+            self.assertEqual(json.loads(Path(argv[argv.index("--insight-file") + 1]).read_text()), report)
             self.assertEqual(argv[argv.index("--agent") + 1], "my agent")
-            self.assertEqual(argv[argv.index("--idempotency-key") + 1], "run-batch-1")
+            self.assertEqual(argv[argv.index("--idempotency-key") + 1], "run-report-1")
 
-    def test_rejects_non_finite_json_in_the_cards_file(self):
+    def test_rejects_non_finite_json_in_report_file(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "cards.json"
-            path.write_text(json.dumps([card()]).replace('"low": 0.1', '"low": NaN'))
+            path = Path(tmp) / "report.json"
+            path.write_text(json.dumps(make_report()).replace('"low": 0.127', '"low": NaN'))
             with contextlib.redirect_stderr(io.StringIO()) as err:
-                self.assertEqual(cards.main([str(path)]), 1)
+                self.assertEqual(reports.main([str(path)]), 1)
             self.assertIn("NaN", err.getvalue())
 
-    def test_rejects_contract_violations(self):
-        bad = card(name="-bad", extra=1)
-        bad["metadata"]["kitaru.insights/v1"]["cta_label"] = "x" * 41
-        bad["metadata"]["kitaru.insights/v1"]["eyebrow"] = "analyzer-only"
-        bad["metadata"]["kitaru.insights.skill/v1"]["rate"] = {"basis": "targeted_only", "low": 0.1}
-        errors = "\n".join(cards.check_cards([bad]))
-        for fragment in ("name must", "unknown field extra", "cta_label", "eyebrow", "must not carry an interval"):
+    def test_rejects_top_level_and_legacy_metadata_violations(self):
+        bad = make_report(name="-bad", extra=1)
+        bad["coverage"]["sessions_analyzed"] = 300
+        bad["coverage"]["started_after"] = "2026-10-12T00:00:00"
+        bad["highlight"] = {"finding_id": "missing", "artifact_index": 0}
+        bad["metadata"]["kitaru.insights/v1"] = {"cta_label": "legacy"}
+        bad["metadata"]["kitaru.insights.skill/v1"]["findings"]["p1"]["rate"] = {"basis": "targeted_only", "low": 0.1}
+        errors = "\n".join(reports.check_report(bad))
+        for fragment in (
+            "report.name",
+            "unknown field extra",
+            "cannot exceed sessions_available",
+            "timezone-aware",
+            "does not match any finding",
+            "legacy card key",
+            "must not carry an interval",
+        ):
             self.assertIn(fragment, errors)
 
-    def test_rejects_stray_evidence_extra_keys_and_infinite_values(self):
-        stray = card()
-        stray["metadata"]["kitaru.insights/v1"]["evidence"][0]["session_id"] = str(uuid.uuid4())
-        self.assertTrue(any("not in contributing_session_ids" in e for e in cards.check_cards([stray])))
-        values = card(data={"type": "categorical", "values": [{"label": "a", "value": float("inf"), "note": "x"}]})
-        errors = "\n".join(cards.check_cards([values]))
-        self.assertIn("only label and value", errors)
-        self.assertIn("non-negative numbers", errors)
-        bounds = card(data={"type": "binned", "bins": [{"lower_bound": "0", "upper_bound": 1, "count": 1}]})
-        self.assertTrue(any("finite numbers" in e for e in cards.check_cards([bounds])))
-        noticed = card()
-        noticed["metadata"]["kitaru.insights.skill/v1"]["rate"] = {"basis": "random_slice", "low": 0.1, "high": 0.4}
-        self.assertTrue(any("must not carry an interval" in e for e in cards.check_cards([noticed])))
+    def test_rejects_stray_non_counterexample_evidence_but_allows_counterexample(self):
+        report = make_report()
+        # Counterexample in make_report already uses a fresh UUID outside contributing_session_ids.
+        self.assertEqual(reports.check_report(report), [])
+        # Changing the non-counterexample row to an unknown session must fail.
+        report["findings"][0]["artifacts"][1]["rows"][0]["session_id"] = str(uuid.uuid4())
+        self.assertTrue(any("not in contributing_session_ids" in e for e in reports.check_report(report)))
 
-    def test_rejects_bad_bins_and_too_many_cards(self):
-        bins = card(data={"type": "binned", "bins": [{"lower_bound": 0, "upper_bound": 5, "count": 1}, {"lower_bound": 6, "upper_bound": None, "count": 2}]})
-        self.assertTrue(any("does not start" in e for e in cards.check_cards([bins])))
-        many = [card(name=f"kitaru-insights-p{i}") for i in range(9)]
-        self.assertTrue(any("at most 8" in e for e in cards.check_cards(many)))
+    def test_plain_text_summaries_and_no_run_id_leaks(self):
+        for bad in ("Calls `search` twice.", "**Bold** claim.", "Line one.\nLine two.", "- list", "See [x](https://x)", "x" * 321):
+            r = make_report(summary=bad)
+            self.assertTrue(any("report.summary" in e for e in reports.check_report(r)), bad)
+        leaky = make_report()
+        run_id = leaky["metadata"]["kitaru.insights.skill/v1"]["run_id"]
+        leaky["findings"][0]["body"] = f"Generated by {run_id}."
+        self.assertTrue(any("contains the run_id" in e for e in reports.check_report(leaky)))
 
-    def test_description_is_one_plain_line(self):
-        for bad in ("Calls `search` twice.", "**Bold** claim.", "Line one.\nLine two.", "- a list item", "See [this](https://x)", "x" * 241, ""):
-            errors = "\n".join(cards.check_cards([card(description=bad)]))
-            self.assertIn("description:", errors, bad)
-        self.assertEqual(cards.check_cards([card(description="In 41 of 3,228 sessions the agent called search_documents three times in a row.")]), [])
+    def test_primary_finding_cap_and_duplicate_finding_ids(self):
+        many_findings = [make_finding(fid=f"p{i}") for i in range(9)]
+        report = make_report(findings=many_findings)
+        for i in range(9):
+            report["metadata"]["kitaru.insights.skill/v1"]["findings"][f"p{i}"] = report["metadata"]["kitaru.insights.skill/v1"]["findings"]["p1"]
+        self.assertTrue(any("at most 8" in e for e in reports.check_report(report)))
+        dup = make_report(findings=[make_finding("p1"), make_finding("p1")])
+        self.assertTrue(any("duplicate finding id" in e for e in reports.check_report(dup)))
 
-    def test_charts_and_text_stay_readable(self):
-        slices = card(data={"type": "categorical", "values": [{"label": f"t{i}", "value": i} for i in range(9)]})
-        self.assertTrue(any("at most 8" in e for e in cards.check_cards([slices])))
-        bins = card(data={"type": "binned", "bins": [{"lower_bound": i, "upper_bound": i + 1, "count": 1} for i in range(13)]})
-        self.assertTrue(any("at most 12" in e for e in cards.check_cards([bins])))
-        long = card(data={"type": "text", "content": "x" * 2501})
-        self.assertTrue(any("keep it to 2500" in e for e in cards.check_cards([long])))
+    def test_artifact_title_validation(self):
+        self.assertEqual(reports.check_artifact({"type": "rate", "title": "Skip rate", "rate": 0.14}), [])
+        self.assertTrue(any(".title" in e for e in reports.check_artifact({"type": "rate", "title": "", "rate": 0.14})))
+        self.assertTrue(any(".title" in e for e in reports.check_artifact({"type": "rate", "title": "x" * 121, "rate": 0.14})))
 
-    def test_ranks_run_down_to_one_so_the_top_card_shows_first(self):
-        first, second = card(name="kitaru-insights-p1"), card(name="kitaru-insights-p2")
-        run = first["metadata"]["kitaru.insights.skill/v1"]["run_id"]
-        for index, item in enumerate((first, second)):
-            item["metadata"]["kitaru.insights.skill/v1"].update(run_id=run, rank=index + 1)
-        self.assertTrue(any("rank 1 is written last" in e for e in cards.check_cards([first, second])))
-        self.assertEqual(cards.check_cards([second, first]), [])
+    def test_all_17_artifact_types_pass_validation(self):
+        sid, sid2, nid = str(uuid.uuid4()), str(uuid.uuid4()), str(uuid.uuid4())
+        all_17 = [
+            {"type": "stat_grid", "title": "Run overview", "items": [{"label": "New", "value": 3, "tone": "warn"}]},
+            {"type": "rate", "presentation": "share_bar", "rate": 0.24, "numerator": 29, "denominator": 120},
+            {"type": "categorical", "presentation": "ranked_bars", "unit": "sessions", "values": [{"label": "Policy", "value": 24}, {"label": "Other", "value": 5}]},
+            {"type": "comparison", "presentation": "dumbbell", "before_label": "v1", "after_label": "v2", "unit": "%", "rows": [{"label": "Refund fail", "before": 14, "after": 2, "before_detail": "31/214", "after_detail": "4/214"}]},
+            {"type": "table", "columns": [{"key": "tool", "label": "Tool", "format": "mono"}, {"key": "rate", "label": "Fail", "format": "percent_bar"}], "rows": [{"tool": "search", "rate": 0.12}]},
+            {"type": "binned", "presentation": "columns", "unit": "calls", "median": 6, "p95": 18, "bins": [{"lower_bound": 0, "upper_bound": 10, "count": 142}, {"lower_bound": 10, "upper_bound": None, "count": 72}]},
+            {"type": "session_dots", "unit": "s", "scale_min": 0, "scale_max": 60, "points": [{"session_id": sid, "value": 12.5, "highlight": True}]},
+            {"type": "time_series", "presentation": "line", "x_labels": ["W1", "W2", "W3"], "unit": "%", "series": [{"label": "Fail rate", "values": [12, 14, 9]}], "annotations": [{"x_index": 2, "label": "v2"}]},
+            {"type": "step_strip", "presentation": "rows", "total_steps": 10, "rows": [{"label": "Policy skipped", "session_count": 24, "last_good_step": 6, "first_wrong_step": 7, "severity": "high", "session_ids": [sid]}]},
+            {"type": "failure_matrix", "state_by": "tool", "rows": ["edit_order"], "cols": ["issue_refund"], "total_failed": 31, "cells": [{"from_state": "edit_order", "to_state": "issue_refund", "count": 31, "sessions": [{"session_id": sid, "node_id": nid}]}]},
+            {"type": "flow_sankey", "stages": [{"label": "Start", "nodes": [{"id": "s", "label": "Edit", "count": 47}]}, {"label": "End", "nodes": [{"id": "ok", "label": "Checked", "count": 16, "tone": "good"}, {"id": "bad", "label": "Skipped", "count": 31, "tone": "danger"}]}], "links": [{"source": "s", "target": "ok", "count": 16}, {"source": "s", "target": "bad", "count": 31}]},
+            {"type": "step_story", "session_id": sid, "steps": [{"number": 1, "text": "User edits order", "role": "user"}, {"number": 7, "text": "Calls issue_refund without policy check", "role": "tool", "tool_name": "issue_refund", "node_id": nid, "tone": "danger"}]},
+            {"type": "tool_cycle", "steps": [{"name": "search", "status": "ok"}, {"name": "fetch_page", "status": "error"}], "repeat_count": 14, "session_count": 23},
+            {"type": "session_comparison", "left": {"session_id": sid, "verdict": "fail", "steps": [{"label": "edit_order"}, {"label": None, "status": "missing"}, {"label": "issue_refund", "status": "highlight_bad"}]}, "right": {"session_id": sid2, "verdict": "pass", "steps": [{"label": "edit_order"}, {"label": "check_refund_policy", "status": "highlight_good"}, {"label": "issue_refund"}]}},
+            {"type": "session_timeline", "session_id": sid, "total_duration_ms": 4200, "spans": [{"name": "lookup_order", "start_ms": 0, "duration_ms": 800}, {"name": "issue_refund", "start_ms": 800, "duration_ms": 3400, "tone": "danger"}]},
+            {"type": "evidence", "presentation": "compact", "total_sessions": 31, "rows": [{"session_id": sid, "verdict": "fail"}]},
+            {"type": "text", "style": "hypothesis", "label": "Code hypothesis", "content": "State flag cleared.", "file_path": "src/orders.py", "revision": "abc1234"},
+        ]
+        for artifact in all_17:
+            self.assertEqual(reports.check_artifact(artifact), [], f"failed for {artifact['type']}")
 
-    def test_impact_and_run_details(self):
-        loose = card()
-        loose["metadata"]["kitaru.insights.skill/v1"]["impact"] = {"summary": "x", "sessions": 3, "amount": 5, "unit": None}
-        self.assertTrue(any("set together" in e for e in cards.check_cards([loose])))
-        leaky = card()
-        run = leaky["metadata"]["kitaru.insights.skill/v1"]["run_id"]
-        leaky["data"] = {"type": "text", "content": f"Run {run}."}
-        self.assertTrue(any("contains the run_id" in e for e in cards.check_cards([leaky])))
+    def test_enforces_zuris_11_chart_limits(self):
+        cases = [
+            ({"type": "categorical", "presentation": "ranked_bars", "values": [{"label": f"c{i}", "value": i + 1} for i in range(9)]}, "at most 8"),
+            ({"type": "categorical", "presentation": "donut", "values": [{"label": "a", "value": 1}, {"label": "b", "value": 1}]}, "3 to 4"),
+            ({"type": "categorical", "presentation": "split_bar", "values": [{"label": "a", "value": 99}, {"label": "b", "value": 1}]}, "at least 2%"),
+            ({"type": "comparison", "presentation": "side_by_side", "before_label": "a", "after_label": "b", "rows": [{"label": f"r{i}", "before": 1, "after": 2} for i in range(4)]}, "at most 3"),
+            ({"type": "comparison", "presentation": "dot_plot", "before_label": "a", "after_label": "b", "rows": [{"label": f"r{i}", "before": 1, "after": 2} for i in range(9)]}, "at most 8"),
+            ({"type": "binned", "bins": [{"lower_bound": 0, "upper_bound": 5, "count": 1}, {"lower_bound": 6, "upper_bound": None, "count": 2}]}, "previous bin's upper_bound"),
+            ({"type": "session_dots", "points": [{"session_id": str(uuid.uuid4()), "value": i} for i in range(101)]}, "1 to 100"),
+            ({"type": "time_series", "presentation": "ordered_columns", "x_labels": [f"v{i}" for i in range(13)], "series": [{"label": "s", "values": list(range(13))}]}, "at most 12"),
+            ({"type": "time_series", "presentation": "stacked_columns", "x_labels": ["a", "b", "c"], "series": [{"label": f"s{i}", "values": [1, 2, 3]} for i in range(4)]}, "at most 3"),
+            ({"type": "time_series", "presentation": "line", "x_labels": ["a", "b", "c"], "series": [{"label": f"s{i}", "values": [1, 2, 3]} for i in range(6)]}, "at most 5"),
+            ({"type": "time_series", "presentation": "highlight_line", "x_labels": ["a", "b", "c"], "series": [{"label": "a", "values": [1, 2, 3]}, {"label": "b", "values": [2, 3, 4]}]}, "exactly one series"),
+            ({"type": "time_series", "presentation": "small_multiples", "x_labels": ["a", "b", "c"], "series": [{"label": f"s{i}", "values": [1, 2, 3]} for i in range(7)]}, "at most 6"),
+            ({"type": "step_strip", "presentation": "small_multiples", "total_steps": 10, "rows": [{"label": f"a{i}"} for i in range(7)]}, "at most 6"),
+            ({"type": "failure_matrix", "rows": [f"r{i}" for i in range(7)], "cols": ["c0"], "total_failed": 1, "cells": []}, "1 to 6"),
+            ({"type": "flow_sankey", "stages": [{"nodes": [{"id": f"n{i}", "label": f"n{i}", "count": 1} for i in range(5)]}, {"nodes": [{"id": f"m{i}", "label": f"m{i}", "count": 1} for i in range(4)]}], "links": [{"source": "n0", "target": "m0", "count": 1}]}, "at most 8 nodes"),
+        ]
+        for artifact, expected in cases:
+            errors = "\n".join(reports.check_artifact(artifact))
+            self.assertIn(expected, errors, f"expected {expected!r} for {artifact}")
 
-    def test_dashboard_url_requires_a_link_to_a_contributing_session(self):
-        linked = card()
-        sid = linked["metadata"]["kitaru.insights/v1"]["contributing_session_ids"][0]
-        self.assertTrue(any("needs a Markdown link" in e for e in cards.check_cards([linked], dashboard_url="https://kitaru.example")))
-        linked["data"] = {"type": "text", "content": f"See [the first loop](https://kitaru.example/sessions/{sid})."}
-        self.assertEqual(cards.check_cards([linked], dashboard_url="https://kitaru.example/"), [])
-        elsewhere = card(data={"type": "text", "content": f"See [it](https://kitaru.example/sessions/{uuid.uuid4()})."})
-        self.assertTrue(any("needs a Markdown link" in e for e in cards.check_cards([elsewhere], dashboard_url="https://kitaru.example")))
-        chart = card(data={"type": "categorical", "values": [{"label": "a", "value": 1}]})
-        self.assertEqual(cards.check_cards([chart], dashboard_url="https://kitaru.example"), [])
+    def test_batch_rejects_duplicate_names_and_mixed_runs(self):
+        errors = reports.check_payload([make_report(), make_report()])
+        self.assertIn("payload: report names must be unique within a batch", errors)
+        self.assertIn("payload: every report in one batch must share one run_id", errors)
 
-    def test_rejects_mixed_runs_and_duplicate_names(self):
-        errors = cards.check_cards([card(), card()])
-        self.assertIn("cards: names must be unique within a run", errors)
-        self.assertIn("cards: every card in one batch must share one run_id", errors)
+    def test_warns_on_long_finding_titles_and_repeated_rate_leads(self):
+        report = make_report()
+        f0 = report["findings"][0]
+        f0["title"] = "A" * 60
+        f1 = {**f0, "id": "p2", "title": "Short title two"}
+        f2 = {**f0, "id": "p3", "title": "Short title three"}
+        report["findings"] = [f0, f1, f2]
+        warnings = "\n".join(reports.collect_warnings(report))
+        self.assertIn("findings[0].title: 60 chars", warnings)
+        self.assertIn("3 primary findings lead with a rate chart", warnings)
+        clean = make_report()
+        clean["findings"][0]["title"] = "Short sidebar-friendly title"
+        self.assertEqual(reports.collect_warnings(clean), [])
 
 
 class ScopeCountsTest(unittest.TestCase):
