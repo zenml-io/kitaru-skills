@@ -24,7 +24,7 @@ description: Move a local open-source Kitaru workspace to a managed cloud worksp
 4. **The user is logged in to the managed cloud and a Kitaru workspace exists.** Have the user run `kitaru login` themselves. It opens a browser device flow where they select or create a Kitaru workspace (14-day trial, no credit card required), waits for the workspace, and stores a credential for its URL. For an existing workspace, `kitaru login <workspace-url>` does the same. Read the managed URL from the login result (`item.server_url`) or from `kitaru status` afterwards.
 5. **Know which server is selected.** `kitaru login` makes the managed workspace the selected server. From here on, `kitaru` without `--server` talks to the managed workspace, so every push command must name the local server with the global `--server <local-url>` option. `--server` takes precedence over `KITARU_API_URL` and the stored selection.
 
-Credentials: the destination is authenticated only with the credential `kitaru login` stored for the exact `--to` URL. `KITARU_API_KEY` in the environment applies to the source and is ignored for the destination. If `KITARU_API_KEY` holds a key for a different server than the source, unset it for these commands.
+Credentials: a destination that requires authentication is authenticated only with the credential `kitaru login` stored for the exact `--to` URL; a destination with no authentication needs no login. `KITARU_API_KEY` in the environment applies to the source and is ignored for the destination. If `KITARU_API_KEY` holds a key for a different server than the source, unset it for these commands.
 
 ## 2. Preview with a dry run
 
@@ -65,7 +65,7 @@ On success (exit code 0) the report is the JSON document on stdout. `warnings` a
 |---|---|---|
 | `counts` | Per-kind totals of `copied`, `already_present`, `skipped`, `failed` | The headline result. |
 | `skipped` | `kind`, `record`, `reason` for each skipped record | Sessions still in progress and replay result sessions are never copied. An agent version is skipped when the destination agent's version numbers differ from the source. |
-| `failed` | `kind`, `record`, `error` | Empty on success. See `partial_failure` below. |
+| `failed` | `kind`, `record`, `error`, `retryable` | Empty on success. `retryable` says whether a rerun can fix that record. See `partial_failure` below. |
 | `incomplete_connections` | `connection`, `missing_keys`, and the `command` that sets them | These connections exist on the destination without their secret values. They do not work until the user sets every listed key. |
 | `unmapped_references` | `insight`, `source_insight_id`, and `references` (`id`, `kind`) | These copied insights still mention records that exist only on the source, such as a skipped session, the import that created the sessions, or an analyzer version. Those links lead nowhere on the destination. The same list is stored in each insight's `kitaru.push/v1` metadata. |
 | `not_copied` | Kinds a push never copies | Recreate the ones the user needs. |
@@ -92,14 +92,14 @@ Rerunning the push is safe. Records are matched before they are written, so a se
 
 ## 7. Next steps for the user
 
-1. **Re-enter connection secrets.** For each entry under `incomplete_connections`, give the user this command to run in their own terminal, with the real names filled in and the values left for them to type:
+1. **Re-enter connection secrets.** For each entry under `incomplete_connections`, give the user its `command` to run in their own terminal, with the `<value>` placeholders left for them to fill in. It has this shape:
 
    ```bash
    kitaru --server <managed-url> connection update <connection-name> \
-     --set-secret KEY_ONE=... --set-secret KEY_TWO=...
+     --set-secret KEY_ONE=<value> --set-secret KEY_TWO=<value> [--default]
    ```
 
-   `--set-secret` replaces all stored secret values of the connection, so every missing key must go in one command. Do not run this command yourself.
+   `--set-secret` replaces all stored secret values of the connection, so the command names every secret key in one call: the missing ones and any the destination already holds, which the user must re-enter too. A connection copied without its secret values is never the provider default on the destination; the command ends with `--default` when the source connection was the default and the destination has none for that provider, so it becomes the default only once its secrets are set. Do not run this command yourself.
 2. **Reattach run-spec secrets** on agent versions if the report warned about them.
 3. **Point the SDK and workers at the managed workspace.** Set `KITARU_API_URL` to the managed URL and `KITARU_API_KEY` to an API key the user creates for that workspace, wherever the agent, CI, and workers run. Restart workers so they register with the new server. If the MCP server was registered against the local URL, rerun `kitaru --server <managed-url> setup`.
 4. **Recreate what was not copied**, if the user needs it: cohorts, evaluators, evaluations, investigations, annotations, experiments, replays, tags, importers, and analyzers. Sessions that were in progress can be pushed with a rerun once they settle.
@@ -111,9 +111,9 @@ Failures are JSON on stderr under `error`, with `kind`, `message`, and often `hi
 
 | `error.kind` | Exit code | Cause and fix |
 |---|---|---|
-| `invalid_arguments` | 2 | `--to` is not an absolute HTTP(S) URL, or it is the same server as the source. After `kitaru login`, the selected server is the managed workspace: add `--server <local-url>`. |
+| `invalid_arguments` | 2 | `--to` is not an absolute HTTP(S) URL, or it is the same server as the source (also caught when two URLs reach one server, such as `localhost` and `127.0.0.1`). After `kitaru login`, the selected server is the managed workspace: add `--server <local-url>`. |
 | `invalid_configuration` | 2 | No source server could be resolved. Pass `--server <local-url>`. |
 | `authentication_failed` | 3 | No stored credential for the `--to` URL, or the destination rejected it. Have the user run `kitaru login <managed-url>`, then rerun with `--server <local-url>`. The stored credential is keyed by URL, so `--to` must match the URL that was logged in to. `KITARU_API_KEY` does not help here. |
 | `not_found` | 4 | An `--agent` name does not exist on the source. List names with `kitaru --server <local-url> agent list`. |
 | `network_error` | 6 | A server is unreachable. Check `kitaru --server <url> status` for each side. Start the local server with `kitaru login --local` (this reselects the local server, so keep passing `--server`). |
-| `partial_failure` | 8 | Some records failed. The full report is under `error.details` (same fields as `item`, plus `warnings` and `next_actions`), with each failure in `failed`. The error is retryable: rerun the same command, and records already copied are not copied again. If the same records fail twice, show the user their `error` text. |
+| `partial_failure` | 8 | Some records failed. The full report is under `error.details` (same fields as `item`, plus `warnings` and `next_actions`), with each failure in `failed`. In text output the same report is printed after the error message. The error is retryable only when every failure is: rerun the same command, and records already copied are not copied again. Insights that cite a record that failed in this run are held back and written on the rerun. When a failure is not retryable, such as a same-named connection with a different provider on the destination, show the user its `error` text instead of rerunning. |
