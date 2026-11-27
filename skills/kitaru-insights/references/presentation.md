@@ -25,6 +25,7 @@ One `Insight` record is a complete multi-finding report for an agent. The backen
 Key formatting rules:
 
 - `report.summary` and `finding.summary` are **plain text** (one line, at most 320 characters, no Markdown). `check_report.py` rejects Markdown symbols and line breaks there.
+- **Short finding titles:** Aim for under **50 characters** (at most 55) on every `finding.title` so the two-line left sidebar never truncates mid-word (for example `"Phantom refunds with no action tool"`, not `"Agent promises refunds and escalations without calling any action tool"`). Put the exact counts, dollar totals, and conditions in `summary` and `body`. Keep `report.title` concise too (~55 characters) so breadcrumbs and grid tiles stay clean.
 - Put narrative Markdown in `finding.body` or a `text` artifact (`body`, `callout`, or `hypothesis`).
 - Use `evidence` artifacts and `contributing_session_ids` for clickable sessions rather than pasting bare UUID lists into prose.
 - Compact tiles and full-width report visuals read the same artifact payload. Always include underlying details (`numerator`, `denominator`, `before_detail`, `after_detail`, `session_id`, `node_id`) so hover tooltips stay exact while compact tiles stay uncluttered.
@@ -78,6 +79,8 @@ Pick the artifact type from the question the finding answers. Every pairing belo
 | **Exact values across several columns** | `table` (use `percent_bar`, `delta`, `badge`, `session_link` formats) | Several separate charts |
 
 Give every chart a clear `unit` (when applicable) and state what to notice in the finding's `summary` and `body`. A chart with no stated point is a dashboard metric, not an insight; drop it.
+
+**Match the lens, not one default chart.** Do not lead more than two primary findings in one report with `rate` (`share_bar`). When a finding's real shape is a category split (`categorical` `focus_bars`, `donut`, or `ranked_bars`), a threshold or group gap (`comparison` `dot_plot` or `side_by_side`), a trace walkthrough (`step_story` or `session_comparison`), where failures cluster by step (`step_strip`), a multi-stage path (`flow_sankey`), a daily trend (`time_series`), a per-session spread (`session_dots` for `n <= 100`), a latency waterfall (`session_timeline`), a rule coverage matrix (`table`), or headline counts (`stat_grid`), lead with that chart instead of repeating another share bar. `check_report.py` warns when a report repeats `rate` leads past two primary findings or writes finding titles over 55 characters.
 
 ## Hard chart limits
 

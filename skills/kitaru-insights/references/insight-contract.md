@@ -38,7 +38,7 @@ Each entry in `findings[]` is one ranked section of the report.
 | Field | Rule |
 |---|---|
 | `id` | Required, 1 to 120 characters, unique within the report (for example `p1` or `policy-check-skipped`). |
-| `title` | Required, at most 255 characters. Names the behavior in plain words, not a metric name. |
+| `title` | Required, at most 255 characters (aim for under 50, at most 55 so the report sidebar never truncates mid-word). Names the behavior in plain words, not a metric name. |
 | `summary` | Required for primary findings (optional for secondary). One plain-text sentence of at most 320 characters, with no Markdown or line breaks, stating the claim and its size. |
 | `body` | Optional Markdown narrative with the concrete conversation flow, numbers, observed trigger, and cost. |
 | `tier` | `primary` (default) for main findings, or `secondary` for compact baseline context rows shown under the main findings (for example session outcomes or tool-call spread). |

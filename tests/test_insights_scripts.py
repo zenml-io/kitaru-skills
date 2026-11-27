@@ -499,6 +499,20 @@ class CheckReportTest(unittest.TestCase):
         self.assertIn("payload: report names must be unique within a batch", errors)
         self.assertIn("payload: every report in one batch must share one run_id", errors)
 
+    def test_warns_on_long_finding_titles_and_repeated_rate_leads(self):
+        report = make_report()
+        f0 = report["findings"][0]
+        f0["title"] = "A" * 60
+        f1 = {**f0, "id": "p2", "title": "Short title two"}
+        f2 = {**f0, "id": "p3", "title": "Short title three"}
+        report["findings"] = [f0, f1, f2]
+        warnings = "\n".join(reports.collect_warnings(report))
+        self.assertIn("findings[0].title: 60 chars", warnings)
+        self.assertIn("3 primary findings lead with a rate chart", warnings)
+        clean = make_report()
+        clean["findings"][0]["title"] = "Short sidebar-friendly title"
+        self.assertEqual(reports.collect_warnings(clean), [])
+
 
 class ScopeCountsTest(unittest.TestCase):
     def test_cost_concentration_needs_enough_sessions(self):

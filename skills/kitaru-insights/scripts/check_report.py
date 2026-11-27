@@ -85,6 +85,8 @@ MAX_SUGGESTED_QUESTIONS = 5
 MAX_CONTRIBUTING_SESSIONS = 1000
 SERVER_MAX_BATCH = 100
 SUMMARY_MAX = 320
+FINDING_TITLE_SOFT_MAX = 55
+MAX_REPEATED_RATE_LEADS = 2
 SPLIT_BAR_MIN_SHARE = 0.02
 MARKDOWN_IN_PLAIN_TEXT = re.compile(r"`|\*\*|__|\]\(|^\s*(?:#|[-*+] |\d+\. )", re.MULTILINE)
 
@@ -1122,6 +1124,41 @@ def check_payload(payload: Any, max_primary_findings: int = MAX_PRIMARY_FINDINGS
     return errors
 
 
+def collect_warnings(payload: Any) -> list[str]:
+    """Return non-blocking presentation warnings (long sidebar titles, repetitive rate leads)."""
+    reports = [payload] if isinstance(payload, dict) else (payload if isinstance(payload, list) else [])
+    warnings: list[str] = []
+    for r_idx, report in enumerate(reports):
+        if not isinstance(report, dict):
+            continue
+        prefix = f"report {r_idx}: " if isinstance(payload, list) else ""
+        findings = report.get("findings")
+        if not isinstance(findings, list):
+            continue
+        rate_leads = 0
+        for f_idx, finding in enumerate(findings):
+            if not isinstance(finding, dict):
+                continue
+            title = finding.get("title")
+            if isinstance(title, str) and len(title.strip()) > FINDING_TITLE_SOFT_MAX:
+                warnings.append(
+                    f"{prefix}findings[{f_idx}].title: {len(title.strip())} chars "
+                    f"(aim for <= {FINDING_TITLE_SOFT_MAX} so the sidebar does not truncate)"
+                )
+            if finding.get("tier", "primary") == "primary":
+                artifacts = finding.get("artifacts")
+                if isinstance(artifacts, list) and artifacts and isinstance(artifacts[0], dict):
+                    if artifacts[0].get("type") == "rate":
+                        rate_leads += 1
+        if rate_leads > MAX_REPEATED_RATE_LEADS:
+            warnings.append(
+                f"{prefix}findings: {rate_leads} primary findings lead with a rate chart "
+                f"(keep <= {MAX_REPEATED_RATE_LEADS} and use categorical, comparison, step_story, "
+                "step_strip, flow_sankey, table, or session_comparison where data fits)"
+            )
+    return warnings
+
+
 def build_command(report_path: Path, agent: str, idempotency_key: str) -> str:
     """Return a shell-quoted insight create command that writes the checked report file."""
     parts = [
@@ -1163,6 +1200,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: {error}", file=sys.stderr)
     if errors:
         return 1
+    warnings = collect_warnings(payload)
+    for warning in warnings:
+        print(f"warning: {warning}", file=sys.stderr)
     if args.emit_command:
         if not args.idempotency_key:
             print("error: --emit-command needs --idempotency-key", file=sys.stderr)
@@ -1171,7 +1211,10 @@ def main(argv: list[str] | None = None) -> int:
     else:
         reports = [payload] if isinstance(payload, dict) else payload
         findings_count = sum(len(r.get("findings", [])) for r in reports)
-        print(json.dumps({"reports": len(reports), "findings": findings_count, "ok": True}))
+        summary: dict[str, Any] = {"reports": len(reports), "findings": findings_count, "ok": True}
+        if warnings:
+            summary["warnings"] = warnings
+        print(json.dumps(summary))
     return 0
 
 
