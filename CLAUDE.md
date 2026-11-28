@@ -49,6 +49,9 @@ not instructions to execute the workflows during repository maintenance.
 - Keep the trace viewer's anchor rules and runtime API in
   `skills/kitaru-trace-viewer/references/viewer-contract.md`, and its rule that
   the reviewer, never the assistant, saves notes through the viewer.
+- Keep `kitaru-workspace-push` gated on a dry run before writes, explicit user
+  confirmation (including raw session upload and missing connection secrets),
+  and the rule that the user runs secret-setting commands in their own terminal.
 
 ## Local Claude Code testing
 

@@ -35,8 +35,8 @@ improvement, and compare the result.
 | [`kitaru-validate-evaluator`](skills/kitaru-validate-evaluator/SKILL.md) | Check a judge against criterion-specific human verdicts, inspect disagreements with visual summaries, and assess untouched cases without confusing abstentions or errors with quality. |
 | [`kitaru-replay-experiment`](skills/kitaru-replay-experiment/SKILL.md) | Safely test one candidate against an exact cohort and evaluator set, supervise the run, and report improved, regressed, trade-off, or inconclusive evidence without making the deployment decision. |
 | [`kitaru-importer-builder`](skills/kitaru-importer-builder/SKILL.md) | Build and locally validate a private or packaged importer for an unsupported provider or export format, with optional API fetching, conservative session joining, explicit fidelity reporting, and separately approved remote registration and smoke import. |
-| [`kitaru-workspace-push`](skills/kitaru-workspace-push/SKILL.md) | Move a local Kitaru workspace to a managed one: preview with a dry run, copy agents, connections, sessions, and insights with `kitaru workspace push`, verify the destination, and hand the user the steps the command cannot do, such as re-entering connection secrets. |
 | [`kitaru-adapter-builder`](skills/kitaru-adapter-builder/SKILL.md) | Select a supported provider-backed adapter or build a project-local Python or TypeScript adapter for an unsupported agent framework, with explicit recording and replay boundaries, partial-trace handling, side-effect controls, and separately approved upstream contribution. |
+| [`kitaru-workspace-push`](skills/kitaru-workspace-push/SKILL.md) | Move a local Kitaru workspace to a managed one: preview with a dry run, copy agents, connections, sessions, and insights with `kitaru workspace push`, verify the destination, and hand the user the steps the command cannot do, such as re-entering connection secrets. |
 
 The workflow keeps human observations separate from agent suggestions. It uses
 the Kitaru frontend for human review and consumes the product-owned review link
@@ -69,6 +69,7 @@ product handoff rather than recreating the review UI in chat.
 - "Build a Kitaru adapter for this Python agent framework."
 - "Add Kitaru recording and safe replay to this TypeScript agent without changing its public API."
 - "Can this framework support a Kitaru adapter, including streaming and tool replay?"
+- "Copy my local Kitaru workspace into my managed cloud workspace, starting with a dry run."
 
 ## Requirements
 
@@ -85,6 +86,8 @@ handoffs require Kitaru 0.26 or newer. Existing file-based tour and investigatio
 paths remain available on their earlier supported versions.
 
 Model-read insights use only session reads and insight creation, which Kitaru 0.26 provides. Their optional server-analyzer baseline uses `kitaru session analyze`, from the Kitaru release after 0.27.7; on older versions the skill offers it only for a single-import scope through `kitaru import analyze`. Raw session exports and notes stay in a local run folder outside your repositories.
+
+Workspace migration uses `kitaru workspace push`, from the Kitaru release after 0.27.8.
 
 Evaluator validation uses existing investigation verdicts and exact evaluation runs. TypeSafe is optional and requires the `kitaru-typesafe-evaluator` package on the worker; the skill checks its installed schema and setup. Human agreement validation does not certify the model's probabilities or deploy an automatic gate.
 
