@@ -9,7 +9,8 @@ Claude Code exposes the skills as `/kitaru-hosted-onboarding-tour`,
 `/kitaru-guided-tour`, `/kitaru-investigation`, `/kitaru-insights`,
 `/kitaru-trace-viewer`, `/kitaru-validate-evaluator`,
 `/kitaru-replay-experiment`,
-`/kitaru-importer-builder`, and `/kitaru-adapter-builder`, and may also select
+`/kitaru-importer-builder`, `/kitaru-adapter-builder`, and
+`/kitaru-workspace-push`, and may also select
 them automatically from their frontmatter descriptions.
 
 ## Additional skill editing guidance
@@ -48,6 +49,9 @@ not instructions to execute the workflows during repository maintenance.
 - Keep the trace viewer's anchor rules and runtime API in
   `skills/kitaru-trace-viewer/references/viewer-contract.md`, and its rule that
   the reviewer, never the assistant, saves notes through the viewer.
+- Keep `kitaru-workspace-push` gated on a dry run before writes, explicit user
+  confirmation (including raw session upload and missing connection secrets),
+  and the rule that the user runs secret-setting commands in their own terminal.
 
 ## Local Claude Code testing
 
@@ -62,6 +66,7 @@ cp -R skills/kitaru-insights .claude/skills/
 cp -R skills/kitaru-trace-viewer .claude/skills/
 cp -R skills/kitaru-validate-evaluator .claude/skills/
 cp -R skills/kitaru-replay-experiment .claude/skills/
+cp -R skills/kitaru-workspace-push .claude/skills/
 ```
 
 For marketplace testing:

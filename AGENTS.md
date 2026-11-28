@@ -64,6 +64,9 @@ metadata. It is not a Python package.
   TypeScript frameworks.
 - `skills/kitaru-adapter-builder/references/` separates the shared method,
   Python and TypeScript SDK contracts, and validation and reporting rules.
+- `skills/kitaru-workspace-push/SKILL.md` guides a move from a local server to
+  a managed workspace with `kitaru workspace push`: dry run, confirmed copy,
+  destination checks, and the follow-up the command leaves to the user.
 - `.claude-plugin/plugin.json` defines the Claude Code plugin.
 - `.claude-plugin/marketplace.json` defines its marketplace entry.
 - `README.md` is the public installation and usage guide.

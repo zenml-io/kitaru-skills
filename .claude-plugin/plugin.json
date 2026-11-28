@@ -1,6 +1,6 @@
 {
   "name": "kitaru",
-  "description": "Experience Kitaru through hosted onboarding or a public tour, build integrations, investigate sessions, find insights across many sessions, review them in custom trace viewers, and run bounded replay experiments and evaluator validation",
+  "description": "Experience Kitaru through hosted onboarding or a public tour, build integrations, investigate sessions, find insights across many sessions, review them in custom trace viewers, run bounded replay experiments and evaluator validation, and move a local workspace to a managed one",
   "version": "0.20.0",
   "author": {
     "name": "ZenML",
@@ -36,6 +36,8 @@
     "mcp",
     "trace-viewers",
     "mcp-apps",
-    "evaluator-validation"
+    "evaluator-validation",
+    "workspace-migration",
+    "managed-cloud"
   ]
 }

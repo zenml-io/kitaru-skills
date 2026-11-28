@@ -6,7 +6,7 @@
     "url": "https://zenml.io"
   },
   "metadata": {
-    "description": "Experience Kitaru through hosted onboarding or a public tour, build integrations, investigate sessions, find insights across many sessions, review them in custom trace viewers, and run bounded replay experiments and evaluator validation",
+    "description": "Experience Kitaru through hosted onboarding or a public tour, build integrations, investigate sessions, find insights across many sessions, review them in custom trace viewers, run bounded replay experiments and evaluator validation, and move a local workspace to a managed one",
     "version": "0.20.0",
     "homepage": "https://kitaru.ai",
     "repository": "https://github.com/zenml-io/kitaru-skills"
@@ -15,7 +15,7 @@
     {
       "name": "kitaru",
       "source": "./",
-      "description": "Claude Code package for hosted onboarding, a guided Kitaru tour, integrations, human-reviewed investigations, model-read insights across many sessions, custom trace viewers for domain review, evaluator authoring, and safe bounded replay experiments and evaluator validation.",
+      "description": "Claude Code package for hosted onboarding, a guided Kitaru tour, integrations, human-reviewed investigations, model-read insights across many sessions, custom trace viewers for domain review, evaluator authoring, safe bounded replay experiments and evaluator validation, and moving a local workspace to a managed one.",
       "version": "0.20.0",
       "author": {
         "name": "ZenML",
@@ -52,7 +52,9 @@
         "mcp",
         "trace-viewers",
         "mcp-apps",
-        "evaluator-validation"
+        "evaluator-validation",
+        "workspace-migration",
+        "managed-cloud"
       ]
     }
   ]

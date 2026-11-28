@@ -1,0 +1,4 @@
+interface:
+  display_name: "Kitaru Workspace Push"
+  short_description: "Copy a local Kitaru workspace into a managed one"
+  default_prompt: "Use $kitaru-workspace-push to copy my local Kitaru workspace into my managed workspace. Show me a dry run first and ask before writing anything."
